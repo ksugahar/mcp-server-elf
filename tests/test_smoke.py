@@ -2111,6 +2111,19 @@ def test_public_policy_lint_passes():
     assert run_policy_lint(repo) == []
 
 
+def test_source_native_loop_policy_public_safe():
+    from pathlib import Path
+
+    repo = Path(__file__).resolve().parents[1]
+    doc = (repo / "docs" / "SOURCE_NATIVE_LOOP_POLICY.md").read_text(encoding="utf-8")
+    assert "source_native_example" in doc
+    assert "public sample decks" in doc
+    assert "public validation level" in doc
+    assert "Product/private solver replay remains outside" in doc
+    forbidden = ("S:" + "\\", "C:" + "\\temp", "_cross" + "val")
+    assert not any(marker in doc for marker in forbidden)
+
+
 def test_usage_topic_nonempty():
     from elf_mcp_server.elf_knowledge import get_elf_documentation
     assert len(get_elf_documentation("overview")) > 100
