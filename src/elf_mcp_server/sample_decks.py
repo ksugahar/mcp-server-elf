@@ -4572,9 +4572,11 @@ def build_local_simulation_handoff(
             "recommended": [
                 "case_id",
                 "source_public_deck_paths",
+                "mei_path when mesh regeneration is required",
                 "parameter_overrides",
                 "timeout_seconds",
                 "keep_outputs",
+                "field_export_modes such as M3GB or M3SJ when CSV extraction is needed",
             ],
             "run_modes": [
                 "copy_public_deck_and_run",
@@ -4582,6 +4584,29 @@ def build_local_simulation_handoff(
                 "generate_new_deck_from_recipe_then_run",
                 "dry_run_validate_inputs_only",
             ],
+            "execution_policy": {
+                "preferred": "direct_solver_exe_no_gui",
+                "avoid": "Launcher.exe GUI route",
+                "reason": (
+                    "The shell association route can leave a completion dialog. "
+                    "Automation should call the solver executable directly and "
+                    "wait for process exit."
+                ),
+                "current_elf600_executables": {
+                    "mesh_script": "mesh750.exe (.mei -> .meg, optional)",
+                    "magic": "magh1600.exe (.mai -> .mao/.mag/.mat/.mac)",
+                    "elfin": "elfh1300.exe (.mai -> .mao and electrostatic outputs)",
+                    "beam": "beamh1000.exe (.mai -> beam outputs)",
+                    "field_export": "MagFilter2.exe (.mag -> requested CSV extracts)",
+                },
+                "artifact_roles": {
+                    ".mai": "analysis/control input deck",
+                    ".meg": "compiled geometry/mesh input",
+                    ".mei": "mesh-script input, not a run result",
+                    ".mao": "primary execution log",
+                    ".mag": "field/result file for post-processing",
+                },
+            },
         },
         "parser_output_contract": {
             "required": [
@@ -4593,6 +4618,11 @@ def build_local_simulation_handoff(
                 "generated_files",
                 "parsed_observables",
             ],
+            "primary_files": {
+                "run_log": ".mao",
+                "field_result": ".mag",
+                "mesh_script_input": ".mei",
+            },
             "parsed_observables": [
                 "flux_linkage_FLUM",
                 "field_probe",
@@ -4654,10 +4684,28 @@ def format_local_simulation_handoff(handoff: dict[str, Any]) -> str:
     lines.append("- required fields: " + ", ".join(f"`{item}`" for item in runner["required"]))
     lines.append("- recommended fields: " + ", ".join(f"`{item}`" for item in runner["recommended"]))
     lines.append("- run modes: " + ", ".join(f"`{item}`" for item in runner["run_modes"]))
+    policy = runner.get("execution_policy", {})
+    if policy:
+        lines.append(f"- execution policy: `{policy['preferred']}`")
+        lines.append(f"- avoid: `{policy['avoid']}` -- {policy['reason']}")
+        executables = policy.get("current_elf600_executables", {})
+        if executables:
+            lines.append("- current ELF600 executables:")
+            lines.extend(f"  - `{key}`: {value}" for key, value in executables.items())
+        roles = policy.get("artifact_roles", {})
+        if roles:
+            lines.append("- artifact roles:")
+            lines.extend(f"  - `{key}`: {value}" for key, value in roles.items())
 
     parser = handoff["parser_output_contract"]
     lines.extend(["", "## Parser Output Contract"])
     lines.append("- required fields: " + ", ".join(f"`{item}`" for item in parser["required"]))
+    primary_files = parser.get("primary_files", {})
+    if primary_files:
+        lines.append(
+            "- primary files: "
+            + ", ".join(f"`{key}` = `{value}`" for key, value in primary_files.items())
+        )
     lines.append("- observables: " + ", ".join(f"`{item}`" for item in parser["parsed_observables"]))
     lines.append(f"- public rule: {parser['public_rule']}")
 

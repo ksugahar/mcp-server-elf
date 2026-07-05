@@ -1716,10 +1716,16 @@ def test_public_sample_decks_are_runnable_inputs_only():
     assert handoff["selected_routes"][0]["family"] == "application/motor/spm_surface_pm_10"
     assert handoff["selected_routes"][0]["representative_decks"]
     assert "mai_text or mai_path" in handoff["runner_input_contract"]["required"]
+    assert handoff["runner_input_contract"]["execution_policy"]["preferred"] == "direct_solver_exe_no_gui"
+    assert handoff["runner_input_contract"]["execution_policy"]["avoid"] == "Launcher.exe GUI route"
+    assert handoff["parser_output_contract"]["primary_files"]["run_log"] == ".mao"
+    assert handoff["parser_output_contract"]["primary_files"]["mesh_script_input"] == ".mei"
     assert "flux_linkage_FLUM" in handoff["parser_output_contract"]["parsed_observables"]
     handoff_text = format_local_simulation_handoff(handoff)
     assert "does not execute ELF/MAGIC" in handoff_text
     assert "Runner Input Contract" in handoff_text
+    assert "direct_solver_exe_no_gui" in handoff_text
+    assert "primary files" in handoff_text
     assert "Motor Design Loop" in handoff_text
     readiness = build_mcp_readiness()
     assert readiness["readiness"] == "ready_for_tag_push"
