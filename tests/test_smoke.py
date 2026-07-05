@@ -1716,8 +1716,14 @@ def test_public_sample_decks_are_runnable_inputs_only():
     assert handoff["selected_routes"][0]["family"] == "application/motor/spm_surface_pm_10"
     assert handoff["selected_routes"][0]["representative_decks"]
     assert "mai_text or mai_path" in handoff["runner_input_contract"]["required"]
-    assert handoff["runner_input_contract"]["execution_policy"]["preferred"] == "direct_solver_exe_no_gui"
-    assert handoff["runner_input_contract"]["execution_policy"]["avoid"] == "Launcher.exe GUI route"
+    assert (
+        handoff["runner_input_contract"]["execution_policy"]["preferred"]
+        == "direct_solver_exe_no_gui"
+    )
+    assert (
+        handoff["runner_input_contract"]["execution_policy"]["avoid"]
+        == "Launcher.exe GUI route"
+    )
     assert handoff["parser_output_contract"]["primary_files"]["run_log"] == ".mao"
     assert handoff["parser_output_contract"]["primary_files"]["mesh_script_input"] == ".mei"
     assert "flux_linkage_FLUM" in handoff["parser_output_contract"]["parsed_observables"]
@@ -1726,6 +1732,17 @@ def test_public_sample_decks_are_runnable_inputs_only():
     assert "Runner Input Contract" in handoff_text
     assert "direct_solver_exe_no_gui" in handoff_text
     assert "primary files" in handoff_text
+    assert ".mao" in handoff_text
+    assert ".mag" in handoff_text
+    assert ".mei" in handoff_text
+    forbidden_private_markers = (
+        "C:" + "\\temp",
+        "C:" + "\\tmp",
+        "S:" + "\\",
+        "W:" + "\\",
+        "_cross" + "val",
+    )
+    assert not any(marker in handoff_text for marker in forbidden_private_markers)
     assert "Motor Design Loop" in handoff_text
     readiness = build_mcp_readiness()
     assert readiness["readiness"] == "ready_for_tag_push"
@@ -2145,16 +2162,32 @@ def test_public_sample_decks_are_runnable_inputs_only():
     assert "outside this documentation MCP server" in team28_text
     assert "pm_square_2pole_pickup_100" in team28_text
     combined = "\n".join(get_sample_deck(d["path"])["text"] for d in decks)
-    forbidden = ("C:" + "\\temp", "S:" + "\\", "_cross" + "val", ".mag", ".mao", ".mat", ".mac")
+    forbidden = (
+        "C:" + "\\temp",
+        "S:" + "\\",
+        "_cross" + "val",
+        ".mag",
+        ".mao",
+        ".mat",
+        ".mac",
+    )
     assert not any(token in combined for token in forbidden)
 
 
 def test_public_policy_lint_passes():
     from pathlib import Path
 
-    from elf_mcp_server.policy_lint import run_policy_lint
+    from elf_mcp_server.policy_lint import (
+        SAMPLE_OUTPUT_SUFFIXES,
+        SMALL_REFERENCE_OUTPUT_MAX_BYTES,
+        SMALL_REFERENCE_OUTPUT_SUFFIXES,
+        run_policy_lint,
+    )
 
     repo = Path(__file__).resolve().parents[1]
+    assert ".mag" in SMALL_REFERENCE_OUTPUT_SUFFIXES
+    assert ".mao" in SAMPLE_OUTPUT_SUFFIXES
+    assert SMALL_REFERENCE_OUTPUT_MAX_BYTES <= 64 * 1024
     assert run_policy_lint(repo) == []
 
 

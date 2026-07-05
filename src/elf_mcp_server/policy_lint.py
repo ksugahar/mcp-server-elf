@@ -3,7 +3,8 @@
 The public ELF MCP package is a documentation/input-deck server. This lint
 guards the publish boundary that matters most for the public repository:
 no private validation provenance, no machine-local paths, no unrelated
-commercial-tool promotion, and no bundled solver outputs in public samples.
+commercial-tool promotion, and no unsafe bundled solver outputs in public
+samples.
 """
 from __future__ import annotations
 
@@ -39,7 +40,9 @@ PRIVATE_MARKERS = (
     "elf_converter",
 )
 
-SAMPLE_OUTPUT_SUFFIXES = (".mag", ".mao", ".mat", ".mac")
+SAMPLE_OUTPUT_SUFFIXES = (".mao", ".mat", ".mac")
+SMALL_REFERENCE_OUTPUT_SUFFIXES = (".mag",)
+SMALL_REFERENCE_OUTPUT_MAX_BYTES = 64 * 1024
 SAMPLE_OUTPUT_MARKERS = SAMPLE_OUTPUT_SUFFIXES + ("summary.csv",)
 MANIFEST_NAME = "VALIDATED_MANIFEST.json"
 PUBLICATION_BATCHES_NAME = "PUBLICATION_BATCHES.json"
@@ -424,6 +427,18 @@ def run_policy_lint(root: Path | str | None = None) -> list[str]:
             suffix = path.suffix.lower()
             if suffix in SAMPLE_OUTPUT_SUFFIXES or path.name.lower() == "summary.csv":
                 issues.append(f"{rel}: solver output file is not allowed")
+            if suffix in SMALL_REFERENCE_OUTPUT_SUFFIXES:
+                size = path.stat().st_size
+                if size > SMALL_REFERENCE_OUTPUT_MAX_BYTES:
+                    issues.append(
+                        f"{rel}: reference output file is too large "
+                        f"({size} > {SMALL_REFERENCE_OUTPUT_MAX_BYTES} bytes)"
+                    )
+                else:
+                    text = _read_text(path)
+                    for marker in PRIVATE_MARKERS:
+                        if marker in text:
+                            issues.append(f"{rel}: contains private marker {marker!r}")
             if suffix in {".mai", ".meg"}:
                 text = _read_text(path)
                 for marker in SAMPLE_OUTPUT_MARKERS + PRIVATE_MARKERS:

@@ -4311,7 +4311,7 @@ def main():
         sd_loop13_app_pb = elf_sample_decks_playbook(limit=20, query="Loop13 WPT misalignment")
         assert "wpt_misalignment_10" in sd_loop13_app_pb
         assert "Python-interface seed manifest" not in sd_pb, "Normal sample playbook must not claim team28"
-        sample_text = (
+        sample_corpus_text = (
             sd + sd_mai + sd_search + sd_spm_search + sd_srm_search
             + sd_im_search + sd_app_search + sd_wpt_search + sd_get + sd_pb + sd_app_pb
             + sd_emdlab_ipm_search + sd_emdlab_im_search + sd_emdlab_synrm_search
@@ -4339,7 +4339,7 @@ def main():
             + sd_validation_matrix + sd_transformer_matrix
             + sd_cross_validation + sd_gold_cross_validation
             + sd_motor_readiness + sd_hybrid_router
-            + sd_duplicates + sd_handoff
+            + sd_duplicates
             + sd_representatives
             + sd_motor_representatives + sd_promotion
             + sd_invariant_validation
@@ -4354,8 +4354,25 @@ def main():
             + sd_loop12_pb + sd_numeric_pb + sd_flum_law_pb + sd_inductance_pb
             + sd_force_pb
         )
-        forbidden_sample_markers = ("C:" + "\\temp", "S:" + "\\", "_cross" + "val", ".mag", ".mao")
-        assert not any(marker in sample_text for marker in forbidden_sample_markers)
+        handoff_text = sd_handoff
+        sample_text = sample_corpus_text + handoff_text
+        private_markers = (
+            "C:" + "\\temp",
+            "C:" + "\\tmp",
+            "S:" + "\\",
+            "W:" + "\\",
+            "_cross" + "val",
+        )
+        forbidden_corpus_output_markers = (".mao", ".mat", ".mac")
+        assert not any(marker in sample_text for marker in private_markers)
+        assert not any(
+            marker in sample_corpus_text
+            for marker in forbidden_corpus_output_markers
+        )
+        assert "direct_solver_exe_no_gui" in handoff_text
+        assert ".mao" in handoff_text
+        assert ".mag" in handoff_text
+        assert ".mei" in handoff_text
         print("  1600-case .mai/.meg sample deck corpus OK")
 
         # 10. Recipe tools

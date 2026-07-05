@@ -162,11 +162,16 @@ PUBLIC_FORBIDDEN_TEXT_MARKERS = (
 )
 
 PUBLIC_FORBIDDEN_OUTPUT_SUFFIXES = (
-    ".mag",
     ".mao",
     ".mat",
     ".mac",
 )
+
+PUBLIC_SMALL_REFERENCE_OUTPUT_SUFFIXES = (
+    ".mag",
+)
+
+PUBLIC_SMALL_REFERENCE_OUTPUT_MAX_BYTES = 64 * 1024
 
 PHYSICAL_QUANTITY_DEFINITIONS: dict[str, dict[str, str]] = {
     "flux_linkage": {
@@ -2525,16 +2530,28 @@ def build_public_quality_gates() -> list[dict[str, str]]:
     )
 
     all_public_files = _walk_public_files(_sample_root())
-    solver_output_files = [
-        path
-        for path, _node in all_public_files
-        if path.lower().endswith(PUBLIC_FORBIDDEN_OUTPUT_SUFFIXES)
-    ]
+    solver_output_files = []
+    for path, node in all_public_files:
+        lower_path = path.lower()
+        if lower_path.endswith(PUBLIC_FORBIDDEN_OUTPUT_SUFFIXES):
+            solver_output_files.append(path)
+        elif lower_path.endswith(PUBLIC_SMALL_REFERENCE_OUTPUT_SUFFIXES):
+            try:
+                size = node.stat().st_size
+            except OSError:
+                solver_output_files.append(path)
+                continue
+            if size > PUBLIC_SMALL_REFERENCE_OUTPUT_MAX_BYTES:
+                solver_output_files.append(path)
     gates.append(
         _public_gate(
             "no_solver_output_files",
             not solver_output_files,
-            f"{len(solver_output_files)} bundled solver-output files",
+            (
+                f"{len(solver_output_files)} unsafe solver-output files "
+                f"(.mag is allowed only as a <= "
+                f"{PUBLIC_SMALL_REFERENCE_OUTPUT_MAX_BYTES} byte public reference)"
+            ),
         )
     )
 
