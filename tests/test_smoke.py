@@ -2120,6 +2120,9 @@ def test_source_native_loop_policy_public_safe():
     assert "public sample decks" in doc
     assert "public validation level" in doc
     assert "Product/private solver replay remains outside" in doc
+    assert "Learning Closure Gate" in doc
+    assert "result_artifact_id" in doc
+    assert "verification.source_tool" in doc
     forbidden = ("S:" + "\\", "C:" + "\\temp", "_cross" + "val")
     assert not any(marker in doc for marker in forbidden)
 

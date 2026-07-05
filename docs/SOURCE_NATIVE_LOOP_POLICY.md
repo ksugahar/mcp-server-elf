@@ -27,3 +27,16 @@ The preferred public source-native seeds are representative sample decks,
 motor-readiness routes, public validation matrices, and numeric invariant deck
 families. Product/private solver replay remains outside this public MCP
 package.
+
+## Learning Closure Gate
+
+An ELF/MAGIC public MCP slot is not closed by a note alone.  A promotion should
+record the public deck or documentation seed, the observable contract, the
+public validation level, and, when an executed or generated result is involved,
+`result_artifact_id`, `result_output_schema_id`, compact
+`timing_breakdown_s`, `learning_lanes.source_tool`, and
+`verification.source_tool`.
+
+Product/private replay can inform the next public-safe contract, but the public
+MCP artifact should describe only reusable deck structure, facade/API shape,
+observable schemas, and open validation candidates.
