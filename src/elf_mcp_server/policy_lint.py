@@ -15,9 +15,13 @@ import sys
 TEXT_SUFFIXES = {".md", ".py", ".toml", ".txt", ".mai", ".meg"}
 
 CURATED_PATHS = (
+    ".github",
     "README.md",
+    "docs",
     "pyproject.toml",
+    "scripts",
     "src/elf_mcp_server",
+    "tests",
 )
 
 PRIVATE_MARKERS = (

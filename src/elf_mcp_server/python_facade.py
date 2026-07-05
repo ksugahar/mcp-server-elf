@@ -1134,6 +1134,53 @@ FORCE_TOTAL_KEYS = (
     "force_z_n",
 )
 
+RUN_RESULT_ALLOWED_KEYS = {
+    "torque_value",
+    "torque_ripple_value",
+    "cogging_torque_value",
+    "flux_linkage_value",
+    "back_emf_constant_value",
+    "ld_value_h",
+    "lq_value_h",
+    "ld_lq_value",
+    "loss_proxy_value",
+    "copper_loss_w",
+    "iron_loss_w",
+    "magnet_loss_w",
+    "rotor_loss_w",
+    "inverter_loss_w",
+    "mechanical_loss_w",
+    "efficiency_value",
+    "cycle_efficiency_value",
+    "case_id",
+    "point_id",
+    "speed_rpm",
+    "requested_speed_rpm",
+    "requested_torque_nm",
+    "mechanical_power_w",
+    "input_power_w",
+    "force_x_n",
+    "force_y_n",
+    "force_z_n",
+    "force_x_n_per_m",
+    "force_y_n_per_m",
+    "force_z_n_per_m",
+    "radial_force_n_per_m",
+    "force_unit",
+    "quantity_dimension",
+    "phase_current_a_peak",
+    "phase_current_a_rms",
+    "voltage_margin_value",
+    "current_margin_value",
+    "peak_temperature_c",
+    "temperature_rise_c",
+    "peak_stress_mpa",
+    "yield_margin_proxy",
+    "relative_order_separation",
+    "field_probe_value",
+    "convergence_status_value",
+}
+
 
 def _normalize_force_unit(value: Any) -> str:
     unit = str(value or "").strip().lower()
@@ -1198,6 +1245,7 @@ def parse_run_result_payload(
     parsed: dict[str, Any] = {}
     warnings: list[str] = []
     generated_files: list[str] = []
+    ignored_field_count = 0
     status = "PASS"
     resolved_case_id = case_id or "local_case"
 
@@ -1220,6 +1268,9 @@ def parse_run_result_payload(
                 if key in {"schema_version", "case_id", "status", "generated_files", "warnings", "validation_labels"}:
                     continue
                 norm_key = _normalize_observable_key(str(key))
+                if norm_key not in RUN_RESULT_ALLOWED_KEYS:
+                    ignored_field_count += 1
+                    continue
                 parsed[norm_key] = value
     else:
         text = str(data)
@@ -1234,7 +1285,15 @@ def parse_run_result_payload(
             if not match:
                 continue
             key = _normalize_observable_key(match.group(1))
+            if key not in RUN_RESULT_ALLOWED_KEYS:
+                ignored_field_count += 1
+                continue
             parsed[key] = _safe_float(match.group(2))
+
+    if ignored_field_count:
+        warnings.append(
+            f"ignored {ignored_field_count} non-observable field(s) from local result payload"
+        )
 
     if "ld_value_h" in parsed and "lq_value_h" in parsed:
         parsed["ld_lq_value"] = {
@@ -1399,9 +1458,21 @@ def _parse_run_result_text_records(text: str, source_name: str) -> list[Any]:
             nested = data.get(key)
             if isinstance(nested, Sequence) and not isinstance(nested, str):
                 return list(nested)
-        return [data]
+        schema = str(data.get("schema_version", "")).strip().lower()
+        if schema.startswith("elf-python-run-result") or "parsed_observables" in data:
+            return [data]
+        return []
     if isinstance(data, Sequence) and not isinstance(data, str):
-        return list(data)
+        safe_records = [
+            item
+            for item in data
+            if isinstance(item, Mapping)
+            and (
+                str(item.get("schema_version", "")).strip().lower().startswith("elf-python-run-result")
+                or "parsed_observables" in item
+            )
+        ]
+        return safe_records if len(safe_records) == len(data) else []
     table_rows = _split_result_table_lines(text, source_name)
     if table_rows:
         return table_rows
@@ -1457,7 +1528,17 @@ def parse_run_result_path(
         if warning:
             warnings.append(warning)
             continue
-        for index, record in enumerate(_parse_run_result_text_records(text, candidate.name), start=1):
+        records = _parse_run_result_text_records(text, candidate.name)
+        if (
+            not records
+            and candidate.suffix.lower() == ".json"
+            and _try_json_loads(text) is not None
+        ):
+            warnings.append(
+                f"{candidate.name}: ignored JSON file without RunResult schema or result container"
+            )
+            continue
+        for index, record in enumerate(records, start=1):
             parsed = parse_run_result_payload(
                 record,
                 case_id=f"{candidate.stem}_{index:03d}",
@@ -1465,6 +1546,8 @@ def parse_run_result_path(
                 requested_observables=requested_observables,
             )
             parsed["source_file"] = candidate.name
+            for warning in parsed.get("warnings", []):
+                warnings.append(f"{candidate.name}: {warning}")
             parsed_results.append(parsed)
 
     combined_observables: dict[str, Any] = {}

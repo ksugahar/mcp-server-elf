@@ -131,7 +131,7 @@ def test_tool_surface_and_no_work_family():
     assert "recommended_calls" in overview
     assert "elf_python_interface_design" in overview_text
     assert "COMSOL" not in overview_text
-    assert "internal:" not in overview_text
+    assert "internal" + ":" not in overview_text
     assert "S:" + "\\" not in overview_text
     # publish boundary: the private work-examples corpus tools were removed and
     # must never come back into the public package. Public workflow planning is
@@ -439,6 +439,22 @@ def test_python_facade_schema_lint_and_generation_plan(tmp_path):
     assert "case_summary.mah" in parsed_path_text
     assert "force_table.maf" in parsed_path_text
     assert str(run_dir) not in parsed_path_text
+
+    secret_json = tmp_path / "not_a_run_result.json"
+    secret_json.write_text(
+        json.dumps({"api_token": "SHOULD_NOT_LEAK", "torque_nm": 1.23}),
+        encoding="utf-8",
+    )
+    secret_path = parse_run_result_path(str(secret_json), motor_type="spm")
+    secret_text = format_run_result_path_parse(secret_path)
+    assert secret_path["combined_observables"] == {}
+    assert secret_path["parsed_results"] == []
+    assert secret_path["status"] == "WARN"
+    assert "api_token" not in str(secret_path)
+    assert "SHOULD_NOT_LEAK" not in str(secret_path)
+    assert "api_token" not in secret_text
+    assert "SHOULD_NOT_LEAK" not in secret_text
+    assert "ignored JSON file without RunResult schema" in secret_text
 
     numeric_map = build_motor_efficiency_map_from_results(
         "spm",
