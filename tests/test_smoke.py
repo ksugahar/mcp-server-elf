@@ -1742,10 +1742,16 @@ def test_public_sample_decks_are_runnable_inputs_only():
     assert hybrid_route["inferred_family"] == "ipm"
     assert hybrid_route["elf_deck_routes"][0]["family"] == "application/motor/emdlab_ipm_hairpin_10"
     assert "elf_motor_mmm_quick_check" in hybrid_route["mmm_quick_check"]["call"]
+    assert hybrid_route["age_validation"]["lane"] == "radia-motor-age"
     assert 'ngsolve_usage("mtpa")' in hybrid_route["age_validation"]["calls"]
+    assert hybrid_route["vim_validation"]["lane"] == "radia-motor-vim"
+    assert "demag_field" in hybrid_route["vim_validation"]["targets"]
+    assert 'motor_validation_lane_template("hdiv_vim_reduced_fem")' in hybrid_route["vim_validation"]["calls"]
     hybrid_text = format_motor_hybrid_router(hybrid_route)
     assert "ELF/radia motor hybrid router" in hybrid_text
     assert "application/motor/emdlab_ipm_hairpin_10" in hybrid_text
+    assert "radia-motor-vim" in hybrid_text
+    assert "HDiv-VIM" in hybrid_text
     assert "elf_local_simulation_handoff" in hybrid_text
     assert "S:" + "\\" not in hybrid_text
     mmm_check = build_motor_mmm_quick_check(motor_type="spm")

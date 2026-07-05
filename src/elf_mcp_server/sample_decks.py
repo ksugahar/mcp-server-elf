@@ -5095,11 +5095,26 @@ def _motor_hybrid_family(goal: str) -> dict[str, Any]:
     }
 
 
+def _motor_vim_targets(family: str) -> list[str]:
+    """Public-safe HDiv-VIM / reduced-FEM training targets by motor family."""
+
+    targets = {
+        "induction": ["source_field", "reduced_fem_response", "force_or_torque_trend"],
+        "srm": ["pickup_flux", "force_or_torque_trend", "coenergy"],
+        "synrm": ["pickup_flux", "coenergy", "reduced_fem_response"],
+        "ipm": ["demag_field", "pickup_flux", "flux_linkage"],
+        "hysteresis": ["demag_field", "source_field", "coenergy"],
+        "spm": ["demag_field", "pickup_flux", "source_field"],
+    }
+    return targets.get(family, targets["spm"])
+
+
 def build_motor_hybrid_router(goal: str) -> dict[str, Any]:
-    """Route a motor prompt across ELF decks, radia AGE, and MMM quick checks."""
+    """Route a motor prompt across ELF decks and both radia motor lanes."""
     plan = _motor_hybrid_family(goal)
     routes = route_sample_decks(plan["elf_query"], limit=3)
     readiness = build_motor_readiness(family=plan["family"])
+    vim_targets = _motor_vim_targets(plan["family"])
     return {
         "schema_version": "elf-motor-hybrid-router/v1",
         "goal": goal,
@@ -5128,7 +5143,21 @@ def build_motor_hybrid_router(goal: str) -> dict[str, Any]:
         "age_validation": {
             "server": "mcp-server-radia-ngsolve / mcp-server-motor",
             "calls": [f'ngsolve_usage("{target}")' for target in plan["age_targets"]],
+            "lane": "radia-motor-age",
             "role": "independent 2D AGE / dq / eddy-current validation anchor",
+        },
+        "vim_validation": {
+            "server": "mcp-server-motor",
+            "calls": [
+                'motor_validation_lane_template("hdiv_vim_reduced_fem")',
+                'motor_validation_artifact_gate(..., "hdiv_vim_reduced_fem")',
+            ],
+            "lane": "radia-motor-vim",
+            "targets": vim_targets,
+            "role": (
+                "HDiv-VIM / reduced-FEM source-field lane for pickup flux, "
+                "demag, and reduced-response learning; not a replacement for AGE torque maps"
+            ),
         },
         "local_elf_runner": {
             "call": f'elf_local_simulation_handoff("{goal}")',
@@ -5144,7 +5173,8 @@ def build_motor_hybrid_router(goal: str) -> dict[str, Any]:
         "workflow": [
             "Select an ELF public deck route and inspect the representative .mai/.meg inputs.",
             "Run the radia-motor MMM quick check for sign and scale before spending solver time.",
-            "Use NGSolve AGE / radia-ngsolve for the independent physics validation target.",
+            "Use radia-motor-age for the independent FE air-gap, torque, dq, and eddy validation target.",
+            "Use radia-motor-vim for source-field, pickup-flux, demag, and reduced-FEM response learning.",
             "Run ELF/MAGIC locally only after the deck and reduced physics checks are coherent.",
             "Promote only reduced, public-safe validation labels; keep raw solver outputs private.",
         ],
@@ -5185,8 +5215,17 @@ def format_motor_hybrid_router(route: dict[str, Any]) -> str:
     lines.extend(["", "## AGE Validation"])
     age = route["age_validation"]
     lines.append(f"- server: `{age['server']}`")
+    lines.append(f"- lane: `{age['lane']}`")
     lines.append(f"- role: {age['role']}")
     lines.extend(f"- `{call}`" for call in age["calls"])
+
+    lines.extend(["", "## VIM / Reduced-FEM Validation"])
+    vim = route["vim_validation"]
+    lines.append(f"- server: `{vim['server']}`")
+    lines.append(f"- lane: `{vim['lane']}`")
+    lines.append(f"- targets: {', '.join(f'`{target}`' for target in vim['targets'])}")
+    lines.append(f"- role: {vim['role']}")
+    lines.extend(f"- `{call}`" for call in vim["calls"])
 
     lines.extend(["", "## Local ELF/MAGIC Runner"])
     lines.append(f"- `{route['local_elf_runner']['call']}`")
