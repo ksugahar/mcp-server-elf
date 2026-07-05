@@ -1754,6 +1754,25 @@ def test_public_sample_decks_are_runnable_inputs_only():
     assert "HDiv-VIM" in hybrid_text
     assert "elf_local_simulation_handoff" in hybrid_text
     assert "S:" + "\\" not in hybrid_text
+    wide_routes = {
+        "BLDC outer rotor motor": "outer_rotor_bldc",
+        "axial flux PM face magnet": "afpm",
+        "DFIG slip power": "dfig",
+        "locked rotor induction current": "locked_rotor_induction",
+        "line start pull-in torque": "line_start_induction",
+        "stepper motor detent": "stepper",
+        "linear PM translator force": "linear_pm",
+        "wound field synchronous rotor field": "wound_field_sync",
+    }
+    for prompt, family in wide_routes.items():
+        wide_route = build_motor_hybrid_router(prompt)
+        assert wide_route["inferred_family"] == family
+        assert wide_route["elf_deck_routes"]
+        assert wide_route["age_validation"]["calls"]
+        assert wide_route["vim_validation"]["targets"]
+    bldc_quick = build_motor_mmm_quick_check(motor_type="outer_rotor_bldc")
+    assert bldc_quick["family"] == "outer_rotor_bldc"
+    assert "pm_airgap_flux" in bldc_quick["recommended_age_targets"]
     mmm_check = build_motor_mmm_quick_check(motor_type="spm")
     assert mmm_check["schema_version"] == "elf-motor-mmm-quick/v1"
     assert mmm_check["family"] == "spm"

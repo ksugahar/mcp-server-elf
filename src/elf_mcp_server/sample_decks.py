@@ -5046,6 +5046,78 @@ def format_motor_readiness(summary: dict[str, Any], max_families: int = 5) -> st
 
 def _motor_hybrid_family(goal: str) -> dict[str, Any]:
     g = goal.lower()
+    if any(term in g for term in ("outer rotor bldc", "bldc outer", "outer-rotor bldc")):
+        return {
+            "family": "outer_rotor_bldc",
+            "elf_query": "BLDC outer rotor motor",
+            "mmm_call": "elf_motor_mmm_quick_check(motor_type='outer_rotor_bldc', electrical_angle_deg=...)",
+            "age_targets": ["back_emf", "cogging_torque", "pm_airgap_flux"],
+            "validation_focus": "outer-rotor radius ownership, magnet polarity, and phase EMF order",
+        }
+    if any(term in g for term in ("bldc", "six-step", "six step", "brushless dc")):
+        return {
+            "family": "bldc",
+            "elf_query": "BLDC SPM motor flux linkage",
+            "mmm_call": "elf_motor_mmm_quick_check(motor_type='bldc', electrical_angle_deg=...)",
+            "age_targets": ["back_emf", "torque_angle", "harmonic_budget"],
+            "validation_focus": "commutation sector, phase order, back-EMF, and torque ripple",
+        }
+    if any(term in g for term in ("afpm", "axial flux", "axial-flux", "face magnet")):
+        return {
+            "family": "afpm",
+            "elf_query": "axial flux PM face magnet FLUM",
+            "mmm_call": "elf_motor_mmm_quick_check(motor_type='afpm', electrical_angle_deg=...)",
+            "age_targets": ["pm_airgap_flux", "back_emf", "skew_factor"],
+            "validation_focus": "unfolded axial air-gap coordinates, face-magnet polarity, and skew offset",
+        }
+    if any(term in g for term in ("dfig", "doubly fed", "wound rotor generator")):
+        return {
+            "family": "dfig",
+            "elf_query": "wound field rotor induction slip FLUM",
+            "mmm_call": "elf_motor_mmm_quick_check(motor_type='dfig', slip_hz=...)",
+            "age_targets": ["induction_machine", "slip_loss", "dq_control_layer"],
+            "validation_focus": "stator/rotor frequency bases, slip sign, and power-balance residual",
+        }
+    if any(term in g for term in ("locked rotor", "blocked rotor")):
+        return {
+            "family": "locked_rotor_induction",
+            "elf_query": "induction motor locked rotor OHM2 FLUM",
+            "mmm_call": "elf_motor_mmm_quick_check(motor_type='locked_rotor_induction', slip_hz=...)",
+            "age_targets": ["locked_rotor", "slip_loss", "deep_bar"],
+            "validation_focus": "slip equals one, cage-loss positivity, and current scaling",
+        }
+    if any(term in g for term in ("line start", "line-start", "startup", "pull-in")):
+        return {
+            "family": "line_start_induction",
+            "elf_query": "induction motor torque speed startup OHM2 FLUM",
+            "mmm_call": "elf_motor_mmm_quick_check(motor_type='line_start_induction', slip_hz=...)",
+            "age_targets": ["torque_speed", "induction_machine", "field_weakening"],
+            "validation_focus": "startup slip grid, pull-in angle, cage loss, and final synchronous state",
+        }
+    if any(term in g for term in ("linear pm", "linear motor", "translator")):
+        return {
+            "family": "linear_pm",
+            "elf_query": "linear PM motor translator offset FLUM",
+            "mmm_call": "elf_motor_mmm_quick_check(motor_type='linear_pm', electrical_angle_deg=...)",
+            "age_targets": ["linear_motor_force", "pm_airgap_flux", "force_report"],
+            "validation_focus": "force unit dimension, translator offset, and PM track polarity",
+        }
+    if "stepper" in g:
+        return {
+            "family": "stepper",
+            "elf_query": "stepper motor detent angle FLUM",
+            "mmm_call": "elf_motor_mmm_quick_check(motor_type='stepper', electrical_angle_deg=...)",
+            "age_targets": ["cogging_torque", "holding_torque", "pm_airgap_flux"],
+            "validation_focus": "detent torque periodicity, phase excitation, and holding-torque sign",
+        }
+    if any(term in g for term in ("wound field", "wound-field", "rotor field")):
+        return {
+            "family": "wound_field_sync",
+            "elf_query": "wound field synchronous motor rotor field FLUM",
+            "mmm_call": "elf_motor_mmm_quick_check(motor_type='wound_field_sync', electrical_angle_deg=...)",
+            "age_targets": ["synchronous_power_angle", "field_current", "flux_linkage"],
+            "validation_focus": "rotor field current, stator phase current, and power-angle convention",
+        }
     if any(term in g for term in ("induction", "slip", "cage", "deep bar")):
         return {
             "family": "induction",
@@ -5069,6 +5141,14 @@ def _motor_hybrid_family(goal: str) -> dict[str, Any]:
             "mmm_call": "elf_motor_mmm_quick_check(motor_type='synrm', saliency_ratio_lq_over_ld=...)",
             "age_targets": ["synchronous_power_angle", "mtpa", "cross_saturation"],
             "validation_focus": "Ld/Lq saliency, reluctance torque, cross-saturation",
+        }
+    if any(term in g for term in ("vipm", "v-ipm", "v shaped", "v-shaped")):
+        return {
+            "family": "vipm",
+            "elf_query": "V IPM barrier magnet saliency FLUM",
+            "mmm_call": "elf_motor_mmm_quick_check(motor_type='vipm', electrical_angle_deg=...)",
+            "age_targets": ["ld_lq", "mtpa", "demag_margin"],
+            "validation_focus": "barrier angle, bridge saturation, magnet polarity, and saliency trend",
         }
     if any(term in g for term in ("ipm", "interior", "hairpin")):
         return {
@@ -5100,9 +5180,19 @@ def _motor_vim_targets(family: str) -> list[str]:
 
     targets = {
         "induction": ["source_field", "reduced_fem_response", "force_or_torque_trend"],
+        "locked_rotor_induction": ["source_field", "reduced_fem_response", "force_or_torque_trend"],
+        "line_start_induction": ["source_field", "reduced_fem_response", "force_or_torque_trend"],
+        "dfig": ["source_field", "reduced_fem_response", "pickup_flux"],
         "srm": ["pickup_flux", "force_or_torque_trend", "coenergy"],
         "synrm": ["pickup_flux", "coenergy", "reduced_fem_response"],
+        "bldc": ["demag_field", "pickup_flux", "source_field"],
+        "outer_rotor_bldc": ["demag_field", "source_field", "pickup_flux"],
+        "afpm": ["demag_field", "pickup_flux", "source_field"],
+        "linear_pm": ["source_field", "force_or_torque_trend", "pickup_flux"],
+        "stepper": ["demag_field", "force_or_torque_trend", "pickup_flux"],
+        "wound_field_sync": ["source_field", "pickup_flux", "coenergy"],
         "ipm": ["demag_field", "pickup_flux", "flux_linkage"],
+        "vipm": ["demag_field", "source_field", "pickup_flux"],
         "hysteresis": ["demag_field", "source_field", "coenergy"],
         "spm": ["demag_field", "pickup_flux", "source_field"],
     }
@@ -5259,11 +5349,16 @@ def build_motor_mmm_quick_check(
 ) -> dict[str, Any]:
     """Public-safe first-order 2D MMM/BEM-like motor sanity check."""
     t = motor_type.strip().lower()
-    if any(term in t for term in ("induction", "cage", "im")):
+    if any(term in t for term in ("dfig", "locked_rotor", "line_start", "induction", "cage", "im")):
         family = "induction"
-        age_targets = ["induction_machine", "airgap_eddy_machine", "deep_bar"]
+        age_targets = ["induction_machine", "airgap_eddy_machine", "deep_bar", "slip_loss"]
         primary = "slip_loss_proxy"
         applicability = "Slip-frequency trend only; use AGE for field validation."
+    elif any(term in t for term in ("bldc", "outer_rotor", "afpm", "axial", "linear_pm", "stepper")):
+        family = t
+        age_targets = ["back_emf", "cogging_torque", "pm_airgap_flux"]
+        primary = "pm_flux_linkage_proxy"
+        applicability = "PM flux-linkage sign/scale only; use AGE for topology-specific torque and force."
     elif any(term in t for term in ("srm", "switched", "sr motor")):
         family = "srm"
         age_targets = ["reluctance_torque", "saturating_inductance"]
@@ -5279,6 +5374,11 @@ def build_motor_mmm_quick_check(
         age_targets = ["ld_lq", "mtpa", "field_weakening", "demag_margin"]
         primary = "pm_plus_reluctance_torque_proxy"
         applicability = "PM flux and saliency sanity only; use AGE for dq maps."
+    elif any(term in t for term in ("wound_field", "wound field", "rotor field")):
+        family = "wound_field_sync"
+        age_targets = ["synchronous_power_angle", "field_current", "flux_linkage"]
+        primary = "field_current_flux_proxy"
+        applicability = "Rotor-field flux scale only; use AGE for power-angle validation."
     elif "hysteresis" in t:
         family = "hysteresis"
         age_targets = ["hysteresis_motor_loss", "hysteresis_play"]
@@ -5328,6 +5428,8 @@ def build_motor_mmm_quick_check(
     ]
     if family == "induction":
         warnings.append("cage/end-ring coupling is represented only by a single-pole proxy")
+    if family in {"afpm", "outer_rotor_bldc", "linear_pm", "stepper"}:
+        warnings.append("topology-specific force or torque requires the AGE validation lane")
     if family == "hysteresis":
         warnings.append("hysteresis loop area and vector history are not modeled")
 
