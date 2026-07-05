@@ -1743,6 +1743,18 @@ def test_public_sample_decks_are_runnable_inputs_only():
         "_cross" + "val",
     )
     assert not any(marker in handoff_text for marker in forbidden_private_markers)
+    linear_handoff = build_local_simulation_handoff(
+        "linear PM motor thrust FLUM",
+        family="linear",
+        quantity="motor",
+    )
+    assert linear_handoff["selected_routes"][0]["family"] == "application/motor/linear_pm_motor_10"
+    linear_handoff_text = format_local_simulation_handoff(linear_handoff)
+    assert "direct_solver_exe_no_gui" in linear_handoff_text
+    assert ".mao" in linear_handoff_text
+    assert ".mag" in linear_handoff_text
+    assert ".mei" in linear_handoff_text
+    assert not any(marker in linear_handoff_text for marker in forbidden_private_markers)
     assert "Motor Design Loop" in handoff_text
     readiness = build_mcp_readiness()
     assert readiness["readiness"] == "ready_for_tag_push"
