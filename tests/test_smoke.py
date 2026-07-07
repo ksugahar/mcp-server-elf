@@ -51,7 +51,7 @@ def test_100_example_playbook_cards_public_safe():
 
 
 def test_tool_surface_and_no_work_family():
-    from elf_mcp_server.server import mcp, elf_overview
+    from elf_mcp_server.server import mcp, elf_agentic_profile, elf_overview
     tools = asyncio.run(mcp.list_tools())
     names = [t.name for t in tools]
     assert len(names) >= 25
@@ -124,15 +124,27 @@ def test_tool_surface_and_no_work_family():
     assert "elf_python_ngsolve_validation_script" in names
     assert "elf_python_meg_generation_plan" in names
     assert "elf_python_2d_motor_template" in names
+    assert "elf_agentic_profile" in names
     overview = elf_overview()
     overview_text = str(overview)
-    assert overview["n_tools"] == 85
+    assert overview["n_tools"] == 86
     assert "public_boundary" in overview
     assert "recommended_calls" in overview
     assert "elf_python_interface_design" in overview_text
     assert "COMSOL" not in overview_text
     assert "internal" + ":" not in overview_text
     assert "S:" + "\\" not in overview_text
+
+    profile = elf_agentic_profile()
+    profile_text = str(profile)
+    assert profile["schema"] == "cae-ai-lab.agentic-mcp-profile.v1"
+    assert profile["execution_policy"]["executes_solver"] is False
+    assert profile["execution_policy"]["ships_solver_outputs"] is False
+    assert "runtime_vs_skills" in profile["mathworks_reference_pattern"]
+    assert "elf_mcp_readiness" in profile["recommended_first_calls"]
+    assert "S:" + "\\" not in profile_text
+    assert "W:" + "\\" not in profile_text
+    assert "C:" + "\\" not in profile_text
     # publish boundary: the private work-examples corpus tools were removed and
     # must never come back into the public package. Public workflow planning is
     # allowed; private work-example corpus tools are not.
@@ -1755,6 +1767,28 @@ def test_public_sample_decks_are_runnable_inputs_only():
     assert ".mag" in linear_handoff_text
     assert ".mei" in linear_handoff_text
     assert not any(marker in linear_handoff_text for marker in forbidden_private_markers)
+
+    motor_replay_families = (
+        "application/motor/emdlab_spmsm_10",
+        "application/motor/emdlab_ipm_hairpin_10",
+        "application/motor/emdlab_induction_bar_10",
+        "application/motor/emdlab_srm86_static_torque_10",
+        "application/motor/emdlab_synrm_static_torque_10",
+        "application/motor/emdlab_bldc_spm_10",
+        "application/motor/emdlab_bldc_outer_rotor_10",
+        "application/motor/emdlab_spmsm_fraction_10",
+        "application/motor/emdlab_srm_pole_variants_10",
+        "application/motor/emdlab_synrm_flux_barrier_10",
+        "application/motor/emdlab_afpm_linearized_10",
+    )
+    for family_name in motor_replay_families:
+        family_decks = list_sample_decks(family=family_name, ext=".mai")
+        assert len(family_decks) >= 5
+        assert all(row["path"].startswith(family_name + "/") for row in family_decks[:5])
+        exact_hits = search_sample_decks(family_name, top_k=3)
+        assert exact_hits
+        assert exact_hits[0]["family"] == family_name
+
     assert "Motor Design Loop" in handoff_text
     readiness = build_mcp_readiness()
     assert readiness["readiness"] == "ready_for_tag_push"

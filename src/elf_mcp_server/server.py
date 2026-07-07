@@ -310,7 +310,7 @@ _RELATED_PUBLIC_PACKAGES = [
 
 @mcp.tool()
 def elf_overview() -> dict:
-    """RECOMMENDED FIRST CALL. Catalog of ELF MCP's 85 tools + 1
+    """RECOMMENDED FIRST CALL. Catalog of ELF MCP's 86 tools + 1
     prompt, with public-safe routing hints for MCP clients.
 
     Returns:
@@ -319,7 +319,7 @@ def elf_overview() -> dict:
         hints.
     """
     return {
-        "n_tools": 85,
+        "n_tools": 86,
         "n_prompts": 1,
         "tool_families": [
             {"signature": sig, "description": desc}
@@ -666,6 +666,47 @@ def elf_overview() -> dict:
             "elf_help_search('keyword') / "
             "elf_examples_search('keyword') for raw access, or "
             "elf_examples_playbook(limit=100) for compact example cards.",
+    }
+
+
+@mcp.tool()
+def elf_agentic_profile() -> dict:
+    """Return ELF/MAGIC MCP agentic runtime, boundary, and verification policy."""
+    return {
+        "schema": "cae-ai-lab.agentic-mcp-profile.v1",
+        "server": "ELF-mcp-server",
+        "runtime_pattern": "FastMCP public documentation/input-deck server; no ELF/MAGIC solver execution",
+        "mathworks_reference_pattern": {
+            "runtime_vs_skills": "Keep callable public docs/contracts separate from private runner skills, mirroring MATLAB MCP Server plus Agentic Toolkit.",
+            "environment_probe": "Call elf_overview and elf_mcp_readiness before release or tag push claims.",
+            "focused_skills": "Use motor/demag/BEM/public-deck skills only when the source lane is ELF/MAGIC.",
+            "result_contract": "Expose public input contracts and scrubbed observable schemas; keep local RunResult files and commercial numbers private.",
+        },
+        "recommended_first_calls": [
+            "elf_overview",
+            "elf_mcp_readiness",
+            "elf_motor_readiness",
+            "elf_sample_decks_validation_matrix",
+        ],
+        "execution_policy": {
+            "public_boundary": "product-public documentation MCP",
+            "executes_solver": False,
+            "ships_solver_outputs": False,
+            "private_converter": "separate private converter lane; not bundled or exposed by this public MCP",
+            "private_validation_store": "separate private validation store; not bundled or exposed by this public MCP",
+            "temp_root": "runner-local temporary directory",
+        },
+        "source_lane": {
+            "public_mcp_server": "ELF/MAGIC product documentation MCP package",
+            "private_converter": "separate non-public converter lane",
+            "private_validation_lane": "separate non-public validation lane",
+        },
+        "verification": [
+            "python -m pytest tests/test_smoke.py -q",
+            "python -m elf_mcp_server.policy_lint",
+            "elf-mcp-server --selftest",
+        ],
+        "mcp_learning_rule": "An ELF/MAGIC product slot is learned only after public-safe ELF MCP knowledge/input contracts and scrubbed radia motor/demag/BEM gates are verified; raw product results remain private.",
     }
 
 

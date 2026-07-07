@@ -4855,7 +4855,7 @@ def build_mcp_readiness() -> dict[str, Any]:
             "python -m elf_mcp_server.policy_lint <repo>",
             "python -m elf_mcp_server.server --selftest",
             "python -m build --outdir <temp-dist-dir>",
-            "git commit, git tag v1.59.0, git push origin main, git push origin v1.59.0",
+            "git commit, git tag v1.60.0, git push origin main, git push origin v1.60.0",
         ],
         "public_boundary": (
             "Readiness uses public input decks and metadata only. It does not "
