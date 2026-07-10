@@ -74,6 +74,7 @@ def test_tool_surface_and_no_work_family():
     assert "elf_sample_decks_validation_matrix" in names
     assert "elf_sample_decks_observable_contracts" in names
     assert "elf_sample_decks_cross_validation" in names
+    assert "elf_motor_dual_solver_review_packet" in names
     assert "elf_sample_decks_duplicates" in names
     assert "elf_local_simulation_handoff" in names
     assert "elf_public_promotion" in names
@@ -127,7 +128,7 @@ def test_tool_surface_and_no_work_family():
     assert "elf_agentic_profile" in names
     overview = elf_overview()
     overview_text = str(overview)
-    assert overview["n_tools"] == 86
+    assert overview["n_tools"] == 87
     assert "public_boundary" in overview
     assert "recommended_calls" in overview
     assert "elf_python_interface_design" in overview_text
@@ -150,6 +151,26 @@ def test_tool_surface_and_no_work_family():
     # allowed; private work-example corpus tools are not.
     forbidden = ("elf_work", "work_examples", "work_examples_", "elf_examples_work")
     assert not any(any(token in n for token in forbidden) for n in names), names
+
+
+def test_motor_dual_solver_review_packet_is_public_safe_and_two_lane():
+    from elf_mcp_server.server import elf_motor_dual_solver_review_packet
+
+    packet = json.loads(elf_motor_dual_solver_review_packet(
+        family="application/motor/emdlab_ipm_hairpin_10",
+        observable="torque",
+        limit=2,
+    ))
+    assert packet["status"] == "ready"
+    assert packet["required_lanes"] == ["ngsolve_age", "hdiv_vim_reduced_fem"]
+    assert len(packet["selected_decks"]) == 2
+    assert all(row["mai_path"].endswith(".mai") for row in packet["selected_decks"])
+    assert "timing_breakdown_s" in packet["required_result_fields"]
+    text = json.dumps(packet)
+    assert "solver outputs" in packet["publication_boundary"]
+    assert ("C:" + "\\") not in text
+    assert ("S:" + "\\") not in text
+    assert ("W:" + "\\") not in text
 
 
 def test_python_interface_design_public_policy():

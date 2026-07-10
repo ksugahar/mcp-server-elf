@@ -310,7 +310,7 @@ _RELATED_PUBLIC_PACKAGES = [
 
 @mcp.tool()
 def elf_overview() -> dict:
-    """RECOMMENDED FIRST CALL. Catalog of ELF MCP's 86 tools + 1
+    """RECOMMENDED FIRST CALL. Catalog of ELF MCP's 87 tools + 1
     prompt, with public-safe routing hints for MCP clients.
 
     Returns:
@@ -319,7 +319,7 @@ def elf_overview() -> dict:
         hints.
     """
     return {
-        "n_tools": 86,
+        "n_tools": 87,
         "n_prompts": 1,
         "tool_families": [
             {"signature": sig, "description": desc}
@@ -393,6 +393,10 @@ def elf_overview() -> dict:
             {
                 "goal": "Audit cross-validation coverage and gaps",
                 "call": "elf_sample_decks_cross_validation()",
+            },
+            {
+                "goal": "Prepare a public motor deck for independent AGE and VIM review lanes",
+                "call": "elf_motor_dual_solver_review_packet()",
             },
             {
                 "goal": "Audit duplicate/deck-reuse groups before deleting samples",
@@ -1451,6 +1455,53 @@ def elf_sample_decks_cross_validation(family: str = "", level: str = "") -> str:
         level=level or None,
     )
     return format_cross_validation_summary(summary)
+
+
+@mcp.tool()
+def elf_motor_dual_solver_review_packet(
+    family: str = "application/motor/emdlab_ipm_hairpin_10",
+    observable: str = "torque",
+    limit: int = 3,
+) -> str:
+    """Build a public-safe source-deck packet for two independent motor lanes.
+
+    The packet selects public input decks and records the comparison contract;
+    it contains no licensed solver output or benchmark values.
+    """
+
+    limit = max(1, min(int(limit), 10))
+    cards = build_sample_deck_cards(limit=limit, family=family or None)
+    selected = [
+        {
+            "family": card.get("family", ""),
+            "case": card.get("case", ""),
+            "title": card.get("title", ""),
+            "mai_path": card.get("mai_path", ""),
+            "tags": card.get("tags", []),
+            "validation_level": card.get("validation_level", ""),
+        }
+        for card in cards
+    ]
+    packet = {
+        "schema_version": "motor-source-deck-review-packet/v1",
+        "family_filter": family,
+        "observable_id": str(observable or "").strip(),
+        "selected_decks": selected,
+        "required_lanes": ["ngsolve_age", "hdiv_vim_reduced_fem"],
+        "required_result_fields": [
+            "observable_id",
+            "observable_unit",
+            "coordinate_frame",
+            "sign_convention",
+            "solver_version",
+            "run_date_utc",
+            "timing_breakdown_s",
+        ],
+        "acceptance_rule": "both required lanes must be solver-validated for the same observable before MCP learning",
+        "publication_boundary": "public input-deck metadata and comparison contract only; no solver outputs or benchmark values",
+        "status": "ready" if selected and str(observable or "").strip() else "needs_attention",
+    }
+    return json.dumps(packet, ensure_ascii=False, indent=2)
 
 
 @mcp.tool()
