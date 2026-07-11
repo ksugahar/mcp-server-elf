@@ -32,6 +32,7 @@ from mcp.server.fastmcp import FastMCP
 from .learning_quality import build_balanced_learning_profile
 from .phase_flux_contract import phase_flux_run_contract_gate
 from .mesh_solver_contract import mesh_solver_pipeline_gate
+from .magnet_model_contract import magnet_model_producer_contract_gate
 
 from .elf_knowledge import get_elf_documentation
 from .help_access import list_help_files, search_help, get_help_file
@@ -3317,6 +3318,16 @@ def elf_mesh_solver_pipeline_gate(summary_json: str) -> str:
     """
 
     return json.dumps(mesh_solver_pipeline_gate(summary_json), indent=2, sort_keys=True)
+
+
+@mcp.tool()
+def elf_magnet_model_producer_contract_gate(summary_json: str) -> str:
+    """Gate nonlinear convergence and two-stage magnet-model extraction.
+
+    This metadata-only public contract never opens local result files and does
+    not expose solved values.
+    """
+    return json.dumps(magnet_model_producer_contract_gate(summary_json), indent=2, sort_keys=True)
 
 
 @mcp.tool()
