@@ -37,6 +37,7 @@ from .force_pair_contract import force_pair_run_contract_gate
 from .demagnetization_run_contract import demagnetization_run_contract_gate
 from .transient_induced_current_contract import transient_induced_current_contract_gate
 from .flux_linkage_contract import flux_linkage_inductance_contract_gate
+from .complex_field_contract import complex_field_run_contract_gate
 
 from .elf_knowledge import get_elf_documentation
 from .help_access import list_help_files, search_help, get_help_file
@@ -3360,6 +3361,12 @@ def elf_transient_induced_current_contract_gate(summary_json: str) -> str:
 def elf_flux_linkage_inductance_contract_gate(summary_json: str) -> str:
     """Validate metadata for a GUI-free two-winding FLUM run family."""
     return json.dumps(flux_linkage_inductance_contract_gate(summary_json), indent=2, sort_keys=True)
+
+
+@mcp.tool()
+def elf_complex_field_run_contract_gate(summary_json: str) -> str:
+    """Gate GUI-free ABCL complex-field source runs and .mao structure."""
+    return json.dumps(complex_field_run_contract_gate(summary_json), indent=2, sort_keys=True)
 
 
 @mcp.tool()
