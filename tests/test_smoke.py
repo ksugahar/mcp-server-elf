@@ -148,6 +148,11 @@ def test_tool_surface_and_no_work_family():
     assert balanced["stage_count"] == 10
     assert len({row["capability_id"] for row in balanced["stages"]}) == 10
     assert set(balanced["workflow_roles"]) == {"detect", "check", "run", "test"}
+    assert balanced["self_check"]["status"] == "ok"
+    from elf_mcp_server.learning_quality import validate_balanced_learning_profile
+    bad = {**balanced, "stages": [dict(row) for row in balanced["stages"]]}
+    bad["stages"][3]["negative_control"] = ""
+    assert validate_balanced_learning_profile(bad)["status"] == "needs_attention"
     assert "S:" + "\\" not in profile_text
     assert "W:" + "\\" not in profile_text
     assert "C:" + "\\" not in profile_text
