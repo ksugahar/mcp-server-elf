@@ -38,6 +38,7 @@ from .demagnetization_run_contract import demagnetization_run_contract_gate
 from .transient_induced_current_contract import transient_induced_current_contract_gate
 from .flux_linkage_contract import flux_linkage_inductance_contract_gate
 from .complex_field_contract import complex_field_run_contract_gate
+from .ipm_two_run_contract import ipm_two_run_ldlq_contract_gate
 
 from .elf_knowledge import get_elf_documentation
 from .help_access import list_help_files, search_help, get_help_file
@@ -3312,6 +3313,18 @@ def elf_python_phase_flux_run_contract_gate(summary_json: str) -> str:
     commercial values.
     """
     return json.dumps(phase_flux_run_contract_gate(summary_json), indent=2, sort_keys=True)
+
+
+@mcp.tool()
+def elf_ipm_two_run_ldlq_contract_gate(summary_json: str) -> str:
+    """Gate metadata for a PM-only/current-on IPM inductance run pair.
+
+    The contract validates immutable source copies, fresh result roles, a
+    verified PM-only reference, matching phase/angle metadata, and proof that
+    the solver-neutral numerical gate passed. It opens no local product files
+    and returns no solved commercial values.
+    """
+    return json.dumps(ipm_two_run_ldlq_contract_gate(summary_json), indent=2, sort_keys=True)
 
 
 @mcp.tool()
