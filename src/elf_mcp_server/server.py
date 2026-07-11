@@ -29,6 +29,8 @@ import sys
 
 from mcp.server.fastmcp import FastMCP
 
+from .learning_quality import build_balanced_learning_profile
+
 from .elf_knowledge import get_elf_documentation
 from .help_access import list_help_files, search_help, get_help_file
 from .examples_access import list_examples, search_examples, get_example
@@ -710,6 +712,9 @@ def elf_agentic_profile() -> dict:
             "python -m elf_mcp_server.policy_lint",
             "elf-mcp-server --selftest",
         ],
+        "balanced_learning": build_balanced_learning_profile(
+            "ELF-mcp-server", "radia-mcp", "ELF/MAGIC product MCP"
+        ),
         "mcp_learning_rule": "An ELF/MAGIC product slot is learned only after public-safe ELF MCP knowledge/input contracts and scrubbed radia motor/demag/BEM gates are verified; raw product results remain private.",
     }
 

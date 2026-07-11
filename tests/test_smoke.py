@@ -143,6 +143,11 @@ def test_tool_surface_and_no_work_family():
     assert profile["execution_policy"]["ships_solver_outputs"] is False
     assert "runtime_vs_skills" in profile["mathworks_reference_pattern"]
     assert "elf_mcp_readiness" in profile["recommended_first_calls"]
+    balanced = profile["balanced_learning"]
+    assert balanced["policy"] == "equal_capability_gain_v1"
+    assert balanced["stage_count"] == 10
+    assert len({row["capability_id"] for row in balanced["stages"]}) == 10
+    assert set(balanced["workflow_roles"]) == {"detect", "check", "run", "test"}
     assert "S:" + "\\" not in profile_text
     assert "W:" + "\\" not in profile_text
     assert "C:" + "\\" not in profile_text
