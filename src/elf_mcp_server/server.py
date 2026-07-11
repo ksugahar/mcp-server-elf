@@ -31,6 +31,7 @@ from mcp.server.fastmcp import FastMCP
 
 from .learning_quality import build_balanced_learning_profile
 from .phase_flux_contract import phase_flux_run_contract_gate
+from .mesh_solver_contract import mesh_solver_pipeline_gate
 
 from .elf_knowledge import get_elf_documentation
 from .help_access import list_help_files, search_help, get_help_file
@@ -3305,6 +3306,17 @@ def elf_python_phase_flux_run_contract_gate(summary_json: str) -> str:
     commercial values.
     """
     return json.dumps(phase_flux_run_contract_gate(summary_json), indent=2, sort_keys=True)
+
+
+@mcp.tool()
+def elf_mesh_solver_pipeline_gate(summary_json: str) -> str:
+    """Gate the GUI-free mesh-then-solver execution and result package.
+
+    The contract checks process order, exit codes, freshness and artifact roles.
+    It accepts JSON metadata only and never opens a local product file.
+    """
+
+    return json.dumps(mesh_solver_pipeline_gate(summary_json), indent=2, sort_keys=True)
 
 
 @mcp.tool()
