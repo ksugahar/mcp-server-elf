@@ -30,6 +30,7 @@ import sys
 from mcp.server.fastmcp import FastMCP
 
 from .learning_quality import build_balanced_learning_profile
+from .phase_flux_contract import phase_flux_run_contract_gate
 
 from .elf_knowledge import get_elf_documentation
 from .help_access import list_help_files, search_help, get_help_file
@@ -3292,6 +3293,18 @@ def elf_python_2d_motor_template(
             stator_slots=stator_slots,
         )
     )
+
+
+@mcp.tool()
+def elf_python_phase_flux_run_contract_gate(summary_json: str) -> str:
+    """Gate a direct-CLI three-phase flux result package.
+
+    This public-safe contract validates route, exit status, fresh ``.mao`` and
+    ``.mag`` artifacts, three phase IDs, M1MF records, and exact records-per-
+    step coverage. It does not open arbitrary local paths or expose solved
+    commercial values.
+    """
+    return json.dumps(phase_flux_run_contract_gate(summary_json), indent=2, sort_keys=True)
 
 
 @mcp.tool()
