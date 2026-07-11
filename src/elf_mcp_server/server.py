@@ -35,6 +35,7 @@ from .mesh_solver_contract import mesh_solver_pipeline_gate
 from .magnet_model_contract import magnet_model_producer_contract_gate
 from .force_pair_contract import force_pair_run_contract_gate
 from .demagnetization_run_contract import demagnetization_run_contract_gate
+from .transient_induced_current_contract import transient_induced_current_contract_gate
 
 from .elf_knowledge import get_elf_documentation
 from .help_access import list_help_files, search_help, get_help_file
@@ -3341,6 +3342,17 @@ def elf_demagnetization_run_contract_gate(summary_json: str) -> str:
     It never opens a local product file or exposes stored result values.
     """
     return json.dumps(demagnetization_run_contract_gate(summary_json), indent=2, sort_keys=True)
+
+
+@mcp.tool()
+def elf_transient_induced_current_contract_gate(summary_json: str) -> str:
+    """Gate a GUI-free transient induced-current result package.
+
+    This metadata-only contract distinguishes induced current from force,
+    checks the current-drive override, passive response fit, immutable source
+    execution and fresh output roles. It never opens local result files.
+    """
+    return json.dumps(transient_induced_current_contract_gate(summary_json), indent=2, sort_keys=True)
 
 
 @mcp.tool()
