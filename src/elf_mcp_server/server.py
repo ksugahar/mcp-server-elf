@@ -33,6 +33,7 @@ from .learning_quality import build_balanced_learning_profile
 from .phase_flux_contract import phase_flux_run_contract_gate
 from .mesh_solver_contract import mesh_solver_pipeline_gate
 from .magnet_model_contract import magnet_model_producer_contract_gate
+from .force_pair_contract import force_pair_run_contract_gate
 
 from .elf_knowledge import get_elf_documentation
 from .help_access import list_help_files, search_help, get_help_file
@@ -3328,6 +3329,17 @@ def elf_magnet_model_producer_contract_gate(summary_json: str) -> str:
     not expose solved values.
     """
     return json.dumps(magnet_model_producer_contract_gate(summary_json), indent=2, sort_keys=True)
+
+
+@mcp.tool()
+def elf_force_pair_run_contract_gate(summary_json: str) -> str:
+    """Gate a GUI-free attraction/repulsion force-pair result package.
+
+    This metadata-only contract checks fresh ``.mao``/``.mag`` roles, one
+    ``TOTAL`` row per case, stable selection, force reversal, and magnitude
+    symmetry. It never opens a local product file or exposes stored results.
+    """
+    return json.dumps(force_pair_run_contract_gate(summary_json), indent=2, sort_keys=True)
 
 
 @mcp.tool()
