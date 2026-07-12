@@ -5,12 +5,12 @@ electromagnetic analysis suite (MAGIC magnetostatic / ELFIN electrostatic /
 BEAM particle tracking solvers, with eddy current support in MAGIC via
 MAB/MAT/MBB elements).
 
-This server exposes 86 MCP tools plus one prompt: curated documentation,
+This server exposes MCP tools plus one prompt: curated documentation,
 workflow recipes, public PM/BLDC/SPM/IPM/IM/SynRM/SRM/AFPM/linear/
 stepper/wound-field/reluctance/hysteresis motor and WPT/MRI/IH/transformer/
 accelerator-electromagnet/actuator/maglev/brake/NDT/magnetic-gear/voice-coil/
 relay-solenoid/Hall-sensor/clutch/benchmark/numeric-anchor/FLUM-law/
-inductance-energy/force-torque-gradient/AC-loss/magnetic-circuit/
+inductance-energy/Faraday-frequency-sweep/force-torque-gradient/AC-loss/magnetic-circuit/
 permanent-magnet/transformer-coupling sample-deck playbooks, public quality
 labels, physical-quantity coverage, validation matrices, observable-contract
 quality audits, cross-validation audits, duplicate/reuse audits,

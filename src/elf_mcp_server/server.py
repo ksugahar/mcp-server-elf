@@ -45,6 +45,7 @@ from .source_off_relaxation_contract import source_off_relaxation_contract_gate
 from .material_force_contrast_contract import material_force_contrast_contract_gate
 from .rotating_conductor_contract import rotating_conductor_periodic_contract_gate
 from .magnetization_group_contract import magnetization_group_handoff_contract_gate
+from .two_winding_frequency_contract import two_winding_frequency_contract_gate
 
 from .elf_knowledge import get_elf_documentation
 from .help_access import list_help_files, search_help, get_help_file
@@ -3462,6 +3463,14 @@ def elf_rotating_conductor_periodic_contract_gate(summary_json: str) -> str:
     """
     return json.dumps(
         rotating_conductor_periodic_contract_gate(summary_json), indent=2, sort_keys=True
+    )
+
+
+@mcp.tool()
+def elf_two_winding_frequency_contract_gate(summary_json: str) -> str:
+    """Gate GUI-free two-winding frequency sweeps using normalized evidence."""
+    return json.dumps(
+        two_winding_frequency_contract_gate(summary_json), indent=2, sort_keys=True
     )
 
 
