@@ -40,6 +40,7 @@ from .flux_linkage_contract import flux_linkage_inductance_contract_gate
 from .complex_field_contract import complex_field_run_contract_gate
 from .ipm_two_run_contract import ipm_two_run_ldlq_contract_gate
 from .source_off_relaxation_contract import source_off_relaxation_contract_gate
+from .material_force_contrast_contract import material_force_contrast_contract_gate
 
 from .elf_knowledge import get_elf_documentation
 from .help_access import list_help_files, search_help, get_help_file
@@ -3406,6 +3407,20 @@ def elf_force_pair_run_contract_gate(summary_json: str) -> str:
     symmetry. It never opens a local product file or exposes stored results.
     """
     return json.dumps(force_pair_run_contract_gate(summary_json), indent=2, sort_keys=True)
+
+
+@mcp.tool()
+def elf_material_force_contrast_contract_gate(summary_json: str) -> str:
+    """Gate metadata for a four-role material-force contrast run family.
+
+    This public-safe contract validates direct CLI output roles, ``.mao TOTAL``
+    semantics, solver/mesh version migration, role-specific regression bands,
+    and closure by a solver-neutral force gate. It opens no local paths and
+    exposes no solved values.
+    """
+    return json.dumps(
+        material_force_contrast_contract_gate(summary_json), indent=2, sort_keys=True
+    )
 
 
 @mcp.tool()
