@@ -39,6 +39,7 @@ from .transient_induced_current_contract import transient_induced_current_contra
 from .flux_linkage_contract import flux_linkage_inductance_contract_gate
 from .complex_field_contract import complex_field_run_contract_gate
 from .ipm_two_run_contract import ipm_two_run_ldlq_contract_gate
+from .source_off_relaxation_contract import source_off_relaxation_contract_gate
 
 from .elf_knowledge import get_elf_documentation
 from .help_access import list_help_files, search_help, get_help_file
@@ -3368,6 +3369,20 @@ def elf_transient_induced_current_contract_gate(summary_json: str) -> str:
     execution and fresh output roles. It never opens local result files.
     """
     return json.dumps(transient_induced_current_contract_gate(summary_json), indent=2, sort_keys=True)
+
+
+@mcp.tool()
+def elf_source_off_relaxation_contract_gate(summary_json: str) -> str:
+    """Gate metadata for a GUI-free voltage-driven source-off relaxation.
+
+    The contract checks case-directory execution, voltage/ohmic/EMFM feature
+    headers, total-current semantics, complete fresh outputs, and closure by a
+    solver-neutral numerical gate. It opens no local paths and exposes no
+    solved product values.
+    """
+    return json.dumps(
+        source_off_relaxation_contract_gate(summary_json), indent=2, sort_keys=True
+    )
 
 
 @mcp.tool()
