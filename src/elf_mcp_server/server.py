@@ -38,6 +38,7 @@ from .demagnetization_run_contract import demagnetization_run_contract_gate
 from .transient_induced_current_contract import transient_induced_current_contract_gate
 from .flux_linkage_contract import flux_linkage_inductance_contract_gate
 from .emfm_star_power_contract import emfm_star_power_contract_gate
+from .momc_force_triplet_contract import momc_force_triplet_contract_gate
 from .complex_field_contract import complex_field_run_contract_gate
 from .ipm_two_run_contract import ipm_two_run_ldlq_contract_gate
 from .source_off_relaxation_contract import source_off_relaxation_contract_gate
@@ -3440,6 +3441,14 @@ def elf_material_force_contrast_contract_gate(summary_json: str) -> str:
     """
     return json.dumps(
         material_force_contrast_contract_gate(summary_json), indent=2, sort_keys=True
+    )
+
+
+@mcp.tool()
+def elf_momc_force_triplet_contract_gate(summary_json: str) -> str:
+    """Validate the documented harmonic FORC/FORT/FIXB result contract."""
+    return json.dumps(
+        momc_force_triplet_contract_gate(summary_json), indent=2, sort_keys=True
     )
 
 
