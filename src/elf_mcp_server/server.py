@@ -41,6 +41,7 @@ from .complex_field_contract import complex_field_run_contract_gate
 from .ipm_two_run_contract import ipm_two_run_ldlq_contract_gate
 from .source_off_relaxation_contract import source_off_relaxation_contract_gate
 from .material_force_contrast_contract import material_force_contrast_contract_gate
+from .rotating_conductor_contract import rotating_conductor_periodic_contract_gate
 
 from .elf_knowledge import get_elf_documentation
 from .help_access import list_help_files, search_help, get_help_file
@@ -3420,6 +3421,19 @@ def elf_material_force_contrast_contract_gate(summary_json: str) -> str:
     """
     return json.dumps(
         material_force_contrast_contract_gate(summary_json), indent=2, sort_keys=True
+    )
+
+
+@mcp.tool()
+def elf_rotating_conductor_periodic_contract_gate(summary_json: str) -> str:
+    """Gate metadata for a GUI-free rotating-conductor periodic run.
+
+    The contract checks fresh ``.mao``/``.mag`` roles, a complete multi-turn
+    time axis, decreasing turn-to-turn residuals, and explicit stored-version
+    replay. It opens no local paths and exposes no solved values.
+    """
+    return json.dumps(
+        rotating_conductor_periodic_contract_gate(summary_json), indent=2, sort_keys=True
     )
 
 
