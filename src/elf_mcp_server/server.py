@@ -37,6 +37,7 @@ from .force_pair_contract import force_pair_run_contract_gate
 from .demagnetization_run_contract import demagnetization_run_contract_gate
 from .transient_induced_current_contract import transient_induced_current_contract_gate
 from .flux_linkage_contract import flux_linkage_inductance_contract_gate
+from .emfm_star_power_contract import emfm_star_power_contract_gate
 from .complex_field_contract import complex_field_run_contract_gate
 from .ipm_two_run_contract import ipm_two_run_ldlq_contract_gate
 from .source_off_relaxation_contract import source_off_relaxation_contract_gate
@@ -3403,6 +3404,12 @@ def elf_source_off_relaxation_contract_gate(summary_json: str) -> str:
 def elf_flux_linkage_inductance_contract_gate(summary_json: str) -> str:
     """Validate metadata for a GUI-free two-winding FLUM run family."""
     return json.dumps(flux_linkage_inductance_contract_gate(summary_json), indent=2, sort_keys=True)
+
+
+@mcp.tool()
+def elf_emfm_star_power_balance_gate(summary_json: str) -> str:
+    """Gate GUI-free EMFM/STAR phasors and all-winding copper power closure."""
+    return json.dumps(emfm_star_power_contract_gate(summary_json), indent=2, sort_keys=True)
 
 
 @mcp.tool()
