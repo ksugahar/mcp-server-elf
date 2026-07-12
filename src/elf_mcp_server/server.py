@@ -42,6 +42,7 @@ from .ipm_two_run_contract import ipm_two_run_ldlq_contract_gate
 from .source_off_relaxation_contract import source_off_relaxation_contract_gate
 from .material_force_contrast_contract import material_force_contrast_contract_gate
 from .rotating_conductor_contract import rotating_conductor_periodic_contract_gate
+from .magnetization_group_contract import magnetization_group_handoff_contract_gate
 
 from .elf_knowledge import get_elf_documentation
 from .help_access import list_help_files, search_help, get_help_file
@@ -3349,6 +3350,17 @@ def elf_magnet_model_producer_contract_gate(summary_json: str) -> str:
     not expose solved values.
     """
     return json.dumps(magnet_model_producer_contract_gate(summary_json), indent=2, sort_keys=True)
+
+
+@mcp.tool()
+def elf_magnetization_group_handoff_contract_gate(summary_json: str) -> str:
+    """Gate staged grouped-magnet handoff metadata without exposing solved values."""
+
+    return json.dumps(
+        magnetization_group_handoff_contract_gate(summary_json),
+        indent=2,
+        sort_keys=True,
+    )
 
 
 @mcp.tool()
