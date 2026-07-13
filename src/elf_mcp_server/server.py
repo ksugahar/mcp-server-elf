@@ -3372,8 +3372,8 @@ def elf_magnetization_group_handoff_contract_gate(summary_json: str) -> str:
 def elf_demagnetization_run_contract_gate(summary_json: str) -> str:
     """Gate a GUI-free permanent-magnet demagnetization result package.
 
-    This metadata-only contract checks DMEG history, nonlinear convergence,
-    immutable source-copy execution, and fresh ``.mao/.mag/.mat/.mac`` roles.
+    This contract checks DMEG history, immutable source-copy execution, exact
+    replays, and elementwise WL8T ``B``/``PERM`` field-versus-state behavior.
     It never opens a local product file or exposes stored result values.
     """
     return json.dumps(demagnetization_run_contract_gate(summary_json), indent=2, sort_keys=True)
