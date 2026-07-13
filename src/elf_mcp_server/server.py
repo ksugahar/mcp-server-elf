@@ -44,6 +44,7 @@ from .complex_field_contract import complex_field_run_contract_gate
 from .ipm_two_run_contract import ipm_two_run_ldlq_contract_gate
 from .source_off_relaxation_contract import source_off_relaxation_contract_gate
 from .material_force_contrast_contract import material_force_contrast_contract_gate
+from .force_method_profile_contract import force_method_profile_contract_gate
 from .rotating_conductor_contract import rotating_conductor_periodic_contract_gate
 from .magnetization_group_contract import magnetization_group_handoff_contract_gate
 from .two_winding_frequency_contract import two_winding_frequency_contract_gate
@@ -3452,6 +3453,19 @@ def elf_material_force_contrast_contract_gate(summary_json: str) -> str:
     """
     return json.dumps(
         material_force_contrast_contract_gate(summary_json), indent=2, sort_keys=True
+    )
+
+
+@mcp.tool()
+def elf_force_method_profile_contract_gate(summary_json: str) -> str:
+    """Gate metadata for replayed element-force and closed-surface profiles.
+
+    The contract pins deck roles, body/surface selections, direct headless runs,
+    fresh native outputs, and replay evidence. It opens no local paths and
+    exposes no solved values.
+    """
+    return json.dumps(
+        force_method_profile_contract_gate(summary_json), indent=2, sort_keys=True
     )
 
 
