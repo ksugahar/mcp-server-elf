@@ -191,3 +191,17 @@ def test_generalization_v5_rejects_unpinned_source_filename() -> None:
     summary["source_files"][0]["name"] = "wrong.mai"
     result = force_method_profile_contract_gate(json.dumps(summary))
     assert result["status"] == "needs_attention"
+
+
+@pytest.mark.parametrize(
+    "case_id",
+    ["v6_source_parsed_row_count_disagreement", "v6_source_output_role_disagreement"],
+)
+def test_generalization_v6_source(case_id: str) -> None:
+    summary = copy.deepcopy(_summary())
+    if case_id == "v6_source_parsed_row_count_disagreement":
+        summary["runs"][4]["parsed_rows"]["FORC"] = 5
+    else:
+        summary["runs"][0]["output_roles"][".mao"] = "field_result"
+    result = force_method_profile_contract_gate(json.dumps(summary))
+    assert result["status"] == "needs_attention"
