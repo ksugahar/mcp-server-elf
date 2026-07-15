@@ -3,6 +3,8 @@ from __future__ import annotations
 import copy
 import json
 
+import pytest
+
 from elf_mcp_server.force_method_profile_contract import (
     force_method_profile_contract_gate,
 )
@@ -126,3 +128,39 @@ def test_reports_malformed_replay_and_manifest_as_attention() -> None:
     assert result["status"] == "needs_attention"
     assert result["checks"]["source_manifest_names_and_digests_complete"] is False
     assert result["checks"]["two_replays_per_source_role"] is False
+
+
+def test_rejects_stale_output_and_owned_process_leak_together() -> None:
+    summary = copy.deepcopy(_summary())
+    summary["runs"][0]["all_outputs_fresh"] = False
+    summary["runs"][0]["owned_process_count_after"] = 1
+    result = force_method_profile_contract_gate(json.dumps(summary))
+    assert result["status"] == "needs_attention"
+    assert result["checks"]["six_fresh_headless_runs_are_complete"] is False
+
+
+@pytest.mark.parametrize(
+    "case_id",
+    ["target_scope", "public_handoff", "solver_exit", "source_digest", "result_authority"],
+)
+def test_counterfactual_curriculum90_source(case_id: str) -> None:
+    summary = copy.deepcopy(_summary())
+    if case_id == "target_scope":
+        summary["deck_roles"][2]["selection_scope"] = "all_magnetic_bodies"
+    elif case_id == "public_handoff":
+        summary["public_gate"]["status"] = "needs_attention"
+    elif case_id == "solver_exit":
+        summary["runs"][0]["solver_exit_code"] = 1
+    elif case_id == "source_digest":
+        summary["source_files"][0]["sha256"] = "0" * 63
+    else:
+        summary["result_authority"] = ".mag field"
+    result = force_method_profile_contract_gate(json.dumps(summary))
+    assert result["status"] == "needs_attention"
+
+
+def test_generalization_v3s_rejects_completion_dialog() -> None:
+    summary = copy.deepcopy(_summary())
+    summary["completion_dialog"] = True
+    result = force_method_profile_contract_gate(json.dumps(summary))
+    assert result["status"] == "needs_attention"
