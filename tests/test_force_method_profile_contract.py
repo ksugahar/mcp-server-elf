@@ -164,3 +164,30 @@ def test_generalization_v3s_rejects_completion_dialog() -> None:
     summary["completion_dialog"] = True
     result = force_method_profile_contract_gate(json.dumps(summary))
     assert result["status"] == "needs_attention"
+
+
+@pytest.mark.parametrize(
+    "case_id",
+    ["v4_execution_route", "v4_solver_family", "v4_parsed_replay", "v4_mesh_exit", "v4_source_copy"],
+)
+def test_counterfactual_curriculum90_v4_source(case_id: str) -> None:
+    summary = copy.deepcopy(_summary())
+    if case_id == "v4_execution_route":
+        summary["execution_route"] = "interactive_gui"
+    elif case_id == "v4_solver_family":
+        summary["solver_family"] = "unknown"
+    elif case_id == "v4_parsed_replay":
+        summary["replay"]["parsed_force_rows_exact"] = False
+    elif case_id == "v4_mesh_exit":
+        summary["runs"][0]["mesh_exit_code"] = 1
+    else:
+        summary["runs"][0]["source_copy_preserved"] = False
+    result = force_method_profile_contract_gate(json.dumps(summary))
+    assert result["status"] == "needs_attention"
+
+
+def test_generalization_v5_rejects_unpinned_source_filename() -> None:
+    summary = copy.deepcopy(_summary())
+    summary["source_files"][0]["name"] = "wrong.mai"
+    result = force_method_profile_contract_gate(json.dumps(summary))
+    assert result["status"] == "needs_attention"
