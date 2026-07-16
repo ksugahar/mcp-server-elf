@@ -25,6 +25,39 @@ _OUTPUT_ROLES = {
 }
 
 
+def _output_artifacts_complete(run: dict) -> bool:
+    artifacts = run.get("output_artifacts")
+    if not isinstance(artifacts, dict) or set(artifacts) != set(_OUTPUT_ROLES):
+        return False
+    for suffix, expected_role in _OUTPUT_ROLES.items():
+        row = artifacts.get(suffix)
+        if not isinstance(row, dict):
+            return False
+        if not (
+            row.get("role") == expected_role
+            and row.get("fresh") is True
+            and re.fullmatch(r"[0-9a-f]{64}", str(row.get("sha256") or ""))
+            and bool(str(row.get("modified_at_utc") or "").strip())
+        ):
+            return False
+    return True
+
+
+def _process_lifecycle_closes(run: dict) -> bool:
+    lifecycle = run.get("process_lifecycle")
+    if not isinstance(lifecycle, dict):
+        return False
+    children = lifecycle.get("owned_solver_children_after")
+    if not isinstance(children, list):
+        return False
+    alive = [row for row in children if isinstance(row, dict) and row.get("alive") is True]
+    return (
+        lifecycle.get("seat_released") is True
+        and not alive
+        and run.get("owned_process_count_after") == len(alive) == 0
+    )
+
+
 def _source_manifest_complete(source_files: object) -> bool:
     if not isinstance(source_files, list) or len(source_files) != 6:
         return False
@@ -69,9 +102,13 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
     }
     role_replays: dict[str, set[int]] = {role: set() for role in _CASE_ROLES}
     run_contracts: list[bool] = []
+    output_artifact_contracts: list[bool] = []
+    process_lifecycle_contracts: list[bool] = []
     for run in runs:
         if not isinstance(run, dict):
             run_contracts.append(False)
+            output_artifact_contracts.append(False)
+            process_lifecycle_contracts.append(False)
             continue
         role = str(run.get("role", ""))
         parsed_rows = run.get("parsed_rows")
@@ -85,6 +122,8 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
             replay_id = -1
         if role in role_replays:
             role_replays[role].add(replay_id)
+        output_artifact_contracts.append(_output_artifacts_complete(run))
+        process_lifecycle_contracts.append(_process_lifecycle_closes(run))
         run_contracts.append(
             role in _CASE_ROLES
             and run.get("case_id") == _CASE_ROLES[role]
@@ -135,6 +174,12 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
         and combined_deck.get("selection_scope") == "moving_body_only"
         and combined_deck.get("stress_surface_recorded") is True,
         "six_fresh_headless_runs_are_complete": all(run_contracts),
+        "each_output_role_has_fresh_digest_bound_artifact": all(
+            output_artifact_contracts
+        ),
+        "seat_release_and_owned_solver_children_close": all(
+            process_lifecycle_contracts
+        ),
         "two_replays_per_source_role": all(
             replays == {1, 2} for replays in role_replays.values()
         ),
@@ -162,6 +207,7 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
         "notes": [
             "FORC and FORT profiles are comparable only when body and closed-surface selections are explicit",
             "the .mao TOTAL rows are the result authority; .mei remains an input deck",
+            "a complete .mao cannot make a stale .mag fresh; bind every output digest and close owned child processes as well as the seat",
             "this public documentation contract opens no paths and exposes no solved values",
         ],
     }

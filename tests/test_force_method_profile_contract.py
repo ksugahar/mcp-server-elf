@@ -32,6 +32,15 @@ def _summary() -> dict:
     runs = []
     for role, case_id in case_roles.items():
         for replay in (1, 2):
+            output_artifacts = {
+                suffix: {
+                    "role": artifact_role,
+                    "fresh": True,
+                    "sha256": "b" * 64,
+                    "modified_at_utc": f"2026-07-15T00:00:0{replay}+00:00",
+                }
+                for suffix, artifact_role in output_roles.items()
+            }
             runs.append(
                 {
                     "role": role,
@@ -43,6 +52,11 @@ def _summary() -> dict:
                     "all_outputs_fresh": True,
                     "owned_process_count_after": 0,
                     "output_roles": output_roles,
+                    "output_artifacts": output_artifacts,
+                    "process_lifecycle": {
+                        "seat_released": True,
+                        "owned_solver_children_after": [],
+                    },
                     "parsed_rows": shapes[role],
                 }
             )
@@ -205,3 +219,24 @@ def test_generalization_v6_source(case_id: str) -> None:
         summary["runs"][0]["output_roles"][".mao"] = "field_result"
     result = force_method_profile_contract_gate(json.dumps(summary))
     assert result["status"] == "needs_attention"
+
+
+def test_v7_source_mao_complete_mag_stale() -> None:
+    summary = copy.deepcopy(_summary())
+    summary["runs"][0]["output_artifacts"][".mag"]["fresh"] = False
+    summary["runs"][0]["output_artifacts"][".mag"]["modified_at_utc"] = (
+        "2026-07-14T00:00:00+00:00"
+    )
+    result = force_method_profile_contract_gate(json.dumps(summary))
+    assert result["status"] == "needs_attention"
+    assert result["checks"]["each_output_role_has_fresh_digest_bound_artifact"] is False
+
+
+def test_v7_source_solver_child_survives_seat_release() -> None:
+    summary = copy.deepcopy(_summary())
+    summary["runs"][0]["process_lifecycle"]["owned_solver_children_after"] = [
+        {"pid": 4321, "role": "solver", "alive": True}
+    ]
+    result = force_method_profile_contract_gate(json.dumps(summary))
+    assert result["status"] == "needs_attention"
+    assert result["checks"]["seat_release_and_owned_solver_children_close"] is False
