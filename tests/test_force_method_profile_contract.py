@@ -53,6 +53,13 @@ def _summary() -> dict:
                     "owned_process_count_after": 0,
                     "output_roles": output_roles,
                     "output_artifacts": output_artifacts,
+                    "solver_completed_at_utc": "2026-07-16T05:10:00Z",
+                    "session_identity": {
+                        "solver_session_generation": f"session-{role}-{replay}",
+                        "result_open_session_generation": f"session-{role}-{replay}",
+                        "session_model_generation": f"model-{role}-{replay}",
+                        "opened_result_model_generation": f"model-{role}-{replay}",
+                    },
                     "process_lifecycle": {
                         "seat_released": True,
                         "owned_solver_children_after": [],
@@ -60,6 +67,11 @@ def _summary() -> dict:
                     "parsed_rows": shapes[role],
                 }
             )
+            output_artifacts[".mao"]["terminal_record"] = {
+                "record_id": f"terminal-{role}-{replay}",
+                "durably_flushed": True,
+                "flush_completed_at_utc": "2026-07-16T05:11:00Z",
+            }
     return {
         "execution_route": "direct_mesh_and_solver_exe_no_gui",
         "completion_dialog": False,
@@ -240,3 +252,25 @@ def test_v7_source_solver_child_survives_seat_release() -> None:
     result = force_method_profile_contract_gate(json.dumps(summary))
     assert result["status"] == "needs_attention"
     assert result["checks"]["seat_release_and_owned_solver_children_close"] is False
+
+
+def test_v8_source_mao_tail_not_fully_flushed() -> None:
+    summary = copy.deepcopy(_summary())
+    terminal = summary["runs"][0]["output_artifacts"][".mao"]["terminal_record"]
+    terminal.update({"record_id": "", "durably_flushed": False})
+    result = force_method_profile_contract_gate(json.dumps(summary))
+    assert result["status"] == "needs_attention"
+    assert result["checks"]["mao_terminal_record_is_durably_flushed"] is False
+
+
+def test_v8_source_result_opened_after_session_reuse() -> None:
+    summary = copy.deepcopy(_summary())
+    summary["runs"][0]["session_identity"]["opened_result_model_generation"] = (
+        "model-previous"
+    )
+    result = force_method_profile_contract_gate(json.dumps(summary))
+    assert result["status"] == "needs_attention"
+    assert (
+        result["checks"]["opened_result_matches_current_session_model_generation"]
+        is False
+    )

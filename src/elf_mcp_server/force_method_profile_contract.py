@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import re
+from datetime import datetime
 
 
 _CASE_ROLES = {
@@ -58,6 +59,52 @@ def _process_lifecycle_closes(run: dict) -> bool:
     )
 
 
+def _mao_terminal_record_flushed(run: dict) -> bool:
+    artifacts = run.get("output_artifacts")
+    artifacts = artifacts if isinstance(artifacts, dict) else {}
+    mao = artifacts.get(".mao")
+    mao = mao if isinstance(mao, dict) else {}
+    terminal = mao.get("terminal_record")
+    if terminal is None:
+        return True
+    if not isinstance(terminal, dict):
+        return False
+
+    def timestamp(value: object) -> float | None:
+        try:
+            return datetime.fromisoformat(str(value).replace("Z", "+00:00")).timestamp()
+        except (TypeError, ValueError):
+            return None
+
+    solver_completed = timestamp(run.get("solver_completed_at_utc"))
+    flush_completed = timestamp(terminal.get("flush_completed_at_utc"))
+    return (
+        bool(str(terminal.get("record_id", "")))
+        and terminal.get("durably_flushed") is True
+        and solver_completed is not None
+        and flush_completed is not None
+        and flush_completed >= solver_completed
+    )
+
+
+def _opened_result_matches_session_model(run: dict) -> bool:
+    identity = run.get("session_identity")
+    if identity is None:
+        return True
+    if not isinstance(identity, dict):
+        return False
+    solver_session = str(identity.get("solver_session_generation", ""))
+    result_session = str(identity.get("result_open_session_generation", ""))
+    session_model = str(identity.get("session_model_generation", ""))
+    result_model = str(identity.get("opened_result_model_generation", ""))
+    return (
+        bool(solver_session)
+        and solver_session == result_session
+        and bool(session_model)
+        and session_model == result_model
+    )
+
+
 def _source_manifest_complete(source_files: object) -> bool:
     if not isinstance(source_files, list) or len(source_files) != 6:
         return False
@@ -104,11 +151,15 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
     run_contracts: list[bool] = []
     output_artifact_contracts: list[bool] = []
     process_lifecycle_contracts: list[bool] = []
+    mao_flush_contracts: list[bool] = []
+    session_model_contracts: list[bool] = []
     for run in runs:
         if not isinstance(run, dict):
             run_contracts.append(False)
             output_artifact_contracts.append(False)
             process_lifecycle_contracts.append(False)
+            mao_flush_contracts.append(False)
+            session_model_contracts.append(False)
             continue
         role = str(run.get("role", ""))
         parsed_rows = run.get("parsed_rows")
@@ -124,6 +175,8 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
             role_replays[role].add(replay_id)
         output_artifact_contracts.append(_output_artifacts_complete(run))
         process_lifecycle_contracts.append(_process_lifecycle_closes(run))
+        mao_flush_contracts.append(_mao_terminal_record_flushed(run))
+        session_model_contracts.append(_opened_result_matches_session_model(run))
         run_contracts.append(
             role in _CASE_ROLES
             and run.get("case_id") == _CASE_ROLES[role]
@@ -179,6 +232,10 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
         ),
         "seat_release_and_owned_solver_children_close": all(
             process_lifecycle_contracts
+        ),
+        "mao_terminal_record_is_durably_flushed": all(mao_flush_contracts),
+        "opened_result_matches_current_session_model_generation": all(
+            session_model_contracts
         ),
         "two_replays_per_source_role": all(
             replays == {1, 2} for replays in role_replays.values()
