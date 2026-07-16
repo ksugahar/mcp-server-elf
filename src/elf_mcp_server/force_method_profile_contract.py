@@ -310,6 +310,80 @@ def _terminal_convergence_matches_final_material_update(run: dict) -> bool:
     )
 
 
+def _mao_record_count_trailer_matches_current_body(run: dict) -> bool:
+    identity = run.get("mao_record_count_trailer_identity")
+    if identity is None:
+        return True
+    if not isinstance(identity, dict):
+        return False
+    mao = run.get("output_artifacts")
+    mao = mao.get(".mao") if isinstance(mao, dict) else {}
+    terminal = mao.get("terminal_record") if isinstance(mao, dict) else {}
+    terminal = terminal if isinstance(terminal, dict) else {}
+    job_generation = str(identity.get("job_generation", ""))
+    body_digest = str(identity.get("body_record_digest_sha256", ""))
+    trailer_digest = str(identity.get("trailer_body_digest_sha256", ""))
+    try:
+        body_count = int(identity["parsed_body_record_count"])
+        trailer_count = int(identity["declared_trailer_record_count"])
+    except (KeyError, TypeError, ValueError):
+        body_count = trailer_count = -1
+    return (
+        bool(job_generation)
+        and terminal.get("job_generation") == job_generation
+        and identity.get("mao_body_job_generation") == job_generation
+        and identity.get("mao_trailer_job_generation") == job_generation
+        and body_count > 0
+        and trailer_count == body_count
+        and re.fullmatch(r"[0-9a-f]{64}", body_digest) is not None
+        and trailer_digest == body_digest
+        and identity.get("trailer_present") is True
+    )
+
+
+def _nonlinear_scaled_residual_matches_current_iteration(run: dict) -> bool:
+    identity = run.get("nonlinear_residual_scaled_norm_identity")
+    if identity is None:
+        return True
+    if not isinstance(identity, dict):
+        return False
+    mao = run.get("output_artifacts")
+    mao = mao.get(".mao") if isinstance(mao, dict) else {}
+    terminal = mao.get("terminal_record") if isinstance(mao, dict) else {}
+    terminal = terminal if isinstance(terminal, dict) else {}
+    job_generation = str(identity.get("job_generation", ""))
+    material_generation = str(identity.get("material_state_generation", ""))
+    residual_generation = str(identity.get("residual_vector_generation", ""))
+    try:
+        terminal_iteration = int(identity["terminal_iteration_index"])
+        residual_iteration = int(identity["residual_iteration_index"])
+        scaling_iteration = int(identity["scaling_norm_iteration_index"])
+        scaled_norm = float(identity["scaled_residual_norm"])
+        tolerance = float(identity["terminal_tolerance"])
+    except (KeyError, TypeError, ValueError):
+        terminal_iteration = residual_iteration = scaling_iteration = -1
+        scaled_norm = tolerance = math.nan
+    return (
+        bool(job_generation)
+        and terminal.get("job_generation") == job_generation
+        and terminal_iteration >= 0
+        and residual_iteration == terminal_iteration
+        and scaling_iteration == terminal_iteration
+        and bool(material_generation)
+        and identity.get("residual_material_state_generation")
+        == material_generation
+        and identity.get("scaling_norm_material_state_generation")
+        == material_generation
+        and bool(residual_generation)
+        and identity.get("scaled_norm_residual_generation") == residual_generation
+        and math.isfinite(scaled_norm)
+        and scaled_norm >= 0.0
+        and math.isfinite(tolerance)
+        and tolerance > 0.0
+        and scaled_norm <= tolerance
+    )
+
+
 def _source_manifest_complete(source_files: object) -> bool:
     if not isinstance(source_files, list) or len(source_files) != 6:
         return False
@@ -366,6 +440,8 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
     terminal_sequence_contracts: list[bool] = []
     subcase_selection_contracts: list[bool] = []
     convergence_material_contracts: list[bool] = []
+    mao_record_count_trailer_contracts: list[bool] = []
+    nonlinear_scaled_residual_contracts: list[bool] = []
     for run in runs:
         if not isinstance(run, dict):
             run_contracts.append(False)
@@ -381,6 +457,8 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
             terminal_sequence_contracts.append(False)
             subcase_selection_contracts.append(False)
             convergence_material_contracts.append(False)
+            mao_record_count_trailer_contracts.append(False)
+            nonlinear_scaled_residual_contracts.append(False)
             continue
         role = str(run.get("role", ""))
         parsed_rows = run.get("parsed_rows")
@@ -415,6 +493,12 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
         )
         convergence_material_contracts.append(
             _terminal_convergence_matches_final_material_update(run)
+        )
+        mao_record_count_trailer_contracts.append(
+            _mao_record_count_trailer_matches_current_body(run)
+        )
+        nonlinear_scaled_residual_contracts.append(
+            _nonlinear_scaled_residual_matches_current_iteration(run)
         )
         run_contracts.append(
             role in _CASE_ROLES
@@ -499,6 +583,12 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
         ),
         "terminal_convergence_matches_final_material_update_generation": all(
             convergence_material_contracts
+        ),
+        "mao_record_count_and_trailer_match_current_body_generation": all(
+            mao_record_count_trailer_contracts
+        ),
+        "nonlinear_scaled_residual_uses_current_material_iteration": all(
+            nonlinear_scaled_residual_contracts
         ),
         "two_replays_per_source_role": all(
             replays == {1, 2} for replays in role_replays.values()

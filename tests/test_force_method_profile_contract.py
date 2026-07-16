@@ -136,6 +136,29 @@ def _summary() -> dict:
                 "final_material_update_generation": "nonlinear-material-14",
                 "terminal_convergence_material_generation": "nonlinear-material-14",
             }
+            runs[-1]["mao_record_count_trailer_identity"] = {
+                "job_generation": job_generation,
+                "mao_body_job_generation": job_generation,
+                "mao_trailer_job_generation": job_generation,
+                "parsed_body_record_count": 118,
+                "declared_trailer_record_count": 118,
+                "body_record_digest_sha256": "7" * 64,
+                "trailer_body_digest_sha256": "7" * 64,
+                "trailer_present": True,
+            }
+            runs[-1]["nonlinear_residual_scaled_norm_identity"] = {
+                "job_generation": job_generation,
+                "terminal_iteration_index": 14,
+                "residual_iteration_index": 14,
+                "scaling_norm_iteration_index": 14,
+                "material_state_generation": "nonlinear-material-15",
+                "residual_material_state_generation": "nonlinear-material-15",
+                "scaling_norm_material_state_generation": "nonlinear-material-15",
+                "residual_vector_generation": "residual-vector-15",
+                "scaled_norm_residual_generation": "residual-vector-15",
+                "scaled_residual_norm": 2.0e-8,
+                "terminal_tolerance": 1.0e-6,
+            }
     return {
         "execution_route": "direct_mesh_and_solver_exe_no_gui",
         "completion_dialog": False,
@@ -450,6 +473,44 @@ def test_v12_source_terminal_convergence_material_update_generation_mismatch() -
     assert (
         result["checks"][
             "terminal_convergence_matches_final_material_update_generation"
+        ]
+        is False
+    )
+
+
+def test_v13_source_mao_record_count_trailer_generation_mismatch() -> None:
+    summary = copy.deepcopy(_summary())
+    summary["runs"][0]["mao_record_count_trailer_identity"].update(
+        {
+            "mao_trailer_job_generation": "job-previous",
+            "declared_trailer_record_count": 117,
+            "trailer_body_digest_sha256": "8" * 64,
+        }
+    )
+    result = force_method_profile_contract_gate(json.dumps(summary))
+    assert result["status"] == "needs_attention"
+    assert (
+        result["checks"][
+            "mao_record_count_and_trailer_match_current_body_generation"
+        ]
+        is False
+    )
+
+
+def test_v13_source_nonlinear_residual_scaled_norm_generation_mismatch() -> None:
+    summary = copy.deepcopy(_summary())
+    summary["runs"][0]["nonlinear_residual_scaled_norm_identity"].update(
+        {
+            "scaling_norm_iteration_index": 13,
+            "scaling_norm_material_state_generation": "nonlinear-material-14",
+            "scaled_norm_residual_generation": "residual-vector-14",
+        }
+    )
+    result = force_method_profile_contract_gate(json.dumps(summary))
+    assert result["status"] == "needs_attention"
+    assert (
+        result["checks"][
+            "nonlinear_scaled_residual_uses_current_material_iteration"
         ]
         is False
     )
