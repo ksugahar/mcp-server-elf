@@ -623,6 +623,80 @@ def _nonlinear_history_residual_scaling_matches_mesh(run: dict) -> bool:
     )
 
 
+def _mao_section_endian_marker_matches_decoder(run: dict) -> bool:
+    identity = run.get("mao_section_endian_marker_decoder_generation_identity")
+    if identity is None:
+        return True
+    if not isinstance(identity, dict):
+        return False
+    artifacts = run.get("output_artifacts")
+    mao = artifacts.get(".mao") if isinstance(artifacts, dict) else {}
+    terminal = mao.get("terminal_record") if isinstance(mao, dict) else {}
+    terminal = terminal if isinstance(terminal, dict) else {}
+    job_generation = str(identity.get("job_generation", ""))
+    layout_generation = str(identity.get("section_layout_generation", ""))
+    marker_digest = str(identity.get("endian_marker_sha256", "")).lower()
+    byte_order = identity.get("declared_byte_order")
+    return (
+        bool(job_generation)
+        and terminal.get("job_generation") == job_generation
+        and identity.get("result_job_generation") == job_generation
+        and bool(layout_generation)
+        and identity.get("endian_marker_section_layout_generation")
+        == layout_generation
+        and identity.get("decoder_section_layout_generation") == layout_generation
+        and byte_order in {"little", "big"}
+        and identity.get("endian_marker_byte_order") == byte_order
+        and identity.get("decoder_byte_order") == byte_order
+        and re.fullmatch(r"[0-9a-f]{64}", marker_digest) is not None
+        and str(identity.get("decoded_endian_marker_sha256", "")).lower()
+        == marker_digest
+    )
+
+
+def _coil_group_map_matches_current_numbering(run: dict) -> bool:
+    identity = run.get("coil_group_map_model_numbering_generation_identity")
+    if identity is None:
+        return True
+    if not isinstance(identity, dict):
+        return False
+    artifacts = run.get("output_artifacts")
+    mao = artifacts.get(".mao") if isinstance(artifacts, dict) else {}
+    terminal = mao.get("terminal_record") if isinstance(mao, dict) else {}
+    terminal = terminal if isinstance(terminal, dict) else {}
+    job_generation = str(identity.get("job_generation", ""))
+    numbering_generation = str(identity.get("model_numbering_generation", ""))
+    conductor_ids = identity.get("conductor_ids")
+    mapped_ids = identity.get("mapped_conductor_ids")
+    group_ids = identity.get("coil_group_ids")
+    map_digest = str(identity.get("coil_group_map_sha256", "")).lower()
+    return (
+        bool(job_generation)
+        and terminal.get("job_generation") == job_generation
+        and identity.get("result_job_generation") == job_generation
+        and bool(numbering_generation)
+        and identity.get("conductor_result_model_numbering_generation")
+        == numbering_generation
+        and identity.get("coil_group_map_model_numbering_generation")
+        == numbering_generation
+        and isinstance(conductor_ids, list)
+        and bool(conductor_ids)
+        and all(
+            isinstance(value, int) and not isinstance(value, bool)
+            for value in conductor_ids
+        )
+        and len(set(conductor_ids)) == len(conductor_ids)
+        and mapped_ids == conductor_ids
+        and isinstance(group_ids, list)
+        and len(group_ids) == len(conductor_ids)
+        and all(isinstance(value, str) and bool(value) for value in group_ids)
+        and len(set(group_ids)) == len(group_ids)
+        and re.fullmatch(r"[0-9a-f]{64}", map_digest) is not None
+        and str(identity.get("result_coil_group_map_sha256", "")).lower()
+        == map_digest
+    )
+
+
 def _source_manifest_complete(source_files: object) -> bool:
     if not isinstance(source_files, list) or len(source_files) != 6:
         return False
@@ -687,6 +761,8 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
     material_temperature_interpolation_contracts: list[bool] = []
     mao_floating_precision_layout_contracts: list[bool] = []
     nonlinear_history_scaling_mesh_contracts: list[bool] = []
+    mao_section_endian_marker_contracts: list[bool] = []
+    coil_group_map_numbering_contracts: list[bool] = []
     for run in runs:
         if not isinstance(run, dict):
             run_contracts.append(False)
@@ -710,6 +786,8 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
             material_temperature_interpolation_contracts.append(False)
             mao_floating_precision_layout_contracts.append(False)
             nonlinear_history_scaling_mesh_contracts.append(False)
+            mao_section_endian_marker_contracts.append(False)
+            coil_group_map_numbering_contracts.append(False)
             continue
         role = str(run.get("role", ""))
         parsed_rows = run.get("parsed_rows")
@@ -768,6 +846,12 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
         )
         nonlinear_history_scaling_mesh_contracts.append(
             _nonlinear_history_residual_scaling_matches_mesh(run)
+        )
+        mao_section_endian_marker_contracts.append(
+            _mao_section_endian_marker_matches_decoder(run)
+        )
+        coil_group_map_numbering_contracts.append(
+            _coil_group_map_matches_current_numbering(run)
         )
         run_contracts.append(
             role in _CASE_ROLES
@@ -876,6 +960,12 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
         ),
         "nonlinear_history_residual_scaling_matches_current_mesh": all(
             nonlinear_history_scaling_mesh_contracts
+        ),
+        "mao_section_endian_marker_matches_current_decoder_generation": all(
+            mao_section_endian_marker_contracts
+        ),
+        "coil_group_map_matches_current_model_numbering_generation": all(
+            coil_group_map_numbering_contracts
         ),
         "two_replays_per_source_role": all(
             replays == {1, 2} for replays in role_replays.values()

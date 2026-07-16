@@ -244,6 +244,30 @@ def _summary() -> dict:
                 "residual_scaling_sha256": "9" * 64,
                 "history_residual_scaling_sha256": "9" * 64,
             }
+            runs[-1]["mao_section_endian_marker_decoder_generation_identity"] = {
+                "job_generation": job_generation,
+                "result_job_generation": job_generation,
+                "section_layout_generation": f"section-layout-{19 + len(runs) - 1}",
+                "endian_marker_section_layout_generation": f"section-layout-{19 + len(runs) - 1}",
+                "decoder_section_layout_generation": f"section-layout-{19 + len(runs) - 1}",
+                "declared_byte_order": "little",
+                "endian_marker_byte_order": "little",
+                "decoder_byte_order": "little",
+                "endian_marker_sha256": "3" * 64,
+                "decoded_endian_marker_sha256": "3" * 64,
+            }
+            runs[-1]["coil_group_map_model_numbering_generation_identity"] = {
+                "job_generation": job_generation,
+                "result_job_generation": job_generation,
+                "model_numbering_generation": f"model-numbering-{19 + len(runs) - 1}",
+                "conductor_result_model_numbering_generation": f"model-numbering-{19 + len(runs) - 1}",
+                "coil_group_map_model_numbering_generation": f"model-numbering-{19 + len(runs) - 1}",
+                "conductor_ids": [101, 102, 201, 202],
+                "mapped_conductor_ids": [101, 102, 201, 202],
+                "coil_group_ids": ["U+", "U-", "V+", "V-"],
+                "coil_group_map_sha256": "4" * 64,
+                "result_coil_group_map_sha256": "4" * 64,
+            }
     return {
         "execution_route": "direct_mesh_and_solver_exe_no_gui",
         "completion_dialog": False,
@@ -703,5 +727,47 @@ def test_v16_source_nonlinear_history_residual_scaling_previous_mesh_generation(
     assert result["status"] == "needs_attention"
     assert (
         result["checks"]["nonlinear_history_residual_scaling_matches_current_mesh"]
+        is False
+    )
+
+
+def test_v17_source_mao_section_endian_marker_decoder_generation_mismatch() -> None:
+    summary = copy.deepcopy(_summary())
+    summary["runs"][0][
+        "mao_section_endian_marker_decoder_generation_identity"
+    ].update(
+        {
+            "decoder_section_layout_generation": "section-layout-18",
+            "decoder_byte_order": "big",
+            "decoded_endian_marker_sha256": "5" * 64,
+        }
+    )
+    result = force_method_profile_contract_gate(json.dumps(summary))
+    assert result["status"] == "needs_attention"
+    assert (
+        result["checks"][
+            "mao_section_endian_marker_matches_current_decoder_generation"
+        ]
+        is False
+    )
+
+
+def test_v17_source_coil_group_map_previous_model_numbering_generation() -> None:
+    summary = copy.deepcopy(_summary())
+    summary["runs"][0][
+        "coil_group_map_model_numbering_generation_identity"
+    ].update(
+        {
+            "coil_group_map_model_numbering_generation": "model-numbering-18",
+            "mapped_conductor_ids": [102, 101, 201, 202],
+            "result_coil_group_map_sha256": "5" * 64,
+        }
+    )
+    result = force_method_profile_contract_gate(json.dumps(summary))
+    assert result["status"] == "needs_attention"
+    assert (
+        result["checks"][
+            "coil_group_map_matches_current_model_numbering_generation"
+        ]
         is False
     )
