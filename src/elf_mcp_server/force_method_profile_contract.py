@@ -455,6 +455,97 @@ def _material_id_table_matches_current_model(run: dict) -> bool:
     )
 
 
+def _mao_section_offset_alignment_matches_payload(run: dict) -> bool:
+    identity = run.get("mao_section_offset_byte_order_alignment_identity")
+    if identity is None:
+        return True
+    if not isinstance(identity, dict):
+        return False
+    mao = run.get("output_artifacts")
+    mao = mao.get(".mao") if isinstance(mao, dict) else {}
+    terminal = mao.get("terminal_record") if isinstance(mao, dict) else {}
+    terminal = terminal if isinstance(terminal, dict) else {}
+    job_generation = str(identity.get("job_generation", ""))
+    section_generation = str(identity.get("section_generation", ""))
+    try:
+        section_offset = int(identity.get("section_offset_bytes"))
+        decoded_offset = int(identity.get("decoded_section_offset_bytes"))
+        section_count = int(identity.get("section_byte_count"))
+        decoded_count = int(identity.get("decoded_section_byte_count"))
+        alignment = int(identity.get("section_alignment_bytes"))
+        decoded_alignment = int(identity.get("decoded_section_alignment_bytes"))
+    except (TypeError, ValueError):
+        section_offset = decoded_offset = section_count = decoded_count = -1
+        alignment = decoded_alignment = -1
+    section_digest = str(identity.get("section_sha256", "")).lower()
+    return (
+        bool(job_generation)
+        and terminal.get("job_generation") == job_generation
+        and identity.get("result_job_generation") == job_generation
+        and bool(section_generation)
+        and identity.get("section_header_generation") == section_generation
+        and identity.get("section_payload_generation") == section_generation
+        and section_offset >= 0
+        and decoded_offset == section_offset
+        and section_count > 0
+        and decoded_count == section_count
+        and identity.get("section_byte_order") in {"little", "big"}
+        and identity.get("decoded_section_byte_order")
+        == identity.get("section_byte_order")
+        and alignment > 0
+        and decoded_alignment == alignment
+        and section_offset % alignment == 0
+        and re.fullmatch(r"[0-9a-f]{64}", section_digest) is not None
+        and str(identity.get("decoded_section_sha256", "")).lower()
+        == section_digest
+    )
+
+
+def _material_temperature_interpolation_matches_table(run: dict) -> bool:
+    identity = run.get("material_temperature_interpolation_table_identity")
+    if identity is None:
+        return True
+    if not isinstance(identity, dict):
+        return False
+    mao = run.get("output_artifacts")
+    mao = mao.get(".mao") if isinstance(mao, dict) else {}
+    terminal = mao.get("terminal_record") if isinstance(mao, dict) else {}
+    terminal = terminal if isinstance(terminal, dict) else {}
+    job_generation = str(identity.get("job_generation", ""))
+    material_generation = str(identity.get("material_generation", ""))
+    table_generation = str(identity.get("temperature_table_generation", ""))
+    try:
+        requested = float(identity.get("requested_temperature_c"))
+        lower = float(identity.get("lower_temperature_c"))
+        upper = float(identity.get("upper_temperature_c"))
+        weight = float(identity.get("interpolation_weight"))
+    except (TypeError, ValueError):
+        requested = lower = upper = weight = math.nan
+    table_digest = str(identity.get("temperature_table_sha256", "")).lower()
+    return (
+        bool(job_generation)
+        and terminal.get("job_generation") == job_generation
+        and identity.get("result_job_generation") == job_generation
+        and bool(material_generation)
+        and identity.get("resolved_material_generation") == material_generation
+        and bool(table_generation)
+        and identity.get("interpolation_weight_table_generation")
+        == table_generation
+        and identity.get("result_temperature_table_generation") == table_generation
+        and all(math.isfinite(value) for value in (requested, lower, upper, weight))
+        and lower < requested < upper
+        and math.isclose(
+            weight,
+            (requested - lower) / (upper - lower),
+            rel_tol=1.0e-12,
+            abs_tol=1.0e-12,
+        )
+        and re.fullmatch(r"[0-9a-f]{64}", table_digest) is not None
+        and str(identity.get("interpolation_table_sha256", "")).lower()
+        == table_digest
+    )
+
+
 def _source_manifest_complete(source_files: object) -> bool:
     if not isinstance(source_files, list) or len(source_files) != 6:
         return False
@@ -515,6 +606,8 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
     nonlinear_scaled_residual_contracts: list[bool] = []
     mao_record_precision_contracts: list[bool] = []
     material_id_table_contracts: list[bool] = []
+    mao_section_offset_contracts: list[bool] = []
+    material_temperature_interpolation_contracts: list[bool] = []
     for run in runs:
         if not isinstance(run, dict):
             run_contracts.append(False)
@@ -534,6 +627,8 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
             nonlinear_scaled_residual_contracts.append(False)
             mao_record_precision_contracts.append(False)
             material_id_table_contracts.append(False)
+            mao_section_offset_contracts.append(False)
+            material_temperature_interpolation_contracts.append(False)
             continue
         role = str(run.get("role", ""))
         parsed_rows = run.get("parsed_rows")
@@ -580,6 +675,12 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
         )
         material_id_table_contracts.append(
             _material_id_table_matches_current_model(run)
+        )
+        mao_section_offset_contracts.append(
+            _mao_section_offset_alignment_matches_payload(run)
+        )
+        material_temperature_interpolation_contracts.append(
+            _material_temperature_interpolation_matches_table(run)
         )
         run_contracts.append(
             role in _CASE_ROLES
@@ -676,6 +777,12 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
         ),
         "material_id_table_matches_current_model_generation": all(
             material_id_table_contracts
+        ),
+        "mao_section_offset_uses_current_byte_order_and_alignment": all(
+            mao_section_offset_contracts
+        ),
+        "material_temperature_interpolation_uses_current_table_generation": all(
+            material_temperature_interpolation_contracts
         ),
         "two_replays_per_source_role": all(
             replays == {1, 2} for replays in role_replays.values()

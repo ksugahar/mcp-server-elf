@@ -185,6 +185,38 @@ def _summary() -> dict:
                 "material_id_table_sha256": "c" * 64,
                 "result_material_mapping_sha256": "c" * 64,
             }
+            runs[-1]["mao_section_offset_byte_order_alignment_identity"] = {
+                "job_generation": job_generation,
+                "result_job_generation": job_generation,
+                "section_generation": f"mao-section-{17 + len(runs) - 1}",
+                "section_header_generation": f"mao-section-{17 + len(runs) - 1}",
+                "section_payload_generation": f"mao-section-{17 + len(runs) - 1}",
+                "section_offset_bytes": 4096,
+                "decoded_section_offset_bytes": 4096,
+                "section_byte_count": 8192,
+                "decoded_section_byte_count": 8192,
+                "section_byte_order": "little",
+                "decoded_section_byte_order": "little",
+                "section_alignment_bytes": 8,
+                "decoded_section_alignment_bytes": 8,
+                "section_sha256": "3" * 64,
+                "decoded_section_sha256": "3" * 64,
+            }
+            runs[-1]["material_temperature_interpolation_table_identity"] = {
+                "job_generation": job_generation,
+                "result_job_generation": job_generation,
+                "material_generation": f"material-{17 + len(runs) - 1}",
+                "resolved_material_generation": f"material-{17 + len(runs) - 1}",
+                "temperature_table_generation": f"temperature-table-{17 + len(runs) - 1}",
+                "interpolation_weight_table_generation": f"temperature-table-{17 + len(runs) - 1}",
+                "result_temperature_table_generation": f"temperature-table-{17 + len(runs) - 1}",
+                "requested_temperature_c": 100.0,
+                "lower_temperature_c": 80.0,
+                "upper_temperature_c": 120.0,
+                "interpolation_weight": 0.5,
+                "temperature_table_sha256": "4" * 64,
+                "interpolation_table_sha256": "4" * 64,
+            }
     return {
         "execution_route": "direct_mesh_and_solver_exe_no_gui",
         "completion_dialog": False,
@@ -568,5 +600,46 @@ def test_v14_source_material_id_table_previous_model_generation() -> None:
     assert result["status"] == "needs_attention"
     assert (
         result["checks"]["material_id_table_matches_current_model_generation"]
+        is False
+    )
+
+
+def test_v15_source_mao_section_offset_byte_order_alignment_mismatch() -> None:
+    summary = copy.deepcopy(_summary())
+    summary["runs"][0]["mao_section_offset_byte_order_alignment_identity"].update(
+        {
+            "section_header_generation": "mao-section-16",
+            "decoded_section_offset_bytes": 4100,
+            "decoded_section_byte_order": "big",
+            "decoded_section_alignment_bytes": 4,
+            "decoded_section_sha256": "5" * 64,
+        }
+    )
+    result = force_method_profile_contract_gate(json.dumps(summary))
+    assert result["status"] == "needs_attention"
+    assert (
+        result["checks"][
+            "mao_section_offset_uses_current_byte_order_and_alignment"
+        ]
+        is False
+    )
+
+
+def test_v15_source_material_temperature_interpolation_table_generation_mismatch() -> None:
+    summary = copy.deepcopy(_summary())
+    summary["runs"][0]["material_temperature_interpolation_table_identity"].update(
+        {
+            "interpolation_weight_table_generation": "temperature-table-16",
+            "result_temperature_table_generation": "temperature-table-16",
+            "interpolation_weight": 0.25,
+            "interpolation_table_sha256": "5" * 64,
+        }
+    )
+    result = force_method_profile_contract_gate(json.dumps(summary))
+    assert result["status"] == "needs_attention"
+    assert (
+        result["checks"][
+            "material_temperature_interpolation_uses_current_table_generation"
+        ]
         is False
     )
