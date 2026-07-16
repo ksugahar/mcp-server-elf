@@ -546,6 +546,83 @@ def _material_temperature_interpolation_matches_table(run: dict) -> bool:
     )
 
 
+def _mao_floating_precision_record_layout_matches(run: dict) -> bool:
+    identity = run.get("mao_floating_precision_record_layout_identity")
+    if identity is None:
+        return True
+    if not isinstance(identity, dict):
+        return False
+    mao = run.get("output_artifacts")
+    mao = mao.get(".mao") if isinstance(mao, dict) else {}
+    terminal = mao.get("terminal_record") if isinstance(mao, dict) else {}
+    terminal = terminal if isinstance(terminal, dict) else {}
+    job_generation = str(identity.get("job_generation", ""))
+    layout_generation = str(identity.get("record_layout_generation", ""))
+    try:
+        scalar_bytes = int(identity.get("declared_scalar_bytes"))
+        decoder_scalar_bytes = int(identity.get("decoder_scalar_bytes"))
+        stride = int(identity.get("record_stride_bytes"))
+        decoded_stride = int(identity.get("decoded_record_stride_bytes"))
+    except (TypeError, ValueError):
+        scalar_bytes = decoder_scalar_bytes = stride = decoded_stride = -1
+    layout_digest = str(identity.get("record_layout_sha256", "")).lower()
+    precision_bytes = {"float32": 4, "float64": 8}
+    precision = identity.get("declared_floating_precision")
+    return (
+        bool(job_generation)
+        and terminal.get("job_generation") == job_generation
+        and identity.get("result_job_generation") == job_generation
+        and bool(layout_generation)
+        and identity.get("decoder_record_layout_generation") == layout_generation
+        and precision in precision_bytes
+        and identity.get("decoder_floating_precision") == precision
+        and scalar_bytes == precision_bytes[precision]
+        and decoder_scalar_bytes == scalar_bytes
+        and stride > 0
+        and stride % scalar_bytes == 0
+        and decoded_stride == stride
+        and re.fullmatch(r"[0-9a-f]{64}", layout_digest) is not None
+        and str(identity.get("decoded_record_layout_sha256", "")).lower()
+        == layout_digest
+    )
+
+
+def _nonlinear_history_residual_scaling_matches_mesh(run: dict) -> bool:
+    identity = run.get("nonlinear_history_residual_scaling_mesh_identity")
+    if identity is None:
+        return True
+    if not isinstance(identity, dict):
+        return False
+    mao = run.get("output_artifacts")
+    mao = mao.get(".mao") if isinstance(mao, dict) else {}
+    terminal = mao.get("terminal_record") if isinstance(mao, dict) else {}
+    terminal = terminal if isinstance(terminal, dict) else {}
+    job_generation = str(identity.get("job_generation", ""))
+    mesh_generation = str(identity.get("mesh_generation", ""))
+    try:
+        vector_size = int(identity.get("residual_scaling_vector_size"))
+        dof_count = int(identity.get("active_dof_count"))
+    except (TypeError, ValueError):
+        vector_size = dof_count = -1
+    scaling_digest = str(identity.get("residual_scaling_sha256", "")).lower()
+    return (
+        bool(job_generation)
+        and terminal.get("job_generation") == job_generation
+        and identity.get("result_job_generation") == job_generation
+        and bool(mesh_generation)
+        and identity.get("nonlinear_history_mesh_generation") == mesh_generation
+        and identity.get("residual_scaling_mesh_generation") == mesh_generation
+        and identity.get("residual_norm_basis") == "scaled_l2"
+        and identity.get("history_residual_norm_basis")
+        == identity.get("residual_norm_basis")
+        and vector_size > 0
+        and vector_size == dof_count
+        and re.fullmatch(r"[0-9a-f]{64}", scaling_digest) is not None
+        and str(identity.get("history_residual_scaling_sha256", "")).lower()
+        == scaling_digest
+    )
+
+
 def _source_manifest_complete(source_files: object) -> bool:
     if not isinstance(source_files, list) or len(source_files) != 6:
         return False
@@ -608,6 +685,8 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
     material_id_table_contracts: list[bool] = []
     mao_section_offset_contracts: list[bool] = []
     material_temperature_interpolation_contracts: list[bool] = []
+    mao_floating_precision_layout_contracts: list[bool] = []
+    nonlinear_history_scaling_mesh_contracts: list[bool] = []
     for run in runs:
         if not isinstance(run, dict):
             run_contracts.append(False)
@@ -629,6 +708,8 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
             material_id_table_contracts.append(False)
             mao_section_offset_contracts.append(False)
             material_temperature_interpolation_contracts.append(False)
+            mao_floating_precision_layout_contracts.append(False)
+            nonlinear_history_scaling_mesh_contracts.append(False)
             continue
         role = str(run.get("role", ""))
         parsed_rows = run.get("parsed_rows")
@@ -681,6 +762,12 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
         )
         material_temperature_interpolation_contracts.append(
             _material_temperature_interpolation_matches_table(run)
+        )
+        mao_floating_precision_layout_contracts.append(
+            _mao_floating_precision_record_layout_matches(run)
+        )
+        nonlinear_history_scaling_mesh_contracts.append(
+            _nonlinear_history_residual_scaling_matches_mesh(run)
         )
         run_contracts.append(
             role in _CASE_ROLES
@@ -783,6 +870,12 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
         ),
         "material_temperature_interpolation_uses_current_table_generation": all(
             material_temperature_interpolation_contracts
+        ),
+        "mao_floating_precision_matches_current_record_layout": all(
+            mao_floating_precision_layout_contracts
+        ),
+        "nonlinear_history_residual_scaling_matches_current_mesh": all(
+            nonlinear_history_scaling_mesh_contracts
         ),
         "two_replays_per_source_role": all(
             replays == {1, 2} for replays in role_replays.values()

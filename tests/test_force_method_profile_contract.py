@@ -217,6 +217,33 @@ def _summary() -> dict:
                 "temperature_table_sha256": "4" * 64,
                 "interpolation_table_sha256": "4" * 64,
             }
+            runs[-1]["mao_floating_precision_record_layout_identity"] = {
+                "job_generation": job_generation,
+                "result_job_generation": job_generation,
+                "record_layout_generation": f"record-layout-{18 + len(runs) - 1}",
+                "decoder_record_layout_generation": f"record-layout-{18 + len(runs) - 1}",
+                "declared_floating_precision": "float64",
+                "decoder_floating_precision": "float64",
+                "declared_scalar_bytes": 8,
+                "decoder_scalar_bytes": 8,
+                "record_stride_bytes": 64,
+                "decoded_record_stride_bytes": 64,
+                "record_layout_sha256": "8" * 64,
+                "decoded_record_layout_sha256": "8" * 64,
+            }
+            runs[-1]["nonlinear_history_residual_scaling_mesh_identity"] = {
+                "job_generation": job_generation,
+                "result_job_generation": job_generation,
+                "mesh_generation": f"mesh-{18 + len(runs) - 1}",
+                "nonlinear_history_mesh_generation": f"mesh-{18 + len(runs) - 1}",
+                "residual_scaling_mesh_generation": f"mesh-{18 + len(runs) - 1}",
+                "residual_norm_basis": "scaled_l2",
+                "history_residual_norm_basis": "scaled_l2",
+                "residual_scaling_vector_size": 1024,
+                "active_dof_count": 1024,
+                "residual_scaling_sha256": "9" * 64,
+                "history_residual_scaling_sha256": "9" * 64,
+            }
     return {
         "execution_route": "direct_mesh_and_solver_exe_no_gui",
         "completion_dialog": False,
@@ -641,5 +668,40 @@ def test_v15_source_material_temperature_interpolation_table_generation_mismatch
         result["checks"][
             "material_temperature_interpolation_uses_current_table_generation"
         ]
+        is False
+    )
+
+
+def test_v16_source_mao_floating_precision_record_layout_mismatch() -> None:
+    summary = copy.deepcopy(_summary())
+    summary["runs"][0]["mao_floating_precision_record_layout_identity"].update(
+        {
+            "decoder_record_layout_generation": "record-layout-17",
+            "decoder_floating_precision": "float32",
+            "decoder_scalar_bytes": 4,
+            "decoded_record_stride_bytes": 32,
+            "decoded_record_layout_sha256": "4" * 64,
+        }
+    )
+    result = force_method_profile_contract_gate(json.dumps(summary))
+    assert result["status"] == "needs_attention"
+    assert result["checks"]["mao_floating_precision_matches_current_record_layout"] is False
+
+
+def test_v16_source_nonlinear_history_residual_scaling_previous_mesh_generation() -> None:
+    summary = copy.deepcopy(_summary())
+    summary["runs"][0][
+        "nonlinear_history_residual_scaling_mesh_identity"
+    ].update(
+        {
+            "residual_scaling_mesh_generation": "mesh-17",
+            "residual_scaling_vector_size": 1000,
+            "history_residual_scaling_sha256": "4" * 64,
+        }
+    )
+    result = force_method_profile_contract_gate(json.dumps(summary))
+    assert result["status"] == "needs_attention"
+    assert (
+        result["checks"]["nonlinear_history_residual_scaling_matches_current_mesh"]
         is False
     )
