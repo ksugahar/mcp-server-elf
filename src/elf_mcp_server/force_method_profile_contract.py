@@ -155,6 +155,49 @@ def _terminal_convergence_recorded(run: dict) -> bool:
     )
 
 
+def _mao_terminal_matches_current_job(run: dict) -> bool:
+    artifacts = run.get("output_artifacts")
+    artifacts = artifacts if isinstance(artifacts, dict) else {}
+    mao = artifacts.get(".mao")
+    mao = mao if isinstance(mao, dict) else {}
+    terminal = mao.get("terminal_record")
+    if terminal is None:
+        return True
+    if not isinstance(terminal, dict):
+        return False
+    try:
+        block_index = int(terminal["terminal_block_index"])
+        selected_index = int(terminal["selected_terminal_block_index"])
+    except (KeyError, TypeError, ValueError):
+        return False
+    job_generation = str(terminal.get("job_generation", ""))
+    return (
+        bool(job_generation)
+        and terminal.get("parsed_terminal_job_generation") == job_generation
+        and block_index >= 0
+        and selected_index == block_index
+    )
+
+
+def _force_surface_orientation_matches_remesh(run: dict) -> bool:
+    identity = run.get("force_surface_identity")
+    if identity is None:
+        return True
+    if not isinstance(identity, dict):
+        return False
+    surface_generation = str(identity.get("surface_mesh_generation", ""))
+    orientation_digest = str(identity.get("surface_orientation_digest", ""))
+    return (
+        bool(surface_generation)
+        and identity.get("orientation_sign_generation") == surface_generation
+        and identity.get("force_integration_surface_generation")
+        == surface_generation
+        and bool(orientation_digest)
+        and identity.get("force_orientation_digest") == orientation_digest
+        and identity.get("surface_remeshed") is True
+    )
+
+
 def _source_manifest_complete(source_files: object) -> bool:
     if not isinstance(source_files, list) or len(source_files) != 6:
         return False
@@ -205,6 +248,8 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
     session_model_contracts: list[bool] = []
     material_generation_contracts: list[bool] = []
     convergence_record_contracts: list[bool] = []
+    terminal_job_contracts: list[bool] = []
+    surface_orientation_contracts: list[bool] = []
     for run in runs:
         if not isinstance(run, dict):
             run_contracts.append(False)
@@ -214,6 +259,8 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
             session_model_contracts.append(False)
             material_generation_contracts.append(False)
             convergence_record_contracts.append(False)
+            terminal_job_contracts.append(False)
+            surface_orientation_contracts.append(False)
             continue
         role = str(run.get("role", ""))
         parsed_rows = run.get("parsed_rows")
@@ -235,6 +282,10 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
             _result_material_matches_current_generation(run)
         )
         convergence_record_contracts.append(_terminal_convergence_recorded(run))
+        terminal_job_contracts.append(_mao_terminal_matches_current_job(run))
+        surface_orientation_contracts.append(
+            _force_surface_orientation_matches_remesh(run)
+        )
         run_contracts.append(
             role in _CASE_ROLES
             and run.get("case_id") == _CASE_ROLES[role]
@@ -300,6 +351,12 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
         ),
         "terminal_success_includes_solver_convergence_record": all(
             convergence_record_contracts
+        ),
+        "mao_terminal_block_matches_current_job_generation": all(
+            terminal_job_contracts
+        ),
+        "force_surface_orientation_matches_current_remesh": all(
+            surface_orientation_contracts
         ),
         "two_replays_per_source_role": all(
             replays == {1, 2} for replays in role_replays.values()

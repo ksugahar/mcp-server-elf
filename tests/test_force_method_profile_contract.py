@@ -84,6 +84,20 @@ def _summary() -> dict:
                     "final_residual_norm": 1.0e-9,
                     "terminal_record_id": f"terminal-{role}-{replay}",
                 },
+                "job_generation": f"job-{role}-{replay}",
+                "parsed_terminal_job_generation": f"job-{role}-{replay}",
+                "terminal_block_index": 1,
+                "selected_terminal_block_index": 1,
+            }
+            runs[-1]["force_surface_identity"] = {
+                "surface_mesh_generation": f"surface-mesh-{role}-{replay}",
+                "orientation_sign_generation": f"surface-mesh-{role}-{replay}",
+                "force_integration_surface_generation": (
+                    f"surface-mesh-{role}-{replay}"
+                ),
+                "surface_orientation_digest": f"orientation-{role}-{replay}",
+                "force_orientation_digest": f"orientation-{role}-{replay}",
+                "surface_remeshed": True,
             }
     return {
         "execution_route": "direct_mesh_and_solver_exe_no_gui",
@@ -311,5 +325,33 @@ def test_v9_source_terminal_success_without_convergence_record() -> None:
     assert result["status"] == "needs_attention"
     assert (
         result["checks"]["terminal_success_includes_solver_convergence_record"]
+        is False
+    )
+
+
+def test_v10_source_mao_terminal_block_previous_job() -> None:
+    summary = copy.deepcopy(_summary())
+    terminal = summary["runs"][0]["output_artifacts"][".mao"][
+        "terminal_record"
+    ]
+    terminal["parsed_terminal_job_generation"] = "job-previous"
+    terminal["selected_terminal_block_index"] = 0
+    result = force_method_profile_contract_gate(json.dumps(summary))
+    assert result["status"] == "needs_attention"
+    assert (
+        result["checks"]["mao_terminal_block_matches_current_job_generation"]
+        is False
+    )
+
+
+def test_v10_source_force_surface_orientation_sign_stale() -> None:
+    summary = copy.deepcopy(_summary())
+    surface = summary["runs"][0]["force_surface_identity"]
+    surface["orientation_sign_generation"] = "surface-mesh-previous"
+    surface["force_orientation_digest"] = "orientation-previous"
+    result = force_method_profile_contract_gate(json.dumps(summary))
+    assert result["status"] == "needs_attention"
+    assert (
+        result["checks"]["force_surface_orientation_matches_current_remesh"]
         is False
     )
