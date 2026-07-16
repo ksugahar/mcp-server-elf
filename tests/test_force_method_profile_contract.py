@@ -120,6 +120,22 @@ def _summary() -> dict:
                 "thrust_axis": "x",
                 "thrust_positive_direction": 1,
             }
+            runs[-1]["mao_subcase_selection_identity"] = {
+                "job_generation": job_generation,
+                "mao_result_job_generation": job_generation,
+                "available_subcase_indices": [0, 1, 2],
+                "current_requested_subcase_index": 1,
+                "selected_subcase_index": 1,
+                "selected_subcase_job_generation": job_generation,
+                "selected_subcase_output_sha256": "5" * 64,
+            }
+            runs[-1]["terminal_convergence_material_identity"] = {
+                "job_generation": job_generation,
+                "terminal_record_id": f"terminal-{role}-{replay}",
+                "terminal_record_job_generation": job_generation,
+                "final_material_update_generation": "nonlinear-material-14",
+                "terminal_convergence_material_generation": "nonlinear-material-14",
+            }
     return {
         "execution_route": "direct_mesh_and_solver_exe_no_gui",
         "completion_dialog": False,
@@ -404,5 +420,36 @@ def test_v11_source_linear_motor_terminal_sequence_previous_job() -> None:
     assert result["status"] == "needs_attention"
     assert (
         result["checks"]["linear_motor_terminal_sequence_matches_current_job"]
+        is False
+    )
+
+
+def test_v12_source_mao_selected_subcase_index_previous_run() -> None:
+    summary = copy.deepcopy(_summary())
+    summary["runs"][0]["mao_subcase_selection_identity"].update(
+        {
+            "selected_subcase_index": 0,
+            "selected_subcase_job_generation": "job-previous",
+        }
+    )
+    result = force_method_profile_contract_gate(json.dumps(summary))
+    assert result["status"] == "needs_attention"
+    assert (
+        result["checks"]["mao_selected_subcase_matches_current_run_generation"]
+        is False
+    )
+
+
+def test_v12_source_terminal_convergence_material_update_generation_mismatch() -> None:
+    summary = copy.deepcopy(_summary())
+    summary["runs"][0]["terminal_convergence_material_identity"][
+        "terminal_convergence_material_generation"
+    ] = "nonlinear-material-13"
+    result = force_method_profile_contract_gate(json.dumps(summary))
+    assert result["status"] == "needs_attention"
+    assert (
+        result["checks"][
+            "terminal_convergence_matches_final_material_update_generation"
+        ]
         is False
     )

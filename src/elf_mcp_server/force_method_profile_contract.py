@@ -255,6 +255,61 @@ def _linear_motor_terminal_sequence_matches_job(run: dict) -> bool:
     )
 
 
+def _mao_subcase_selection_matches_current_run(run: dict) -> bool:
+    identity = run.get("mao_subcase_selection_identity")
+    if identity is None:
+        return True
+    if not isinstance(identity, dict):
+        return False
+    mao = run.get("output_artifacts")
+    mao = mao.get(".mao") if isinstance(mao, dict) else {}
+    terminal = mao.get("terminal_record") if isinstance(mao, dict) else {}
+    terminal = terminal if isinstance(terminal, dict) else {}
+    job_generation = str(identity.get("job_generation", ""))
+    available_indices = identity.get("available_subcase_indices")
+    requested_index = identity.get("current_requested_subcase_index")
+    selected_index = identity.get("selected_subcase_index")
+    digest = str(identity.get("selected_subcase_output_sha256", ""))
+    return (
+        bool(job_generation)
+        and terminal.get("job_generation") == job_generation
+        and identity.get("mao_result_job_generation") == job_generation
+        and isinstance(available_indices, list)
+        and bool(available_indices)
+        and all(type(index) is int and index >= 0 for index in available_indices)
+        and len(set(available_indices)) == len(available_indices)
+        and type(requested_index) is int
+        and requested_index in available_indices
+        and selected_index == requested_index
+        and identity.get("selected_subcase_job_generation") == job_generation
+        and re.fullmatch(r"[0-9a-f]{64}", digest) is not None
+    )
+
+
+def _terminal_convergence_matches_final_material_update(run: dict) -> bool:
+    identity = run.get("terminal_convergence_material_identity")
+    if identity is None:
+        return True
+    if not isinstance(identity, dict):
+        return False
+    mao = run.get("output_artifacts")
+    mao = mao.get(".mao") if isinstance(mao, dict) else {}
+    terminal = mao.get("terminal_record") if isinstance(mao, dict) else {}
+    terminal = terminal if isinstance(terminal, dict) else {}
+    job_generation = str(identity.get("job_generation", ""))
+    material_generation = str(identity.get("final_material_update_generation", ""))
+    return (
+        bool(job_generation)
+        and terminal.get("job_generation") == job_generation
+        and identity.get("terminal_record_job_generation") == job_generation
+        and bool(str(identity.get("terminal_record_id", "")))
+        and identity.get("terminal_record_id") == terminal.get("record_id")
+        and bool(material_generation)
+        and identity.get("terminal_convergence_material_generation")
+        == material_generation
+    )
+
+
 def _source_manifest_complete(source_files: object) -> bool:
     if not isinstance(source_files, list) or len(source_files) != 6:
         return False
@@ -309,6 +364,8 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
     surface_orientation_contracts: list[bool] = []
     model_digest_contracts: list[bool] = []
     terminal_sequence_contracts: list[bool] = []
+    subcase_selection_contracts: list[bool] = []
+    convergence_material_contracts: list[bool] = []
     for run in runs:
         if not isinstance(run, dict):
             run_contracts.append(False)
@@ -322,6 +379,8 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
             surface_orientation_contracts.append(False)
             model_digest_contracts.append(False)
             terminal_sequence_contracts.append(False)
+            subcase_selection_contracts.append(False)
+            convergence_material_contracts.append(False)
             continue
         role = str(run.get("role", ""))
         parsed_rows = run.get("parsed_rows")
@@ -350,6 +409,12 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
         model_digest_contracts.append(_mao_result_matches_live_model_digest(run))
         terminal_sequence_contracts.append(
             _linear_motor_terminal_sequence_matches_job(run)
+        )
+        subcase_selection_contracts.append(
+            _mao_subcase_selection_matches_current_run(run)
+        )
+        convergence_material_contracts.append(
+            _terminal_convergence_matches_final_material_update(run)
         )
         run_contracts.append(
             role in _CASE_ROLES
@@ -428,6 +493,12 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
         ),
         "linear_motor_terminal_sequence_matches_current_job": all(
             terminal_sequence_contracts
+        ),
+        "mao_selected_subcase_matches_current_run_generation": all(
+            subcase_selection_contracts
+        ),
+        "terminal_convergence_matches_final_material_update_generation": all(
+            convergence_material_contracts
         ),
         "two_replays_per_source_role": all(
             replays == {1, 2} for replays in role_replays.values()
