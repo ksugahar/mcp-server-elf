@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import math
 import re
 from datetime import datetime
 
@@ -105,6 +106,55 @@ def _opened_result_matches_session_model(run: dict) -> bool:
     )
 
 
+def _result_material_matches_current_generation(run: dict) -> bool:
+    identity = run.get("material_identity")
+    if identity is None:
+        return True
+    if not isinstance(identity, dict):
+        return False
+    session = run.get("session_identity")
+    session = session if isinstance(session, dict) else {}
+    session_model = str(session.get("session_model_generation", ""))
+    model_generation = str(identity.get("model_generation", ""))
+    material_generation = str(identity.get("material_table_generation", ""))
+    return (
+        bool(session_model)
+        and model_generation == session_model
+        and str(identity.get("result_model_generation", "")) == model_generation
+        and bool(material_generation)
+        and str(identity.get("result_material_table_generation", ""))
+        == material_generation
+    )
+
+
+def _terminal_convergence_recorded(run: dict) -> bool:
+    artifacts = run.get("output_artifacts")
+    artifacts = artifacts if isinstance(artifacts, dict) else {}
+    mao = artifacts.get(".mao")
+    mao = mao if isinstance(mao, dict) else {}
+    terminal = mao.get("terminal_record")
+    if terminal is None:
+        return True
+    if not isinstance(terminal, dict):
+        return False
+    convergence = terminal.get("convergence_record")
+    if not isinstance(convergence, dict):
+        return False
+    try:
+        iteration_count = int(convergence["iteration_count"])
+        residual = float(convergence["final_residual_norm"])
+    except (KeyError, TypeError, ValueError):
+        return False
+    return (
+        convergence.get("status") == "converged"
+        and convergence.get("solver_exit_code") == run.get("solver_exit_code") == 0
+        and iteration_count >= 1
+        and math.isfinite(residual)
+        and residual >= 0.0
+        and convergence.get("terminal_record_id") == terminal.get("record_id")
+    )
+
+
 def _source_manifest_complete(source_files: object) -> bool:
     if not isinstance(source_files, list) or len(source_files) != 6:
         return False
@@ -153,6 +203,8 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
     process_lifecycle_contracts: list[bool] = []
     mao_flush_contracts: list[bool] = []
     session_model_contracts: list[bool] = []
+    material_generation_contracts: list[bool] = []
+    convergence_record_contracts: list[bool] = []
     for run in runs:
         if not isinstance(run, dict):
             run_contracts.append(False)
@@ -160,6 +212,8 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
             process_lifecycle_contracts.append(False)
             mao_flush_contracts.append(False)
             session_model_contracts.append(False)
+            material_generation_contracts.append(False)
+            convergence_record_contracts.append(False)
             continue
         role = str(run.get("role", ""))
         parsed_rows = run.get("parsed_rows")
@@ -177,6 +231,10 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
         process_lifecycle_contracts.append(_process_lifecycle_closes(run))
         mao_flush_contracts.append(_mao_terminal_record_flushed(run))
         session_model_contracts.append(_opened_result_matches_session_model(run))
+        material_generation_contracts.append(
+            _result_material_matches_current_generation(run)
+        )
+        convergence_record_contracts.append(_terminal_convergence_recorded(run))
         run_contracts.append(
             role in _CASE_ROLES
             and run.get("case_id") == _CASE_ROLES[role]
@@ -236,6 +294,12 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
         "mao_terminal_record_is_durably_flushed": all(mao_flush_contracts),
         "opened_result_matches_current_session_model_generation": all(
             session_model_contracts
+        ),
+        "result_material_table_matches_current_model_generation": all(
+            material_generation_contracts
+        ),
+        "terminal_success_includes_solver_convergence_record": all(
+            convergence_record_contracts
         ),
         "two_replays_per_source_role": all(
             replays == {1, 2} for replays in role_replays.values()

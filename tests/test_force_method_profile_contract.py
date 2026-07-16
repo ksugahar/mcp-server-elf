@@ -60,6 +60,12 @@ def _summary() -> dict:
                         "session_model_generation": f"model-{role}-{replay}",
                         "opened_result_model_generation": f"model-{role}-{replay}",
                     },
+                    "material_identity": {
+                        "model_generation": f"model-{role}-{replay}",
+                        "material_table_generation": f"material-{role}-{replay}",
+                        "result_model_generation": f"model-{role}-{replay}",
+                        "result_material_table_generation": f"material-{role}-{replay}",
+                    },
                     "process_lifecycle": {
                         "seat_released": True,
                         "owned_solver_children_after": [],
@@ -71,6 +77,13 @@ def _summary() -> dict:
                 "record_id": f"terminal-{role}-{replay}",
                 "durably_flushed": True,
                 "flush_completed_at_utc": "2026-07-16T05:11:00Z",
+                "convergence_record": {
+                    "status": "converged",
+                    "solver_exit_code": 0,
+                    "iteration_count": 12,
+                    "final_residual_norm": 1.0e-9,
+                    "terminal_record_id": f"terminal-{role}-{replay}",
+                },
             }
     return {
         "execution_route": "direct_mesh_and_solver_exe_no_gui",
@@ -272,5 +285,31 @@ def test_v8_source_result_opened_after_session_reuse() -> None:
     assert result["status"] == "needs_attention"
     assert (
         result["checks"]["opened_result_matches_current_session_model_generation"]
+        is False
+    )
+
+
+def test_v9_source_result_material_table_generation_mismatch() -> None:
+    summary = copy.deepcopy(_summary())
+    summary["runs"][0]["material_identity"][
+        "result_material_table_generation"
+    ] = "material-previous"
+    result = force_method_profile_contract_gate(json.dumps(summary))
+    assert result["status"] == "needs_attention"
+    assert (
+        result["checks"]["result_material_table_matches_current_model_generation"]
+        is False
+    )
+
+
+def test_v9_source_terminal_success_without_convergence_record() -> None:
+    summary = copy.deepcopy(_summary())
+    del summary["runs"][0]["output_artifacts"][".mao"]["terminal_record"][
+        "convergence_record"
+    ]
+    result = force_method_profile_contract_gate(json.dumps(summary))
+    assert result["status"] == "needs_attention"
+    assert (
+        result["checks"]["terminal_success_includes_solver_convergence_record"]
         is False
     )
