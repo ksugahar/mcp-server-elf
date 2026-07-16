@@ -159,6 +159,32 @@ def _summary() -> dict:
                 "scaled_residual_norm": 2.0e-8,
                 "terminal_tolerance": 1.0e-6,
             }
+            runs[-1]["mao_record_precision_header_payload_identity"] = {
+                "job_generation": job_generation,
+                "record_header_job_generation": job_generation,
+                "record_payload_job_generation": job_generation,
+                "record_generation": f"mao-record-{16 + len(runs) - 1}",
+                "header_record_generation": f"mao-record-{16 + len(runs) - 1}",
+                "payload_record_generation": f"mao-record-{16 + len(runs) - 1}",
+                "header_float_precision": "float64",
+                "payload_float_precision": "float64",
+                "header_bytes_per_float": 8,
+                "payload_bytes_per_float": 8,
+                "header_endianness": "little",
+                "payload_endianness": "little",
+            }
+            runs[-1]["material_id_table_model_generation_identity"] = {
+                "job_generation": job_generation,
+                "result_job_generation": job_generation,
+                "active_model_generation": f"model-{16 + len(runs) - 1}",
+                "result_region_model_generation": f"model-{16 + len(runs) - 1}",
+                "material_id_table_model_generation": f"model-{16 + len(runs) - 1}",
+                "material_id_table": {"1": "air", "2": "magnet"},
+                "result_region_material_ids": [1, 2],
+                "resolved_material_ids": [1, 2],
+                "material_id_table_sha256": "c" * 64,
+                "result_material_mapping_sha256": "c" * 64,
+            }
     return {
         "execution_route": "direct_mesh_and_solver_exe_no_gui",
         "completion_dialog": False,
@@ -512,5 +538,35 @@ def test_v13_source_nonlinear_residual_scaled_norm_generation_mismatch() -> None
         result["checks"][
             "nonlinear_scaled_residual_uses_current_material_iteration"
         ]
+        is False
+    )
+
+
+def test_v14_source_mao_record_precision_header_payload_mismatch() -> None:
+    summary = copy.deepcopy(_summary())
+    summary["runs"][0]["mao_record_precision_header_payload_identity"].update(
+        {
+            "header_float_precision": "float32",
+            "header_bytes_per_float": 4,
+            "header_record_generation": "mao-record-15",
+        }
+    )
+    result = force_method_profile_contract_gate(json.dumps(summary))
+    assert result["status"] == "needs_attention"
+    assert result["checks"]["mao_record_precision_matches_header_and_payload"] is False
+
+
+def test_v14_source_material_id_table_previous_model_generation() -> None:
+    summary = copy.deepcopy(_summary())
+    summary["runs"][0]["material_id_table_model_generation_identity"].update(
+        {
+            "material_id_table_model_generation": "model-15",
+            "material_id_table_sha256": "d" * 64,
+        }
+    )
+    result = force_method_profile_contract_gate(json.dumps(summary))
+    assert result["status"] == "needs_attention"
+    assert (
+        result["checks"]["material_id_table_matches_current_model_generation"]
         is False
     )

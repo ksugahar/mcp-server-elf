@@ -384,6 +384,77 @@ def _nonlinear_scaled_residual_matches_current_iteration(run: dict) -> bool:
     )
 
 
+def _mao_record_precision_matches_header(run: dict) -> bool:
+    identity = run.get("mao_record_precision_header_payload_identity")
+    if identity is None:
+        return True
+    if not isinstance(identity, dict):
+        return False
+    mao = run.get("output_artifacts")
+    mao = mao.get(".mao") if isinstance(mao, dict) else {}
+    terminal = mao.get("terminal_record") if isinstance(mao, dict) else {}
+    terminal = terminal if isinstance(terminal, dict) else {}
+    job_generation = str(identity.get("job_generation", ""))
+    record_generation = str(identity.get("record_generation", ""))
+    precision = str(identity.get("header_float_precision", ""))
+    expected_bytes = {"float32": 4, "float64": 8}.get(precision)
+    try:
+        header_bytes = int(identity.get("header_bytes_per_float"))
+        payload_bytes = int(identity.get("payload_bytes_per_float"))
+    except (TypeError, ValueError):
+        header_bytes = payload_bytes = -1
+    return (
+        bool(job_generation)
+        and terminal.get("job_generation") == job_generation
+        and identity.get("record_header_job_generation") == job_generation
+        and identity.get("record_payload_job_generation") == job_generation
+        and bool(record_generation)
+        and identity.get("header_record_generation") == record_generation
+        and identity.get("payload_record_generation") == record_generation
+        and expected_bytes is not None
+        and identity.get("payload_float_precision") == precision
+        and header_bytes == expected_bytes
+        and payload_bytes == expected_bytes
+        and identity.get("header_endianness") in {"little", "big"}
+        and identity.get("payload_endianness") == identity.get("header_endianness")
+    )
+
+
+def _material_id_table_matches_current_model(run: dict) -> bool:
+    identity = run.get("material_id_table_model_generation_identity")
+    if identity is None:
+        return True
+    if not isinstance(identity, dict):
+        return False
+    mao = run.get("output_artifacts")
+    mao = mao.get(".mao") if isinstance(mao, dict) else {}
+    terminal = mao.get("terminal_record") if isinstance(mao, dict) else {}
+    terminal = terminal if isinstance(terminal, dict) else {}
+    job_generation = str(identity.get("job_generation", ""))
+    model_generation = str(identity.get("active_model_generation", ""))
+    material_table = identity.get("material_id_table")
+    result_ids = identity.get("result_region_material_ids")
+    resolved_ids = identity.get("resolved_material_ids")
+    table_digest = str(identity.get("material_id_table_sha256", "")).lower()
+    return (
+        bool(job_generation)
+        and terminal.get("job_generation") == job_generation
+        and identity.get("result_job_generation") == job_generation
+        and bool(model_generation)
+        and identity.get("result_region_model_generation") == model_generation
+        and identity.get("material_id_table_model_generation") == model_generation
+        and isinstance(material_table, dict)
+        and bool(material_table)
+        and all(str(key).isdigit() and bool(str(value)) for key, value in material_table.items())
+        and isinstance(result_ids, list)
+        and bool(result_ids)
+        and resolved_ids == result_ids
+        and all(str(material_id) in material_table for material_id in result_ids)
+        and re.fullmatch(r"[0-9a-f]{64}", table_digest) is not None
+        and identity.get("result_material_mapping_sha256") == table_digest
+    )
+
+
 def _source_manifest_complete(source_files: object) -> bool:
     if not isinstance(source_files, list) or len(source_files) != 6:
         return False
@@ -442,6 +513,8 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
     convergence_material_contracts: list[bool] = []
     mao_record_count_trailer_contracts: list[bool] = []
     nonlinear_scaled_residual_contracts: list[bool] = []
+    mao_record_precision_contracts: list[bool] = []
+    material_id_table_contracts: list[bool] = []
     for run in runs:
         if not isinstance(run, dict):
             run_contracts.append(False)
@@ -459,6 +532,8 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
             convergence_material_contracts.append(False)
             mao_record_count_trailer_contracts.append(False)
             nonlinear_scaled_residual_contracts.append(False)
+            mao_record_precision_contracts.append(False)
+            material_id_table_contracts.append(False)
             continue
         role = str(run.get("role", ""))
         parsed_rows = run.get("parsed_rows")
@@ -499,6 +574,12 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
         )
         nonlinear_scaled_residual_contracts.append(
             _nonlinear_scaled_residual_matches_current_iteration(run)
+        )
+        mao_record_precision_contracts.append(
+            _mao_record_precision_matches_header(run)
+        )
+        material_id_table_contracts.append(
+            _material_id_table_matches_current_model(run)
         )
         run_contracts.append(
             role in _CASE_ROLES
@@ -589,6 +670,12 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
         ),
         "nonlinear_scaled_residual_uses_current_material_iteration": all(
             nonlinear_scaled_residual_contracts
+        ),
+        "mao_record_precision_matches_header_and_payload": all(
+            mao_record_precision_contracts
+        ),
+        "material_id_table_matches_current_model_generation": all(
+            material_id_table_contracts
         ),
         "two_replays_per_source_role": all(
             replays == {1, 2} for replays in role_replays.values()
