@@ -198,6 +198,63 @@ def _force_surface_orientation_matches_remesh(run: dict) -> bool:
     )
 
 
+def _mao_result_matches_live_model_digest(run: dict) -> bool:
+    identity = run.get("mao_model_identity")
+    if identity is None:
+        return True
+    if not isinstance(identity, dict):
+        return False
+    artifacts = run.get("output_artifacts")
+    artifacts = artifacts if isinstance(artifacts, dict) else {}
+    mao = artifacts.get(".mao")
+    mao = mao if isinstance(mao, dict) else {}
+    terminal = mao.get("terminal_record")
+    terminal = terminal if isinstance(terminal, dict) else {}
+    live_digest = str(identity.get("live_model_sha256", ""))
+    embedded_digest = str(identity.get("mao_embedded_model_sha256", ""))
+    job_generation = str(identity.get("job_generation", ""))
+    return (
+        bool(str(identity.get("job_name", "")).strip())
+        and bool(re.fullmatch(r"[0-9a-f]{64}", live_digest))
+        and embedded_digest == live_digest
+        and bool(job_generation)
+        and identity.get("mao_job_generation") == job_generation
+        and terminal.get("job_generation") == job_generation
+    )
+
+
+def _linear_motor_terminal_sequence_matches_job(run: dict) -> bool:
+    identity = run.get("linear_motor_terminal_sequence")
+    if identity is None:
+        return True
+    if not isinstance(identity, dict):
+        return False
+    artifacts = run.get("output_artifacts")
+    artifacts = artifacts if isinstance(artifacts, dict) else {}
+    mao = artifacts.get(".mao")
+    mao = mao if isinstance(mao, dict) else {}
+    terminal = mao.get("terminal_record")
+    terminal = terminal if isinstance(terminal, dict) else {}
+    job_generation = str(identity.get("job_generation", ""))
+    terminals = identity.get("terminal_sequence")
+    travel_direction = identity.get("positive_travel_direction")
+    thrust_direction = identity.get("thrust_positive_direction")
+    return (
+        bool(job_generation)
+        and terminal.get("job_generation") == job_generation
+        and identity.get("terminal_sequence_job_generation") == job_generation
+        and identity.get("thrust_observable_job_generation") == job_generation
+        and terminals == ["U", "V", "W"]
+        and len(set(terminals)) == 3
+        and identity.get("travel_axis") in {"x", "y", "z"}
+        and identity.get("thrust_axis") == identity.get("travel_axis")
+        and type(travel_direction) is int
+        and type(thrust_direction) is int
+        and travel_direction in {-1, 1}
+        and thrust_direction == travel_direction
+    )
+
+
 def _source_manifest_complete(source_files: object) -> bool:
     if not isinstance(source_files, list) or len(source_files) != 6:
         return False
@@ -250,6 +307,8 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
     convergence_record_contracts: list[bool] = []
     terminal_job_contracts: list[bool] = []
     surface_orientation_contracts: list[bool] = []
+    model_digest_contracts: list[bool] = []
+    terminal_sequence_contracts: list[bool] = []
     for run in runs:
         if not isinstance(run, dict):
             run_contracts.append(False)
@@ -261,6 +320,8 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
             convergence_record_contracts.append(False)
             terminal_job_contracts.append(False)
             surface_orientation_contracts.append(False)
+            model_digest_contracts.append(False)
+            terminal_sequence_contracts.append(False)
             continue
         role = str(run.get("role", ""))
         parsed_rows = run.get("parsed_rows")
@@ -285,6 +346,10 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
         terminal_job_contracts.append(_mao_terminal_matches_current_job(run))
         surface_orientation_contracts.append(
             _force_surface_orientation_matches_remesh(run)
+        )
+        model_digest_contracts.append(_mao_result_matches_live_model_digest(run))
+        terminal_sequence_contracts.append(
+            _linear_motor_terminal_sequence_matches_job(run)
         )
         run_contracts.append(
             role in _CASE_ROLES
@@ -357,6 +422,12 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
         ),
         "force_surface_orientation_matches_current_remesh": all(
             surface_orientation_contracts
+        ),
+        "mao_result_model_digest_matches_current_live_model": all(
+            model_digest_contracts
+        ),
+        "linear_motor_terminal_sequence_matches_current_job": all(
+            terminal_sequence_contracts
         ),
         "two_replays_per_source_role": all(
             replays == {1, 2} for replays in role_replays.values()

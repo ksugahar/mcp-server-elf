@@ -99,6 +99,27 @@ def _summary() -> dict:
                 "force_orientation_digest": f"orientation-{role}-{replay}",
                 "surface_remeshed": True,
             }
+            job_generation = output_artifacts[".mao"]["terminal_record"][
+                "job_generation"
+            ]
+            model_digest = ("c" if len(runs) % 2 else "d") * 64
+            runs[-1]["mao_model_identity"] = {
+                "job_name": f"force-profile-{len(runs) - 1}",
+                "job_generation": job_generation,
+                "live_model_sha256": model_digest,
+                "mao_embedded_model_sha256": model_digest,
+                "mao_job_generation": job_generation,
+            }
+            runs[-1]["linear_motor_terminal_sequence"] = {
+                "job_generation": job_generation,
+                "terminal_sequence_job_generation": job_generation,
+                "thrust_observable_job_generation": job_generation,
+                "terminal_sequence": ["U", "V", "W"],
+                "travel_axis": "x",
+                "positive_travel_direction": 1,
+                "thrust_axis": "x",
+                "thrust_positive_direction": 1,
+            }
     return {
         "execution_route": "direct_mesh_and_solver_exe_no_gui",
         "completion_dialog": False,
@@ -353,5 +374,35 @@ def test_v10_source_force_surface_orientation_sign_stale() -> None:
     assert result["status"] == "needs_attention"
     assert (
         result["checks"]["force_surface_orientation_matches_current_remesh"]
+        is False
+    )
+
+
+def test_v11_source_mao_result_live_model_digest_mismatch() -> None:
+    summary = copy.deepcopy(_summary())
+    summary["runs"][0]["mao_model_identity"][
+        "mao_embedded_model_sha256"
+    ] = "e" * 64
+    result = force_method_profile_contract_gate(json.dumps(summary))
+    assert result["status"] == "needs_attention"
+    assert (
+        result["checks"]["mao_result_model_digest_matches_current_live_model"]
+        is False
+    )
+
+
+def test_v11_source_linear_motor_terminal_sequence_previous_job() -> None:
+    summary = copy.deepcopy(_summary())
+    summary["runs"][0]["linear_motor_terminal_sequence"].update(
+        {
+            "terminal_sequence_job_generation": "job-previous",
+            "terminal_sequence": ["U", "W", "V"],
+            "positive_travel_direction": -1,
+        }
+    )
+    result = force_method_profile_contract_gate(json.dumps(summary))
+    assert result["status"] == "needs_attention"
+    assert (
+        result["checks"]["linear_motor_terminal_sequence_matches_current_job"]
         is False
     )
