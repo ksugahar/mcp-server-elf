@@ -268,6 +268,35 @@ def _summary() -> dict:
                 "coil_group_map_sha256": "4" * 64,
                 "result_coil_group_map_sha256": "4" * 64,
             }
+            runs[-1]["mao_record_stride_alignment_section_generation_identity"] = {
+                "job_generation": job_generation,
+                "result_job_generation": job_generation,
+                "section_layout_generation": f"section-layout-{20 + len(runs) - 1}",
+                "record_stride_section_layout_generation": f"section-layout-{20 + len(runs) - 1}",
+                "alignment_section_layout_generation": f"section-layout-{20 + len(runs) - 1}",
+                "decoder_section_layout_generation": f"section-layout-{20 + len(runs) - 1}",
+                "record_stride_bytes": 32,
+                "decoder_record_stride_bytes": 32,
+                "record_alignment_bytes": 8,
+                "decoder_record_alignment_bytes": 8,
+                "record_offsets": [0, 32, 64],
+                "decoded_record_offsets": [0, 32, 64],
+                "section_layout_sha256": "7" * 64,
+                "decoded_section_layout_sha256": "7" * 64,
+            }
+            runs[-1]["material_curve_id_region_assignment_model_reorder_identity"] = {
+                "job_generation": job_generation,
+                "result_job_generation": job_generation,
+                "model_reorder_generation": f"model-reorder-{20 + len(runs) - 1}",
+                "material_assignment_model_reorder_generation": f"model-reorder-{20 + len(runs) - 1}",
+                "result_region_model_reorder_generation": f"model-reorder-{20 + len(runs) - 1}",
+                "material_curve_ids": [11, 12, 13],
+                "assigned_material_curve_ids": [11, 12, 13],
+                "region_ids": [101, 102, 103],
+                "result_region_ids": [101, 102, 103],
+                "material_curve_region_map_sha256": "8" * 64,
+                "result_material_curve_region_map_sha256": "8" * 64,
+            }
     return {
         "execution_route": "direct_mesh_and_solver_exe_no_gui",
         "completion_dialog": False,
@@ -768,6 +797,55 @@ def test_v17_source_coil_group_map_previous_model_numbering_generation() -> None
     assert (
         result["checks"][
             "coil_group_map_matches_current_model_numbering_generation"
+        ]
+        is False
+    )
+
+
+def test_v18_source_mao_record_stride_alignment_section_generation_mismatch() -> None:
+    summary = copy.deepcopy(_summary())
+    stride_alignment = summary["runs"][0][
+        "mao_record_stride_alignment_section_generation_identity"
+    ]
+    stride_alignment.update(
+        {
+            "record_stride_section_layout_generation": "section-layout-19",
+            "decoder_section_layout_generation": "section-layout-19",
+            "decoder_record_stride_bytes": 28,
+            "decoder_record_alignment_bytes": 4,
+            "decoded_record_offsets": [0, 28, 56],
+            "decoded_section_layout_sha256": "9" * 64,
+        }
+    )
+    result = force_method_profile_contract_gate(json.dumps(summary))
+    assert result["status"] == "needs_attention"
+    assert (
+        result["checks"][
+            "mao_record_stride_and_alignment_match_current_section_layout"
+        ]
+        is False
+    )
+
+
+def test_v18_source_material_curve_id_region_assignment_model_reorder_mismatch() -> None:
+    summary = copy.deepcopy(_summary())
+    material_map = summary["runs"][0][
+        "material_curve_id_region_assignment_model_reorder_identity"
+    ]
+    material_map.update(
+        {
+            "material_assignment_model_reorder_generation": "model-reorder-19",
+            "result_region_model_reorder_generation": "model-reorder-19",
+            "assigned_material_curve_ids": [12, 11, 13],
+            "result_region_ids": [102, 101, 103],
+            "result_material_curve_region_map_sha256": "9" * 64,
+        }
+    )
+    result = force_method_profile_contract_gate(json.dumps(summary))
+    assert result["status"] == "needs_attention"
+    assert (
+        result["checks"][
+            "material_curve_region_map_matches_current_model_reorder_generation"
         ]
         is False
     )

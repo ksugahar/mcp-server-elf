@@ -697,6 +697,106 @@ def _coil_group_map_matches_current_numbering(run: dict) -> bool:
     )
 
 
+def _mao_record_stride_alignment_matches_section(run: dict) -> bool:
+    identity = run.get("mao_record_stride_alignment_section_generation_identity")
+    if identity is None:
+        return True
+    if not isinstance(identity, dict):
+        return False
+    artifacts = run.get("output_artifacts")
+    mao = artifacts.get(".mao") if isinstance(artifacts, dict) else {}
+    terminal = mao.get("terminal_record") if isinstance(mao, dict) else {}
+    terminal = terminal if isinstance(terminal, dict) else {}
+    job_generation = str(identity.get("job_generation", ""))
+    layout_generation = str(identity.get("section_layout_generation", ""))
+    try:
+        stride = int(identity.get("record_stride_bytes"))
+        decoded_stride = int(identity.get("decoder_record_stride_bytes"))
+        alignment = int(identity.get("record_alignment_bytes"))
+        decoded_alignment = int(identity.get("decoder_record_alignment_bytes"))
+    except (TypeError, ValueError):
+        stride = decoded_stride = alignment = decoded_alignment = -1
+    offsets = identity.get("record_offsets")
+    decoded_offsets = identity.get("decoded_record_offsets")
+    layout_digest = str(identity.get("section_layout_sha256", "")).lower()
+    return (
+        bool(job_generation)
+        and terminal.get("job_generation") == job_generation
+        and identity.get("result_job_generation") == job_generation
+        and bool(layout_generation)
+        and identity.get("record_stride_section_layout_generation")
+        == layout_generation
+        and identity.get("alignment_section_layout_generation")
+        == layout_generation
+        and identity.get("decoder_section_layout_generation") == layout_generation
+        and stride > 0
+        and stride == decoded_stride
+        and alignment > 0
+        and alignment == decoded_alignment
+        and stride % alignment == 0
+        and isinstance(offsets, list)
+        and len(offsets) >= 2
+        and all(
+            isinstance(value, int)
+            and not isinstance(value, bool)
+            and value >= 0
+            and value % alignment == 0
+            for value in offsets
+        )
+        and all(right - left == stride for left, right in zip(offsets, offsets[1:]))
+        and decoded_offsets == offsets
+        and re.fullmatch(r"[0-9a-f]{64}", layout_digest) is not None
+        and str(identity.get("decoded_section_layout_sha256", "")).lower()
+        == layout_digest
+    )
+
+
+def _material_curve_region_map_matches_model_reorder(run: dict) -> bool:
+    identity = run.get("material_curve_id_region_assignment_model_reorder_identity")
+    if identity is None:
+        return True
+    if not isinstance(identity, dict):
+        return False
+    artifacts = run.get("output_artifacts")
+    mao = artifacts.get(".mao") if isinstance(artifacts, dict) else {}
+    terminal = mao.get("terminal_record") if isinstance(mao, dict) else {}
+    terminal = terminal if isinstance(terminal, dict) else {}
+    job_generation = str(identity.get("job_generation", ""))
+    reorder_generation = str(identity.get("model_reorder_generation", ""))
+    curve_ids = identity.get("material_curve_ids")
+    region_ids = identity.get("region_ids")
+    map_digest = str(
+        identity.get("material_curve_region_map_sha256", "")
+    ).lower()
+    return (
+        bool(job_generation)
+        and terminal.get("job_generation") == job_generation
+        and identity.get("result_job_generation") == job_generation
+        and bool(reorder_generation)
+        and identity.get("material_assignment_model_reorder_generation")
+        == reorder_generation
+        and identity.get("result_region_model_reorder_generation")
+        == reorder_generation
+        and isinstance(curve_ids, list)
+        and isinstance(region_ids, list)
+        and bool(curve_ids)
+        and len(curve_ids) == len(region_ids)
+        and all(
+            isinstance(value, int) and not isinstance(value, bool)
+            for value in curve_ids + region_ids
+        )
+        and len(set(curve_ids)) == len(curve_ids)
+        and len(set(region_ids)) == len(region_ids)
+        and identity.get("assigned_material_curve_ids") == curve_ids
+        and identity.get("result_region_ids") == region_ids
+        and re.fullmatch(r"[0-9a-f]{64}", map_digest) is not None
+        and str(
+            identity.get("result_material_curve_region_map_sha256", "")
+        ).lower()
+        == map_digest
+    )
+
+
 def _source_manifest_complete(source_files: object) -> bool:
     if not isinstance(source_files, list) or len(source_files) != 6:
         return False
@@ -763,6 +863,8 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
     nonlinear_history_scaling_mesh_contracts: list[bool] = []
     mao_section_endian_marker_contracts: list[bool] = []
     coil_group_map_numbering_contracts: list[bool] = []
+    mao_record_stride_alignment_contracts: list[bool] = []
+    material_curve_region_map_contracts: list[bool] = []
     for run in runs:
         if not isinstance(run, dict):
             run_contracts.append(False)
@@ -788,6 +890,8 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
             nonlinear_history_scaling_mesh_contracts.append(False)
             mao_section_endian_marker_contracts.append(False)
             coil_group_map_numbering_contracts.append(False)
+            mao_record_stride_alignment_contracts.append(False)
+            material_curve_region_map_contracts.append(False)
             continue
         role = str(run.get("role", ""))
         parsed_rows = run.get("parsed_rows")
@@ -852,6 +956,12 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
         )
         coil_group_map_numbering_contracts.append(
             _coil_group_map_matches_current_numbering(run)
+        )
+        mao_record_stride_alignment_contracts.append(
+            _mao_record_stride_alignment_matches_section(run)
+        )
+        material_curve_region_map_contracts.append(
+            _material_curve_region_map_matches_model_reorder(run)
         )
         run_contracts.append(
             role in _CASE_ROLES
@@ -966,6 +1076,12 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
         ),
         "coil_group_map_matches_current_model_numbering_generation": all(
             coil_group_map_numbering_contracts
+        ),
+        "mao_record_stride_and_alignment_match_current_section_layout": all(
+            mao_record_stride_alignment_contracts
+        ),
+        "material_curve_region_map_matches_current_model_reorder_generation": all(
+            material_curve_region_map_contracts
         ),
         "two_replays_per_source_role": all(
             replays == {1, 2} for replays in role_replays.values()
