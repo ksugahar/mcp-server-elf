@@ -1349,6 +1349,124 @@ def _position_sweep_force_rows_match_generation(run: dict) -> bool:
     )
 
 
+def _mao_case_result_matches_generation(run: dict) -> bool:
+    identity = run.get(
+        "mao_case_model_version_calculation_revision_generation_identity"
+    )
+    if identity is None:
+        return True
+    if not isinstance(identity, dict):
+        return False
+    artifacts = run.get("output_artifacts")
+    mao = artifacts.get(".mao") if isinstance(artifacts, dict) else {}
+    terminal = mao.get("terminal_record") if isinstance(mao, dict) else {}
+    terminal = terminal if isinstance(terminal, dict) else {}
+    job_generation = str(identity.get("job_generation", ""))
+    case_generation = str(identity.get("case_generation", ""))
+    model_digest = str(identity.get("case_model_sha256", "")).lower()
+    version = str(identity.get("product_version", "")).strip()
+    revision = str(identity.get("calculation_revision", "")).strip()
+    table_digest = str(identity.get("mao_case_table_sha256", "")).lower()
+    return (
+        bool(job_generation)
+        and terminal.get("job_generation") == job_generation
+        and identity.get("result_job_generation") == job_generation
+        and bool(case_generation)
+        and all(
+            identity.get(key) == case_generation
+            for key in (
+                "model_case_generation",
+                "product_version_case_generation",
+                "calculation_revision_case_generation",
+                "completion_case_generation",
+            )
+        )
+        and re.fullmatch(r"[0-9a-f]{64}", model_digest) is not None
+        and str(identity.get("result_case_model_sha256", "")).lower()
+        == model_digest
+        and re.fullmatch(r"[0-9]+(?:\.[0-9]+){1,3}", version) is not None
+        and identity.get("result_product_version") == version
+        and bool(revision)
+        and identity.get("result_calculation_revision") == revision
+        and identity.get("result_complete") is True
+        and identity.get("parsed_result_complete") is True
+        and re.fullmatch(r"[0-9a-f]{64}", table_digest) is not None
+        and str(identity.get("parsed_mao_case_table_sha256", "")).lower()
+        == table_digest
+    )
+
+
+def _mesh_result_matches_entity_map_generation(run: dict) -> bool:
+    identity = run.get(
+        "mesh_result_entity_count_material_map_solve_generation_identity"
+    )
+    if identity is None:
+        return True
+    if not isinstance(identity, dict):
+        return False
+    artifacts = run.get("output_artifacts")
+    mao = artifacts.get(".mao") if isinstance(artifacts, dict) else {}
+    terminal = mao.get("terminal_record") if isinstance(mao, dict) else {}
+    terminal = terminal if isinstance(terminal, dict) else {}
+    job_generation = str(identity.get("job_generation", ""))
+    solve_generation = str(identity.get("solve_generation", ""))
+    counts = identity.get("entity_counts")
+    material_map = identity.get("material_region_map")
+    frame = str(identity.get("coordinate_frame", "")).strip()
+    mesh_digest = str(identity.get("mesh_sha256", "")).lower()
+    result_digest = str(identity.get("result_table_sha256", "")).lower()
+    counts_ok = (
+        isinstance(counts, dict)
+        and set(counts) == {"nodes", "elements", "regions"}
+        and all(
+            isinstance(value, int) and not isinstance(value, bool) and value > 0
+            for value in counts.values()
+        )
+    )
+    map_ok = (
+        isinstance(material_map, list)
+        and bool(material_map)
+        and all(
+            isinstance(row, list)
+            and len(row) == 2
+            and all(
+                isinstance(value, int)
+                and not isinstance(value, bool)
+                and value > 0
+                for value in row
+            )
+            for row in material_map
+        )
+        and len({row[0] for row in material_map}) == len(material_map)
+    )
+    return (
+        bool(job_generation)
+        and terminal.get("job_generation") == job_generation
+        and identity.get("result_job_generation") == job_generation
+        and bool(solve_generation)
+        and all(
+            identity.get(key) == solve_generation
+            for key in (
+                "mesh_entity_solve_generation",
+                "result_entity_solve_generation",
+                "material_map_solve_generation",
+                "coordinate_frame_solve_generation",
+            )
+        )
+        and counts_ok
+        and identity.get("result_entity_counts") == counts
+        and map_ok
+        and identity.get("result_material_region_map") == material_map
+        and frame in {"global_xyz", "local_xyz", "rotor_dq"}
+        and identity.get("result_coordinate_frame") == frame
+        and re.fullmatch(r"[0-9a-f]{64}", mesh_digest) is not None
+        and str(identity.get("result_mesh_sha256", "")).lower() == mesh_digest
+        and re.fullmatch(r"[0-9a-f]{64}", result_digest) is not None
+        and str(identity.get("parsed_result_table_sha256", "")).lower()
+        == result_digest
+    )
+
+
 def _source_manifest_complete(source_files: object) -> bool:
     if not isinstance(source_files, list) or len(source_files) != 6:
         return False
@@ -1425,6 +1543,8 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
     winding_input_contracts: list[bool] = []
     bem_panel_region_contracts: list[bool] = []
     position_sweep_force_contracts: list[bool] = []
+    mao_case_result_contracts: list[bool] = []
+    mesh_result_entity_map_contracts: list[bool] = []
     for run in runs:
         if not isinstance(run, dict):
             run_contracts.append(False)
@@ -1460,6 +1580,8 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
             winding_input_contracts.append(False)
             bem_panel_region_contracts.append(False)
             position_sweep_force_contracts.append(False)
+            mao_case_result_contracts.append(False)
+            mesh_result_entity_map_contracts.append(False)
             continue
         role = str(run.get("role", ""))
         parsed_rows = run.get("parsed_rows")
@@ -1554,6 +1676,12 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
         )
         position_sweep_force_contracts.append(
             _position_sweep_force_rows_match_generation(run)
+        )
+        mao_case_result_contracts.append(
+            _mao_case_result_matches_generation(run)
+        )
+        mesh_result_entity_map_contracts.append(
+            _mesh_result_matches_entity_map_generation(run)
         )
         run_contracts.append(
             role in _CASE_ROLES
@@ -1698,6 +1826,12 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
         ),
         "position_sweep_uses_current_rows_force_frame_and_units": all(
             position_sweep_force_contracts
+        ),
+        "mao_results_use_current_model_version_revision_and_completion": all(
+            mao_case_result_contracts
+        ),
+        "mesh_results_use_current_entity_counts_material_map_and_frame": all(
+            mesh_result_entity_map_contracts
         ),
         "two_replays_per_source_role": all(
             replays == {1, 2} for replays in role_replays.values()
