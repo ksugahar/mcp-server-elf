@@ -797,6 +797,128 @@ def _material_curve_region_map_matches_model_reorder(run: dict) -> bool:
     )
 
 
+def _hysteresis_curve_branch_units_match_region_generation(run: dict) -> bool:
+    identity = run.get("hysteresis_curve_branch_unit_region_generation_identity")
+    if identity is None:
+        return True
+    if not isinstance(identity, dict):
+        return False
+    artifacts = run.get("output_artifacts")
+    mao = artifacts.get(".mao") if isinstance(artifacts, dict) else {}
+    terminal = mao.get("terminal_record") if isinstance(mao, dict) else {}
+    terminal = terminal if isinstance(terminal, dict) else {}
+    job_generation = str(identity.get("job_generation", ""))
+    material_generation = str(identity.get("material_generation", ""))
+    region_generation = str(identity.get("region_map_generation", ""))
+    branches = identity.get("curve_branches")
+    units = identity.get("field_units")
+    region_ids = identity.get("region_ids")
+    map_digest = str(identity.get("curve_region_map_sha256", "")).lower()
+    return (
+        bool(job_generation)
+        and terminal.get("job_generation") == job_generation
+        and identity.get("result_job_generation") == job_generation
+        and bool(material_generation)
+        and identity.get("result_material_generation") == material_generation
+        and bool(region_generation)
+        and identity.get("curve_branch_region_map_generation")
+        == region_generation
+        and identity.get("field_unit_region_map_generation")
+        == region_generation
+        and identity.get("result_region_map_generation") == region_generation
+        and isinstance(branches, list)
+        and bool(branches)
+        and len(set(branches)) == len(branches)
+        and all(branch in {"ascending", "descending"} for branch in branches)
+        and identity.get("parsed_curve_branches") == branches
+        and units == {"B": "T", "H": "A/m"}
+        and identity.get("parsed_field_units") == units
+        and isinstance(region_ids, list)
+        and len(region_ids) == len(branches)
+        and all(
+            isinstance(value, int) and not isinstance(value, bool)
+            for value in region_ids
+        )
+        and len(set(region_ids)) == len(region_ids)
+        and identity.get("curve_region_ids") == region_ids
+        and re.fullmatch(r"[0-9a-f]{64}", map_digest) is not None
+        and str(identity.get("result_curve_region_map_sha256", "")).lower()
+        == map_digest
+    )
+
+
+def _run_result_iteration_table_matches_solver_generation(run: dict) -> bool:
+    identity = run.get(
+        "run_result_step_solver_iteration_table_generation_identity"
+    )
+    if identity is None:
+        return True
+    if not isinstance(identity, dict):
+        return False
+    artifacts = run.get("output_artifacts")
+    mao = artifacts.get(".mao") if isinstance(artifacts, dict) else {}
+    terminal = mao.get("terminal_record") if isinstance(mao, dict) else {}
+    terminal = terminal if isinstance(terminal, dict) else {}
+    job_generation = str(identity.get("job_generation", ""))
+    solver_generation = str(identity.get("solver_run_generation", ""))
+    step_ids = identity.get("step_ids")
+    iteration_indices = identity.get("iteration_indices")
+    convergence_rows = identity.get("convergence_rows")
+    table_digest = str(
+        identity.get("solver_iteration_table_sha256", "")
+    ).lower()
+    rows_valid = (
+        isinstance(convergence_rows, list)
+        and isinstance(step_ids, list)
+        and isinstance(iteration_indices, list)
+        and len(convergence_rows) == len(step_ids) == len(iteration_indices)
+        and all(
+            isinstance(row, dict)
+            and row.get("step_id") == step_id
+            and row.get("iteration_index") == iteration_index
+            and row.get("converged") is True
+            for row, step_id, iteration_index in zip(
+                convergence_rows, step_ids, iteration_indices
+            )
+        )
+    )
+    return (
+        bool(job_generation)
+        and terminal.get("job_generation") == job_generation
+        and identity.get("result_job_generation") == job_generation
+        and bool(solver_generation)
+        and identity.get("run_result_solver_generation") == solver_generation
+        and identity.get("step_table_solver_generation") == solver_generation
+        and identity.get("iteration_table_solver_generation")
+        == solver_generation
+        and identity.get("convergence_table_solver_generation")
+        == solver_generation
+        and isinstance(step_ids, list)
+        and bool(step_ids)
+        and all(
+            isinstance(value, int) and not isinstance(value, bool) and value >= 0
+            for value in step_ids
+        )
+        and len(set(step_ids)) == len(step_ids)
+        and step_ids == sorted(step_ids)
+        and identity.get("parsed_step_ids") == step_ids
+        and isinstance(iteration_indices, list)
+        and all(
+            isinstance(value, int) and not isinstance(value, bool) and value >= 0
+            for value in iteration_indices
+        )
+        and iteration_indices == sorted(iteration_indices)
+        and identity.get("parsed_iteration_indices") == iteration_indices
+        and rows_valid
+        and identity.get("parsed_convergence_rows") == convergence_rows
+        and re.fullmatch(r"[0-9a-f]{64}", table_digest) is not None
+        and str(
+            identity.get("parsed_solver_iteration_table_sha256", "")
+        ).lower()
+        == table_digest
+    )
+
+
 def _source_manifest_complete(source_files: object) -> bool:
     if not isinstance(source_files, list) or len(source_files) != 6:
         return False
@@ -865,6 +987,8 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
     coil_group_map_numbering_contracts: list[bool] = []
     mao_record_stride_alignment_contracts: list[bool] = []
     material_curve_region_map_contracts: list[bool] = []
+    hysteresis_curve_region_contracts: list[bool] = []
+    run_result_iteration_table_contracts: list[bool] = []
     for run in runs:
         if not isinstance(run, dict):
             run_contracts.append(False)
@@ -892,6 +1016,8 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
             coil_group_map_numbering_contracts.append(False)
             mao_record_stride_alignment_contracts.append(False)
             material_curve_region_map_contracts.append(False)
+            hysteresis_curve_region_contracts.append(False)
+            run_result_iteration_table_contracts.append(False)
             continue
         role = str(run.get("role", ""))
         parsed_rows = run.get("parsed_rows")
@@ -962,6 +1088,12 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
         )
         material_curve_region_map_contracts.append(
             _material_curve_region_map_matches_model_reorder(run)
+        )
+        hysteresis_curve_region_contracts.append(
+            _hysteresis_curve_branch_units_match_region_generation(run)
+        )
+        run_result_iteration_table_contracts.append(
+            _run_result_iteration_table_matches_solver_generation(run)
         )
         run_contracts.append(
             role in _CASE_ROLES
@@ -1082,6 +1214,12 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
         ),
         "material_curve_region_map_matches_current_model_reorder_generation": all(
             material_curve_region_map_contracts
+        ),
+        "hysteresis_curve_branches_and_units_match_current_region_generation": all(
+            hysteresis_curve_region_contracts
+        ),
+        "run_result_iteration_table_matches_current_solver_generation": all(
+            run_result_iteration_table_contracts
         ),
         "two_replays_per_source_role": all(
             replays == {1, 2} for replays in role_replays.values()

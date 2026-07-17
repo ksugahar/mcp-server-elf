@@ -297,6 +297,47 @@ def _summary() -> dict:
                 "material_curve_region_map_sha256": "8" * 64,
                 "result_material_curve_region_map_sha256": "8" * 64,
             }
+            runs[-1]["hysteresis_curve_branch_unit_region_generation_identity"] = {
+                "job_generation": job_generation,
+                "result_job_generation": job_generation,
+                "material_generation": f"material-{21 + len(runs) - 1}",
+                "result_material_generation": f"material-{21 + len(runs) - 1}",
+                "region_map_generation": f"region-map-{21 + len(runs) - 1}",
+                "curve_branch_region_map_generation": f"region-map-{21 + len(runs) - 1}",
+                "field_unit_region_map_generation": f"region-map-{21 + len(runs) - 1}",
+                "result_region_map_generation": f"region-map-{21 + len(runs) - 1}",
+                "curve_branches": ["ascending", "descending"],
+                "parsed_curve_branches": ["ascending", "descending"],
+                "field_units": {"B": "T", "H": "A/m"},
+                "parsed_field_units": {"B": "T", "H": "A/m"},
+                "region_ids": [101, 102],
+                "curve_region_ids": [101, 102],
+                "curve_region_map_sha256": "c" * 64,
+                "result_curve_region_map_sha256": "c" * 64,
+            }
+            solver_generation = f"solver-run-{21 + len(runs) - 1}"
+            convergence_rows = [
+                {"step_id": 0, "iteration_index": 0, "converged": True},
+                {"step_id": 1, "iteration_index": 4, "converged": True},
+                {"step_id": 2, "iteration_index": 9, "converged": True},
+            ]
+            runs[-1]["run_result_step_solver_iteration_table_generation_identity"] = {
+                "job_generation": job_generation,
+                "result_job_generation": job_generation,
+                "solver_run_generation": solver_generation,
+                "run_result_solver_generation": solver_generation,
+                "step_table_solver_generation": solver_generation,
+                "iteration_table_solver_generation": solver_generation,
+                "convergence_table_solver_generation": solver_generation,
+                "step_ids": [0, 1, 2],
+                "parsed_step_ids": [0, 1, 2],
+                "iteration_indices": [0, 4, 9],
+                "parsed_iteration_indices": [0, 4, 9],
+                "convergence_rows": convergence_rows,
+                "parsed_convergence_rows": convergence_rows,
+                "solver_iteration_table_sha256": "d" * 64,
+                "parsed_solver_iteration_table_sha256": "d" * 64,
+            }
     return {
         "execution_route": "direct_mesh_and_solver_exe_no_gui",
         "completion_dialog": False,
@@ -846,6 +887,59 @@ def test_v18_source_material_curve_id_region_assignment_model_reorder_mismatch()
     assert (
         result["checks"][
             "material_curve_region_map_matches_current_model_reorder_generation"
+        ]
+        is False
+    )
+
+
+def test_v19_source_hysteresis_curve_branch_unit_region_generation_mismatch() -> None:
+    summary = copy.deepcopy(_summary())
+    identity = summary["runs"][0][
+        "hysteresis_curve_branch_unit_region_generation_identity"
+    ]
+    identity.update(
+        {
+            "curve_branch_region_map_generation": "region-map-20",
+            "field_unit_region_map_generation": "region-map-20",
+            "parsed_field_units": {"B": "G", "H": "Oe"},
+            "curve_region_ids": [102, 101],
+            "result_curve_region_map_sha256": "e" * 64,
+        }
+    )
+    result = force_method_profile_contract_gate(json.dumps(summary))
+    assert result["status"] == "needs_attention"
+    assert (
+        result["checks"][
+            "hysteresis_curve_branches_and_units_match_current_region_generation"
+        ]
+        is False
+    )
+
+
+def test_v19_source_run_result_step_solver_iteration_table_generation_mismatch() -> None:
+    summary = copy.deepcopy(_summary())
+    identity = summary["runs"][0][
+        "run_result_step_solver_iteration_table_generation_identity"
+    ]
+    identity.update(
+        {
+            "step_table_solver_generation": "solver-run-20",
+            "iteration_table_solver_generation": "solver-run-20",
+            "convergence_table_solver_generation": "solver-run-20",
+            "parsed_iteration_indices": [0, 3, 8],
+            "parsed_convergence_rows": [
+                {"step_id": 0, "iteration_index": 0, "converged": True},
+                {"step_id": 1, "iteration_index": 3, "converged": True},
+                {"step_id": 2, "iteration_index": 8, "converged": True},
+            ],
+            "parsed_solver_iteration_table_sha256": "e" * 64,
+        }
+    )
+    result = force_method_profile_contract_gate(json.dumps(summary))
+    assert result["status"] == "needs_attention"
+    assert (
+        result["checks"][
+            "run_result_iteration_table_matches_current_solver_generation"
         ]
         is False
     )
