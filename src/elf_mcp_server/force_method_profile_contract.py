@@ -1755,6 +1755,81 @@ def _source_manifest_complete(source_files: object) -> bool:
     return names == _EXPECTED_SOURCE_NAMES
 
 
+def _document_index_identity_ok(run: dict) -> bool:
+    identity = run.get(
+        "document_index_release_section_anchor_topic_checksum_generation_identity"
+    )
+    if identity is None:
+        return True
+    if not isinstance(identity, dict):
+        return False
+    generation = str(identity.get("index_generation", "")).strip()
+    release = str(identity.get("document_release", "")).strip()
+    sections = identity.get("section_ids")
+    anchors = identity.get("section_anchors")
+    topics = identity.get("topic_ids")
+    return (
+        bool(generation)
+        and all(identity.get(key) == generation for key in (
+            "release_index_generation", "section_index_generation", "anchor_index_generation",
+            "topic_index_generation", "checksum_index_generation", "result_index_generation"))
+        and bool(release) and identity.get("result_document_release") == release
+        and isinstance(sections, list) and bool(sections)
+        and all(isinstance(item, str) and item.strip() for item in sections)
+        and len(set(sections)) == len(sections) and identity.get("result_section_ids") == sections
+        and isinstance(anchors, list) and len(anchors) == len(sections)
+        and all(isinstance(item, str) and item.strip() for item in anchors)
+        and len(set(anchors)) == len(anchors) and identity.get("result_section_anchors") == anchors
+        and isinstance(topics, list) and bool(topics)
+        and all(isinstance(item, str) and item.strip() for item in topics)
+        and len(set(topics)) == len(topics) and identity.get("result_topic_ids") == topics
+        and re.fullmatch(r"[0-9a-f]{64}", str(identity.get("document_sha256", "")).lower()) is not None
+        and identity.get("indexed_document_sha256") == identity.get("document_sha256")
+        and re.fullmatch(r"[0-9a-f]{64}", str(identity.get("index_sha256", "")).lower()) is not None
+        and identity.get("result_index_sha256") == identity.get("index_sha256")
+    )
+
+
+def _public_query_identity_ok(run: dict) -> bool:
+    identity = run.get(
+        "query_category_schema_doc_version_observable_redaction_generation_identity"
+    )
+    if identity is None:
+        return True
+    if not isinstance(identity, dict):
+        return False
+    generation = str(identity.get("query_generation", "")).strip()
+    category = str(identity.get("category", "")).strip()
+    version = str(identity.get("document_version", "")).strip()
+    allowlist = identity.get("observable_allowlist")
+    returned = identity.get("returned_observable_keys")
+    redacted = identity.get("redacted_field_names")
+    known_observables = {"force_vector_n", "torque_n_m", "method_name", "demag_margin_ratio"}
+    return (
+        bool(generation)
+        and all(identity.get(key) == generation for key in (
+            "category_query_generation", "schema_query_generation", "document_query_generation",
+            "allowlist_query_generation", "redaction_query_generation", "result_query_generation"))
+        and category in {"force_methods", "torque_methods", "demagnetization", "maglev"}
+        and identity.get("result_category") == category
+        and identity.get("query_schema") == "elf-public-query/v1"
+        and identity.get("result_query_schema") == "elf-public-query/v1"
+        and bool(version) and identity.get("result_document_version") == version
+        and isinstance(allowlist, list) and bool(allowlist)
+        and all(isinstance(item, str) and item in known_observables for item in allowlist)
+        and len(set(allowlist)) == len(allowlist)
+        and isinstance(returned, list) and all(item in allowlist for item in returned)
+        and len(set(returned)) == len(returned)
+        and isinstance(redacted, list)
+        and {"api_token", "license_key", "local_path"}.issubset(set(redacted))
+        and identity.get("result_redacted_field_names") == redacted
+        and identity.get("redaction_applied") is True
+        and identity.get("sensitive_fields_present") == []
+        and re.fullmatch(r"[0-9a-f]{64}", str(identity.get("result_sha256", "")).lower()) is not None
+        and identity.get("accepted_result_sha256") == identity.get("result_sha256")
+    )
+
+
 def force_method_profile_contract_gate(summary_json: str) -> dict:
     """Validate deck roles and GUI-free replay metadata without opening files."""
     try:
@@ -1822,6 +1897,8 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
     headless_result_finalization_contracts: list[bool] = []
     result_manifest_generation_contracts: list[bool] = []
     public_artifact_boundary_contracts: list[bool] = []
+    document_index_contracts: list[bool] = []
+    public_query_contracts: list[bool] = []
     for run in runs:
         if not isinstance(run, dict):
             run_contracts.append(False)
@@ -1863,6 +1940,8 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
             headless_result_finalization_contracts.append(False)
             result_manifest_generation_contracts.append(False)
             public_artifact_boundary_contracts.append(False)
+            document_index_contracts.append(False)
+            public_query_contracts.append(False)
             continue
         role = str(run.get("role", ""))
         parsed_rows = run.get("parsed_rows")
@@ -1976,6 +2055,8 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
         public_artifact_boundary_contracts.append(
             _public_artifact_manifest_is_bounded(run)
         )
+        document_index_contracts.append(_document_index_identity_ok(run))
+        public_query_contracts.append(_public_query_identity_ok(run))
         run_contracts.append(
             role in _CASE_ROLES
             and run.get("case_id") == _CASE_ROLES[role]
@@ -2137,6 +2218,12 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
         ),
         "public_artifacts_stay_in_allowed_root_schema_allowlist_and_redaction": all(
             public_artifact_boundary_contracts
+        ),
+        "document_index_uses_current_release_sections_anchors_topics_checksums_and_generation": all(
+            document_index_contracts
+        ),
+        "public_queries_use_current_category_schema_document_allowlist_redaction_and_result": all(
+            public_query_contracts
         ),
         "two_replays_per_source_role": all(
             replays == {1, 2} for replays in role_replays.values()
