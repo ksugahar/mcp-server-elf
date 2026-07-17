@@ -1191,6 +1191,164 @@ def _winding_matches_turn_current_phase_region_generation(run: dict) -> bool:
     )
 
 
+def _bem_panel_material_region_matches_model_generation(run: dict) -> bool:
+    identity = run.get(
+        "bem_panel_group_material_permeability_region_generation_identity"
+    )
+    if identity is None:
+        return True
+    if not isinstance(identity, dict):
+        return False
+    artifacts = run.get("output_artifacts")
+    mao = artifacts.get(".mao") if isinstance(artifacts, dict) else {}
+    terminal = mao.get("terminal_record") if isinstance(mao, dict) else {}
+    terminal = terminal if isinstance(terminal, dict) else {}
+    job_generation = str(identity.get("job_generation", ""))
+    model_generation = str(identity.get("model_generation", ""))
+    panel_ids = identity.get("panel_group_ids")
+    orientations = identity.get("region_orientations")
+    permeabilities = identity.get("relative_permeabilities")
+    region_map = identity.get("panel_material_region_map")
+    digest = str(identity.get("panel_region_table_sha256", "")).lower()
+    panels_ok = (
+        isinstance(panel_ids, list)
+        and bool(panel_ids)
+        and all(
+            isinstance(value, int) and not isinstance(value, bool) and value > 0
+            for value in panel_ids
+        )
+        and len(set(panel_ids)) == len(panel_ids)
+    )
+    orientations_ok = (
+        isinstance(orientations, list)
+        and panels_ok
+        and len(orientations) == len(panel_ids)
+        and all(value in {-1, 1} for value in orientations)
+    )
+    permeability_ok = (
+        isinstance(permeabilities, list)
+        and panels_ok
+        and len(permeabilities) == len(panel_ids)
+        and all(
+            isinstance(value, (int, float))
+            and not isinstance(value, bool)
+            and math.isfinite(float(value))
+            and float(value) > 0.0
+            for value in permeabilities
+        )
+    )
+    expected_map = (
+        [
+            [panel_id, material_index, orientation]
+            for material_index, (panel_id, orientation) in enumerate(
+                zip(panel_ids, orientations), start=1
+            )
+        ]
+        if panels_ok and orientations_ok
+        else []
+    )
+    return (
+        bool(job_generation)
+        and terminal.get("job_generation") == job_generation
+        and identity.get("result_job_generation") == job_generation
+        and bool(model_generation)
+        and all(
+            identity.get(key) == model_generation
+            for key in (
+                "panel_group_model_generation",
+                "region_orientation_model_generation",
+                "permeability_map_model_generation",
+                "result_model_generation",
+            )
+        )
+        and panels_ok
+        and identity.get("result_panel_group_ids") == panel_ids
+        and orientations_ok
+        and identity.get("result_region_orientations") == orientations
+        and permeability_ok
+        and identity.get("result_relative_permeabilities") == permeabilities
+        and region_map == expected_map
+        and identity.get("result_panel_material_region_map") == region_map
+        and re.fullmatch(r"[0-9a-f]{64}", digest) is not None
+        and str(identity.get("result_panel_region_table_sha256", "")).lower()
+        == digest
+    )
+
+
+def _position_sweep_force_rows_match_generation(run: dict) -> bool:
+    identity = run.get("position_sweep_force_frame_unit_row_generation_identity")
+    if identity is None:
+        return True
+    if not isinstance(identity, dict):
+        return False
+    artifacts = run.get("output_artifacts")
+    mao = artifacts.get(".mao") if isinstance(artifacts, dict) else {}
+    terminal = mao.get("terminal_record") if isinstance(mao, dict) else {}
+    terminal = terminal if isinstance(terminal, dict) else {}
+    job_generation = str(identity.get("job_generation", ""))
+    sweep_generation = str(identity.get("sweep_generation", ""))
+    frame = str(identity.get("force_frame", ""))
+    unit = str(identity.get("force_unit", ""))
+    row_keys = identity.get("row_keys")
+    digest = str(identity.get("position_force_table_sha256", "")).lower()
+    try:
+        positions = [float(value) for value in identity.get("positions_m", [])]
+        result_positions = [
+            float(value) for value in identity.get("result_positions_m", [])
+        ]
+        force_rows = [
+            [float(value) for value in row]
+            for row in identity.get("force_rows", [])
+        ]
+        result_force_rows = [
+            [float(value) for value in row]
+            for row in identity.get("result_force_rows", [])
+        ]
+    except (TypeError, ValueError):
+        positions = result_positions = []
+        force_rows = result_force_rows = []
+    return (
+        bool(job_generation)
+        and terminal.get("job_generation") == job_generation
+        and identity.get("result_job_generation") == job_generation
+        and bool(sweep_generation)
+        and all(
+            identity.get(key) == sweep_generation
+            for key in (
+                "position_key_sweep_generation",
+                "force_frame_sweep_generation",
+                "unit_sweep_generation",
+                "row_order_sweep_generation",
+            )
+        )
+        and len(positions) >= 3
+        and all(math.isfinite(value) for value in positions)
+        and all(right > left for left, right in zip(positions, positions[1:]))
+        and result_positions == positions
+        and isinstance(row_keys, list)
+        and len(row_keys) == len(positions)
+        and all(
+            isinstance(value, int) and not isinstance(value, bool)
+            for value in row_keys
+        )
+        and len(set(row_keys)) == len(row_keys)
+        and identity.get("result_row_keys") == row_keys
+        and frame in {"global_xyz", "local_xyz"}
+        and identity.get("result_force_frame") == frame
+        and unit in {"N", "kN"}
+        and identity.get("result_force_unit") == unit
+        and len(force_rows) == len(positions)
+        and all(
+            len(row) == 3 and all(math.isfinite(value) for value in row)
+            for row in force_rows
+        )
+        and result_force_rows == force_rows
+        and re.fullmatch(r"[0-9a-f]{64}", digest) is not None
+        and str(identity.get("result_position_force_table_sha256", "")).lower()
+        == digest
+    )
+
+
 def _source_manifest_complete(source_files: object) -> bool:
     if not isinstance(source_files, list) or len(source_files) != 6:
         return False
@@ -1265,6 +1423,8 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
     result_observable_frame_unit_contracts: list[bool] = []
     output_record_layout_contracts: list[bool] = []
     winding_input_contracts: list[bool] = []
+    bem_panel_region_contracts: list[bool] = []
+    position_sweep_force_contracts: list[bool] = []
     for run in runs:
         if not isinstance(run, dict):
             run_contracts.append(False)
@@ -1298,6 +1458,8 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
             result_observable_frame_unit_contracts.append(False)
             output_record_layout_contracts.append(False)
             winding_input_contracts.append(False)
+            bem_panel_region_contracts.append(False)
+            position_sweep_force_contracts.append(False)
             continue
         role = str(run.get("role", ""))
         parsed_rows = run.get("parsed_rows")
@@ -1386,6 +1548,12 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
         )
         winding_input_contracts.append(
             _winding_matches_turn_current_phase_region_generation(run)
+        )
+        bem_panel_region_contracts.append(
+            _bem_panel_material_region_matches_model_generation(run)
+        )
+        position_sweep_force_contracts.append(
+            _position_sweep_force_rows_match_generation(run)
         )
         run_contracts.append(
             role in _CASE_ROLES
@@ -1524,6 +1692,12 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
         ),
         "windings_use_current_turns_currents_phases_and_region_map": all(
             winding_input_contracts
+        ),
+        "bem_panels_use_current_groups_materials_permeabilities_and_regions": all(
+            bem_panel_region_contracts
+        ),
+        "position_sweep_uses_current_rows_force_frame_and_units": all(
+            position_sweep_force_contracts
         ),
         "two_replays_per_source_role": all(
             replays == {1, 2} for replays in role_replays.values()

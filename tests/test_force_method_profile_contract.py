@@ -1163,3 +1163,119 @@ def test_v21_source_winding_turn_current_phase_region_map_generation_mismatch() 
     assert result["checks"][
         "windings_use_current_turns_currents_phases_and_region_map"
     ] is False
+
+
+def _summary_v22():
+    summary = _summary_v21()
+    for index, run in enumerate(summary["runs"]):
+        terminal = run["output_artifacts"][".mao"]["terminal_record"]
+        job_generation = terminal["job_generation"]
+        model_generation = f"bem-model-{41 + index}"
+        run["bem_panel_group_material_permeability_region_generation_identity"] = {
+            "job_generation": job_generation,
+            "result_job_generation": job_generation,
+            "model_generation": model_generation,
+            "panel_group_model_generation": model_generation,
+            "region_orientation_model_generation": model_generation,
+            "permeability_map_model_generation": model_generation,
+            "result_model_generation": model_generation,
+            "panel_group_ids": [11, 12],
+            "result_panel_group_ids": [11, 12],
+            "region_orientations": [1, -1],
+            "result_region_orientations": [1, -1],
+            "relative_permeabilities": [1.0, 2500.0],
+            "result_relative_permeabilities": [1.0, 2500.0],
+            "panel_material_region_map": [[11, 1, 1], [12, 2, -1]],
+            "result_panel_material_region_map": [[11, 1, 1], [12, 2, -1]],
+            "panel_region_table_sha256": "4" * 64,
+            "result_panel_region_table_sha256": "4" * 64,
+        }
+        sweep_generation = f"position-sweep-{41 + index}"
+        run["position_sweep_force_frame_unit_row_generation_identity"] = {
+            "job_generation": job_generation,
+            "result_job_generation": job_generation,
+            "sweep_generation": sweep_generation,
+            "position_key_sweep_generation": sweep_generation,
+            "force_frame_sweep_generation": sweep_generation,
+            "unit_sweep_generation": sweep_generation,
+            "row_order_sweep_generation": sweep_generation,
+            "positions_m": [-0.01, 0.0, 0.01],
+            "result_positions_m": [-0.01, 0.0, 0.01],
+            "row_keys": [101, 102, 103],
+            "result_row_keys": [101, 102, 103],
+            "force_frame": "global_xyz",
+            "result_force_frame": "global_xyz",
+            "force_unit": "N",
+            "result_force_unit": "N",
+            "force_rows": [
+                [80.0, 0.0, 0.0],
+                [100.0, 0.0, 0.0],
+                [78.0, 0.0, 0.0],
+            ],
+            "result_force_rows": [
+                [80.0, 0.0, 0.0],
+                [100.0, 0.0, 0.0],
+                [78.0, 0.0, 0.0],
+            ],
+            "position_force_table_sha256": "5" * 64,
+            "result_position_force_table_sha256": "5" * 64,
+        }
+    return summary
+
+
+def test_v22_source_positive_bem_panel_and_position_sweep_identity() -> None:
+    assert force_method_profile_contract_gate(json.dumps(_summary_v22()))["status"] == "ok"
+
+
+def test_v22_source_bem_panel_group_material_permeability_region_generation_mismatch() -> None:
+    summary = _summary_v22()
+    identity = summary["runs"][0][
+        "bem_panel_group_material_permeability_region_generation_identity"
+    ]
+    identity.update(
+        {
+            "panel_group_model_generation": "bem-model-40",
+            "region_orientation_model_generation": "bem-model-39",
+            "permeability_map_model_generation": "bem-model-38",
+            "result_panel_group_ids": [12, 13],
+            "result_region_orientations": [-1, 1],
+            "result_relative_permeabilities": [1.0, 1800.0],
+            "result_panel_material_region_map": [[12, 1, -1], [13, 2, 1]],
+            "result_panel_region_table_sha256": "d" * 64,
+        }
+    )
+    result = force_method_profile_contract_gate(json.dumps(summary))
+    assert result["status"] == "needs_attention"
+    assert not result["checks"][
+        "bem_panels_use_current_groups_materials_permeabilities_and_regions"
+    ]
+
+
+def test_v22_source_position_sweep_force_frame_unit_row_generation_mismatch() -> None:
+    summary = _summary_v22()
+    identity = summary["runs"][0][
+        "position_sweep_force_frame_unit_row_generation_identity"
+    ]
+    identity.update(
+        {
+            "position_key_sweep_generation": "position-sweep-40",
+            "force_frame_sweep_generation": "position-sweep-39",
+            "unit_sweep_generation": "position-sweep-38",
+            "row_order_sweep_generation": "position-sweep-37",
+            "result_positions_m": [0.01, 0.0, -0.01],
+            "result_row_keys": [103, 102, 101],
+            "result_force_frame": "local_xyz",
+            "result_force_unit": "kN",
+            "result_force_rows": [
+                [0.078, 0.0, 0.0],
+                [0.1, 0.0, 0.0],
+                [0.08, 0.0, 0.0],
+            ],
+            "result_position_force_table_sha256": "e" * 64,
+        }
+    )
+    result = force_method_profile_contract_gate(json.dumps(summary))
+    assert result["status"] == "needs_attention"
+    assert not result["checks"][
+        "position_sweep_uses_current_rows_force_frame_and_units"
+    ]
