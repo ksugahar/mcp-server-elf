@@ -1467,6 +1467,126 @@ def _mesh_result_matches_entity_map_generation(run: dict) -> bool:
     )
 
 
+def _force_method_profile_matches_generation(run: dict) -> bool:
+    identity = run.get(
+        "force_method_profile_selection_surface_nodal_frame_result_generation_identity"
+    )
+    if identity is None:
+        return True
+    if not isinstance(identity, dict):
+        return False
+    artifacts = run.get("output_artifacts")
+    mao = artifacts.get(".mao") if isinstance(artifacts, dict) else {}
+    terminal = mao.get("terminal_record") if isinstance(mao, dict) else {}
+    terminal = terminal if isinstance(terminal, dict) else {}
+    job_generation = str(identity.get("job_generation", ""))
+    generation = str(identity.get("force_profile_generation", ""))
+    method = str(identity.get("force_method", "")).strip()
+    selection_ids = identity.get("selection_scope_ids")
+    surface_ids = identity.get("surface_ids")
+    nodal_ids = identity.get("nodal_ids")
+    frame = str(identity.get("component_frame", "")).strip()
+    try:
+        force = [float(item) for item in identity.get("force_vector_n", [])]
+        result_force = [
+            float(item) for item in identity.get("result_force_vector_n", [])
+        ]
+    except (TypeError, ValueError):
+        return False
+    digest = str(identity.get("force_profile_sha256", "")).lower()
+
+    def positive_unique_ids(value: object) -> bool:
+        return (
+            isinstance(value, list)
+            and bool(value)
+            and all(
+                isinstance(item, int) and not isinstance(item, bool) and item > 0
+                for item in value
+            )
+            and len(set(value)) == len(value)
+        )
+
+    return (
+        bool(job_generation)
+        and terminal.get("job_generation") == job_generation
+        and identity.get("result_job_generation") == job_generation
+        and bool(generation)
+        and all(
+            identity.get(key) == generation
+            for key in (
+                "method_force_profile_generation",
+                "selection_force_profile_generation",
+                "surface_force_profile_generation",
+                "nodal_force_profile_generation",
+                "frame_force_profile_generation",
+                "result_force_profile_generation",
+            )
+        )
+        and method in {"virtual_work", "maxwell_stress", "nodal_force"}
+        and identity.get("result_force_method") == method
+        and positive_unique_ids(selection_ids)
+        and identity.get("result_selection_scope_ids") == selection_ids
+        and positive_unique_ids(surface_ids)
+        and identity.get("result_surface_ids") == surface_ids
+        and positive_unique_ids(nodal_ids)
+        and identity.get("result_nodal_ids") == nodal_ids
+        and frame in {"global_xyz", "local_xyz", "rotor_dq"}
+        and identity.get("result_component_frame") == frame
+        and len(force) == 3
+        and all(math.isfinite(item) for item in force)
+        and result_force == force
+        and re.fullmatch(r"[0-9a-f]{64}", digest) is not None
+        and str(identity.get("result_force_profile_sha256", "")).lower()
+        == digest
+    )
+
+
+def _headless_result_finalization_matches_generation(run: dict) -> bool:
+    identity = run.get(
+        "headless_completion_dialog_exit_lock_log_final_artifact_generation_identity"
+    )
+    if identity is None:
+        return True
+    if not isinstance(identity, dict):
+        return False
+    artifacts = run.get("output_artifacts")
+    mao = artifacts.get(".mao") if isinstance(artifacts, dict) else {}
+    terminal = mao.get("terminal_record") if isinstance(mao, dict) else {}
+    terminal = terminal if isinstance(terminal, dict) else {}
+    job_generation = str(identity.get("job_generation", ""))
+    generation = str(identity.get("headless_generation", ""))
+    marker = str(identity.get("completion_log_marker", "")).strip()
+    digest = str(identity.get("final_artifact_sha256", "")).lower()
+    return (
+        bool(job_generation)
+        and terminal.get("job_generation") == job_generation
+        and identity.get("result_job_generation") == job_generation
+        and bool(generation)
+        and all(
+            identity.get(key) == generation
+            for key in (
+                "dialog_headless_generation",
+                "process_exit_headless_generation",
+                "result_lock_headless_generation",
+                "completion_log_headless_generation",
+                "final_artifact_headless_generation",
+            )
+        )
+        and identity.get("headless") is True
+        and identity.get("modal_completion_dialog_shown") is False
+        and identity.get("process_exited") is True
+        and identity.get("process_exit_code") == 0
+        and identity.get("result_lock_present") is False
+        and bool(marker)
+        and identity.get("parsed_completion_log_marker") == marker
+        and identity.get("final_artifact_exists") is True
+        and re.fullmatch(r"[0-9a-f]{64}", digest) is not None
+        and str(identity.get("accepted_final_artifact_sha256", "")).lower()
+        == digest
+        and identity.get("owned_process_count_after") == 0
+    )
+
+
 def _source_manifest_complete(source_files: object) -> bool:
     if not isinstance(source_files, list) or len(source_files) != 6:
         return False
@@ -1545,6 +1665,8 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
     position_sweep_force_contracts: list[bool] = []
     mao_case_result_contracts: list[bool] = []
     mesh_result_entity_map_contracts: list[bool] = []
+    force_method_profile_generation_contracts: list[bool] = []
+    headless_result_finalization_contracts: list[bool] = []
     for run in runs:
         if not isinstance(run, dict):
             run_contracts.append(False)
@@ -1582,6 +1704,8 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
             position_sweep_force_contracts.append(False)
             mao_case_result_contracts.append(False)
             mesh_result_entity_map_contracts.append(False)
+            force_method_profile_generation_contracts.append(False)
+            headless_result_finalization_contracts.append(False)
             continue
         role = str(run.get("role", ""))
         parsed_rows = run.get("parsed_rows")
@@ -1682,6 +1806,12 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
         )
         mesh_result_entity_map_contracts.append(
             _mesh_result_matches_entity_map_generation(run)
+        )
+        force_method_profile_generation_contracts.append(
+            _force_method_profile_matches_generation(run)
+        )
+        headless_result_finalization_contracts.append(
+            _headless_result_finalization_matches_generation(run)
         )
         run_contracts.append(
             role in _CASE_ROLES
@@ -1832,6 +1962,12 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
         ),
         "mesh_results_use_current_entity_counts_material_map_and_frame": all(
             mesh_result_entity_map_contracts
+        ),
+        "force_profiles_use_current_method_selection_surface_nodal_frame_and_result": all(
+            force_method_profile_generation_contracts
+        ),
+        "headless_runs_close_dialog_process_lock_log_and_final_artifact_state": all(
+            headless_result_finalization_contracts
         ),
         "two_replays_per_source_role": all(
             replays == {1, 2} for replays in role_replays.values()
