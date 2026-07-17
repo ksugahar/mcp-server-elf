@@ -1587,6 +1587,159 @@ def _headless_result_finalization_matches_generation(run: dict) -> bool:
     )
 
 
+def _result_manifest_matches_generation(run: dict) -> bool:
+    identity = run.get(
+        "result_manifest_component_column_unit_row_job_model_generation_identity"
+    )
+    if identity is None:
+        return True
+    if not isinstance(identity, dict):
+        return False
+    artifacts = run.get("output_artifacts")
+    mao = artifacts.get(".mao") if isinstance(artifacts, dict) else {}
+    terminal = mao.get("terminal_record") if isinstance(mao, dict) else {}
+    terminal = terminal if isinstance(terminal, dict) else {}
+    job_generation = str(identity.get("job_generation", ""))
+    generation = str(identity.get("result_generation", ""))
+    frame = str(identity.get("component_frame", ""))
+    columns = identity.get("column_names")
+    units = identity.get("column_units")
+    row_ids = identity.get("row_ids")
+    model_digest = str(identity.get("model_sha256", "")).lower()
+    manifest_digest = str(identity.get("result_manifest_sha256", "")).lower()
+    columns_ok = (
+        isinstance(columns, list)
+        and len(columns) >= 2
+        and columns[0] == "row_id"
+        and all(isinstance(item, str) and bool(item) for item in columns)
+        and len(set(columns)) == len(columns)
+    )
+    units_ok = (
+        isinstance(units, list)
+        and columns_ok
+        and len(units) == len(columns)
+        and all(unit in {"1", "N", "N/m", "N m"} for unit in units)
+        and units[0] == "1"
+    )
+    rows_ok = (
+        isinstance(row_ids, list)
+        and bool(row_ids)
+        and all(
+            isinstance(item, int) and not isinstance(item, bool) and item >= 0
+            for item in row_ids
+        )
+        and row_ids == sorted(set(row_ids))
+    )
+    return (
+        bool(job_generation)
+        and terminal.get("job_generation") == job_generation
+        and identity.get("result_job_generation") == job_generation
+        and bool(generation)
+        and all(
+            identity.get(key) == generation
+            for key in (
+                "component_result_generation",
+                "column_result_generation",
+                "unit_result_generation",
+                "row_result_generation",
+                "model_result_generation",
+                "manifest_result_generation",
+            )
+        )
+        and frame in {"global_xyz", "local_xyz", "rotor_dq"}
+        and identity.get("result_component_frame") == frame
+        and columns_ok
+        and identity.get("parsed_column_names") == columns
+        and units_ok
+        and identity.get("parsed_column_units") == units
+        and rows_ok
+        and identity.get("parsed_row_ids") == row_ids
+        and re.fullmatch(r"[0-9a-f]{64}", model_digest) is not None
+        and str(identity.get("result_model_sha256", "")).lower() == model_digest
+        and re.fullmatch(r"[0-9a-f]{64}", manifest_digest) is not None
+        and str(identity.get("parsed_result_manifest_sha256", "")).lower()
+        == manifest_digest
+    )
+
+
+def _public_artifact_manifest_is_bounded(run: dict) -> bool:
+    identity = run.get(
+        "public_artifact_root_schema_observable_allowlist_redaction_generation_identity"
+    )
+    if identity is None:
+        return True
+    if not isinstance(identity, dict):
+        return False
+    artifacts = run.get("output_artifacts")
+    mao = artifacts.get(".mao") if isinstance(artifacts, dict) else {}
+    terminal = mao.get("terminal_record") if isinstance(mao, dict) else {}
+    terminal = terminal if isinstance(terminal, dict) else {}
+    job_generation = str(identity.get("job_generation", ""))
+    generation = str(identity.get("manifest_generation", ""))
+    relative_path = str(identity.get("relative_artifact_path", ""))
+    allowlist = identity.get("observable_allowlist")
+    returned = identity.get("returned_observable_keys")
+    redacted = identity.get("redacted_field_names")
+    digest = str(identity.get("public_manifest_sha256", "")).lower()
+    known_observables = {"force_vector_n", "torque_n_m", "demag_margin_ratio"}
+    allowlist_ok = (
+        isinstance(allowlist, list)
+        and bool(allowlist)
+        and all(isinstance(item, str) and item in known_observables for item in allowlist)
+        and len(set(allowlist)) == len(allowlist)
+    )
+    returned_ok = (
+        isinstance(returned, list)
+        and allowlist_ok
+        and all(isinstance(item, str) and item in allowlist for item in returned)
+        and len(set(returned)) == len(returned)
+    )
+    redacted_ok = (
+        isinstance(redacted, list)
+        and {"api_token", "license_key", "local_path"}.issubset(set(redacted))
+        and identity.get("result_redacted_field_names") == redacted
+    )
+    path_ok = (
+        bool(relative_path)
+        and not relative_path.startswith(("/", "\\"))
+        and ":" not in relative_path
+        and "\\" not in relative_path
+        and ".." not in relative_path.split("/")
+        and relative_path.endswith(".json")
+    )
+    return (
+        bool(job_generation)
+        and terminal.get("job_generation") == job_generation
+        and identity.get("result_job_generation") == job_generation
+        and bool(generation)
+        and all(
+            identity.get(key) == generation
+            for key in (
+                "root_manifest_generation",
+                "schema_manifest_generation",
+                "allowlist_manifest_generation",
+                "redaction_manifest_generation",
+                "result_manifest_generation",
+            )
+        )
+        and identity.get("artifact_root_id") == "public_package_artifacts"
+        and identity.get("result_artifact_root_id")
+        == identity.get("artifact_root_id")
+        and path_ok
+        and identity.get("result_relative_artifact_path") == relative_path
+        and identity.get("public_schema") == "elf-public-result-manifest/v1"
+        and identity.get("result_public_schema") == identity.get("public_schema")
+        and allowlist_ok
+        and returned_ok
+        and redacted_ok
+        and identity.get("redaction_applied") is True
+        and identity.get("sensitive_fields_present") == []
+        and re.fullmatch(r"[0-9a-f]{64}", digest) is not None
+        and str(identity.get("result_public_manifest_sha256", "")).lower()
+        == digest
+    )
+
+
 def _source_manifest_complete(source_files: object) -> bool:
     if not isinstance(source_files, list) or len(source_files) != 6:
         return False
@@ -1667,6 +1820,8 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
     mesh_result_entity_map_contracts: list[bool] = []
     force_method_profile_generation_contracts: list[bool] = []
     headless_result_finalization_contracts: list[bool] = []
+    result_manifest_generation_contracts: list[bool] = []
+    public_artifact_boundary_contracts: list[bool] = []
     for run in runs:
         if not isinstance(run, dict):
             run_contracts.append(False)
@@ -1706,6 +1861,8 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
             mesh_result_entity_map_contracts.append(False)
             force_method_profile_generation_contracts.append(False)
             headless_result_finalization_contracts.append(False)
+            result_manifest_generation_contracts.append(False)
+            public_artifact_boundary_contracts.append(False)
             continue
         role = str(run.get("role", ""))
         parsed_rows = run.get("parsed_rows")
@@ -1812,6 +1969,12 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
         )
         headless_result_finalization_contracts.append(
             _headless_result_finalization_matches_generation(run)
+        )
+        result_manifest_generation_contracts.append(
+            _result_manifest_matches_generation(run)
+        )
+        public_artifact_boundary_contracts.append(
+            _public_artifact_manifest_is_bounded(run)
         )
         run_contracts.append(
             role in _CASE_ROLES
@@ -1968,6 +2131,12 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
         ),
         "headless_runs_close_dialog_process_lock_log_and_final_artifact_state": all(
             headless_result_finalization_contracts
+        ),
+        "result_manifests_share_components_columns_units_rows_job_model_and_generation": all(
+            result_manifest_generation_contracts
+        ),
+        "public_artifacts_stay_in_allowed_root_schema_allowlist_and_redaction": all(
+            public_artifact_boundary_contracts
         ),
         "two_replays_per_source_role": all(
             replays == {1, 2} for replays in role_replays.values()
