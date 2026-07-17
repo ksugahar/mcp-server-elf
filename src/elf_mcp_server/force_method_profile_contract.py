@@ -1959,6 +1959,144 @@ def _public_query_citation_identity_ok(run: dict) -> bool:
     )
 
 
+def _document_glossary_identity_ok(run: dict) -> bool:
+    identity = run.get(
+        "document_glossary_alias_command_category_version_anchor_redaction_digest_generation_identity"
+    )
+    if identity is None:
+        return True
+    if not isinstance(identity, dict):
+        return False
+    generation = str(identity.get("glossary_generation", "")).strip()
+    term = str(identity.get("glossary_term", "")).strip()
+    aliases = identity.get("alias_terms")
+    category = str(identity.get("command_category", "")).strip()
+    version = str(identity.get("document_version", "")).strip()
+    anchor = str(identity.get("section_anchor", "")).strip()
+    redacted = identity.get("redacted_field_names")
+    return (
+        bool(generation)
+        and all(
+            identity.get(key) == generation
+            for key in (
+                "alias_glossary_generation",
+                "category_glossary_generation",
+                "version_glossary_generation",
+                "anchor_glossary_generation",
+                "redaction_glossary_generation",
+                "document_glossary_generation",
+                "result_glossary_generation",
+            )
+        )
+        and bool(term)
+        and identity.get("result_glossary_term") == term
+        and isinstance(aliases, list)
+        and bool(aliases)
+        and all(isinstance(item, str) and item.strip() for item in aliases)
+        and len(set(aliases)) == len(aliases)
+        and identity.get("resolved_alias_terms") == aliases
+        and category in {
+            "preprocessing-material",
+            "preprocessing-winding",
+            "postprocessing-force",
+            "postprocessing-torque",
+        }
+        and identity.get("result_command_category") == category
+        and bool(version)
+        and identity.get("result_document_version") == version
+        and bool(anchor)
+        and identity.get("result_section_anchor") == anchor
+        and isinstance(redacted, list)
+        and {"api_token", "license_key", "local_path"}.issubset(set(redacted))
+        and identity.get("result_redacted_field_names") == redacted
+        and identity.get("redaction_applied") is True
+        and identity.get("sensitive_fields_present") == []
+        and re.fullmatch(
+            r"[0-9a-f]{64}", str(identity.get("document_sha256", "")).lower()
+        )
+        is not None
+        and identity.get("indexed_document_sha256") == identity.get("document_sha256")
+        and re.fullmatch(
+            r"[0-9a-f]{64}", str(identity.get("response_sha256", "")).lower()
+        )
+        is not None
+        and identity.get("accepted_response_sha256") == identity.get("response_sha256")
+    )
+
+
+def _bibliography_evidence_identity_ok(run: dict) -> bool:
+    identity = run.get(
+        "bibliography_citation_doi_edition_page_figure_allowlist_checksum_generation_identity"
+    )
+    if identity is None:
+        return True
+    if not isinstance(identity, dict):
+        return False
+    generation = str(identity.get("bibliography_generation", "")).strip()
+    bibliography_id = str(identity.get("bibliography_id", "")).strip()
+    citation = str(identity.get("citation_text", "")).strip()
+    doi = str(identity.get("doi", "")).strip().lower()
+    edition = str(identity.get("edition", "")).strip()
+    pages = identity.get("page_numbers")
+    figures = identity.get("figure_ids")
+    allowlist = identity.get("citation_allowlist")
+    returned = identity.get("returned_citation_ids")
+    return (
+        bool(generation)
+        and all(
+            identity.get(key) == generation
+            for key in (
+                "citation_bibliography_generation",
+                "doi_bibliography_generation",
+                "edition_bibliography_generation",
+                "page_bibliography_generation",
+                "figure_bibliography_generation",
+                "allowlist_bibliography_generation",
+                "checksum_bibliography_generation",
+                "result_bibliography_generation",
+            )
+        )
+        and bibliography_id.startswith("public-")
+        and identity.get("result_bibliography_id") == bibliography_id
+        and bool(citation)
+        and identity.get("result_citation_text") == citation
+        and re.fullmatch(r"10\.\d{4,9}/\S+", doi) is not None
+        and str(identity.get("result_doi", "")).lower() == doi
+        and bool(edition)
+        and identity.get("result_edition") == edition
+        and isinstance(pages, list)
+        and bool(pages)
+        and all(
+            isinstance(item, int) and not isinstance(item, bool) and item > 0
+            for item in pages
+        )
+        and len(set(pages)) == len(pages)
+        and identity.get("result_page_numbers") == pages
+        and isinstance(figures, list)
+        and bool(figures)
+        and all(isinstance(item, str) and item.strip() for item in figures)
+        and len(set(figures)) == len(figures)
+        and identity.get("result_figure_ids") == figures
+        and isinstance(allowlist, list)
+        and bibliography_id in allowlist
+        and len(set(allowlist)) == len(allowlist)
+        and isinstance(returned, list)
+        and bool(returned)
+        and all(item in allowlist for item in returned)
+        and len(set(returned)) == len(returned)
+        and re.fullmatch(
+            r"[0-9a-f]{64}", str(identity.get("source_sha256", "")).lower()
+        )
+        is not None
+        and identity.get("indexed_source_sha256") == identity.get("source_sha256")
+        and re.fullmatch(
+            r"[0-9a-f]{64}", str(identity.get("evidence_sha256", "")).lower()
+        )
+        is not None
+        and identity.get("accepted_evidence_sha256") == identity.get("evidence_sha256")
+    )
+
+
 def force_method_profile_contract_gate(summary_json: str) -> dict:
     """Validate deck roles and GUI-free replay metadata without opening files."""
     try:
@@ -2030,6 +2168,8 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
     public_query_contracts: list[bool] = []
     document_evidence_contracts: list[bool] = []
     public_query_citation_contracts: list[bool] = []
+    document_glossary_contracts: list[bool] = []
+    bibliography_evidence_contracts: list[bool] = []
     for run in runs:
         if not isinstance(run, dict):
             run_contracts.append(False)
@@ -2075,6 +2215,8 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
             public_query_contracts.append(False)
             document_evidence_contracts.append(False)
             public_query_citation_contracts.append(False)
+            document_glossary_contracts.append(False)
+            bibliography_evidence_contracts.append(False)
             continue
         role = str(run.get("role", ""))
         parsed_rows = run.get("parsed_rows")
@@ -2192,6 +2334,8 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
         public_query_contracts.append(_public_query_identity_ok(run))
         document_evidence_contracts.append(_document_evidence_identity_ok(run))
         public_query_citation_contracts.append(_public_query_citation_identity_ok(run))
+        document_glossary_contracts.append(_document_glossary_identity_ok(run))
+        bibliography_evidence_contracts.append(_bibliography_evidence_identity_ok(run))
         run_contracts.append(
             role in _CASE_ROLES
             and run.get("case_id") == _CASE_ROLES[role]
@@ -2365,6 +2509,12 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
         ),
         "public_queries_use_current_synonyms_topics_categories_versions_citations_and_redaction": all(
             public_query_citation_contracts
+        ),
+        "document_glossary_uses_current_aliases_categories_versions_anchors_redaction_and_digests": all(
+            document_glossary_contracts
+        ),
+        "bibliography_evidence_uses_current_citation_doi_edition_pages_figures_allowlist_and_checksums": all(
+            bibliography_evidence_contracts
         ),
         "two_replays_per_source_role": all(
             replays == {1, 2} for replays in role_replays.values()
