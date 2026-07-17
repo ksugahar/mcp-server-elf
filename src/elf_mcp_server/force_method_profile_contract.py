@@ -1040,6 +1040,157 @@ def _result_observables_match_frame_unit_generation(run: dict) -> bool:
     )
 
 
+def _output_record_matches_version_endian_length_generation(run: dict) -> bool:
+    identity = run.get(
+        "output_record_version_endian_length_generation_identity"
+    )
+    if identity is None:
+        return True
+    if not isinstance(identity, dict):
+        return False
+    artifacts = run.get("output_artifacts")
+    mao = artifacts.get(".mao") if isinstance(artifacts, dict) else {}
+    terminal = mao.get("terminal_record") if isinstance(mao, dict) else {}
+    terminal = terminal if isinstance(terminal, dict) else {}
+    job_generation = str(identity.get("job_generation", ""))
+    output_generation = str(identity.get("output_file_generation", ""))
+    version = identity.get("record_version")
+    byte_order = identity.get("byte_order")
+    record_length = identity.get("record_length_bytes")
+    payload_length = identity.get("payload_length_bytes")
+    digest = str(identity.get("output_record_sha256", "")).lower()
+    return (
+        bool(job_generation)
+        and terminal.get("job_generation") == job_generation
+        and identity.get("result_job_generation") == job_generation
+        and bool(output_generation)
+        and all(
+            identity.get(key) == output_generation
+            for key in (
+                "record_version_output_file_generation",
+                "byte_order_output_file_generation",
+                "record_length_output_file_generation",
+            )
+        )
+        and isinstance(version, int)
+        and not isinstance(version, bool)
+        and version > 0
+        and identity.get("parsed_record_version") == version
+        and byte_order in {"little", "big"}
+        and identity.get("parsed_byte_order") == byte_order
+        and isinstance(record_length, int)
+        and not isinstance(record_length, bool)
+        and record_length > 0
+        and identity.get("parsed_record_length_bytes") == record_length
+        and isinstance(payload_length, int)
+        and not isinstance(payload_length, bool)
+        and 0 < payload_length <= record_length
+        and identity.get("parsed_payload_length_bytes") == payload_length
+        and re.fullmatch(r"[0-9a-f]{64}", digest) is not None
+        and str(identity.get("parsed_output_record_sha256", "")).lower()
+        == digest
+    )
+
+
+def _winding_matches_turn_current_phase_region_generation(run: dict) -> bool:
+    identity = run.get(
+        "winding_turn_current_phase_region_map_generation_identity"
+    )
+    if identity is None:
+        return True
+    if not isinstance(identity, dict):
+        return False
+    artifacts = run.get("output_artifacts")
+    mao = artifacts.get(".mao") if isinstance(artifacts, dict) else {}
+    terminal = mao.get("terminal_record") if isinstance(mao, dict) else {}
+    terminal = terminal if isinstance(terminal, dict) else {}
+    job_generation = str(identity.get("job_generation", ""))
+    model_generation = str(identity.get("model_generation", ""))
+    phases = identity.get("phase_order")
+    turns = identity.get("turn_counts")
+    currents = identity.get("complex_currents_a")
+    region_ids = identity.get("region_ids")
+    region_map = identity.get("phase_region_map")
+    digest = str(identity.get("winding_input_table_sha256", "")).lower()
+    phases_ok = (
+        isinstance(phases, list)
+        and bool(phases)
+        and all(bool(str(value).strip()) for value in phases)
+        and len(set(phases)) == len(phases)
+    )
+    turns_ok = (
+        isinstance(turns, list)
+        and phases_ok
+        and len(turns) == len(phases)
+        and all(
+            isinstance(value, int)
+            and not isinstance(value, bool)
+            and value > 0
+            for value in turns
+        )
+    )
+    currents_ok = (
+        isinstance(currents, list)
+        and phases_ok
+        and len(currents) == len(phases)
+        and all(
+            isinstance(value, list)
+            and len(value) == 2
+            and all(
+                isinstance(component, (int, float))
+                and not isinstance(component, bool)
+                and math.isfinite(float(component))
+                for component in value
+            )
+            for value in currents
+        )
+    )
+    regions_ok = (
+        isinstance(region_ids, list)
+        and phases_ok
+        and len(region_ids) == len(phases)
+        and all(
+            isinstance(value, int)
+            and not isinstance(value, bool)
+            and value > 0
+            for value in region_ids
+        )
+        and len(set(region_ids)) == len(region_ids)
+    )
+    expected_map = (
+        [[phase, region] for phase, region in zip(phases, region_ids)]
+        if phases_ok and regions_ok
+        else []
+    )
+    return (
+        bool(job_generation)
+        and terminal.get("job_generation") == job_generation
+        and identity.get("result_job_generation") == job_generation
+        and bool(model_generation)
+        and all(
+            identity.get(key) == model_generation
+            for key in (
+                "turn_count_model_generation",
+                "current_phase_model_generation",
+                "region_map_model_generation",
+            )
+        )
+        and phases_ok
+        and identity.get("resolved_phase_order") == phases
+        and turns_ok
+        and identity.get("resolved_turn_counts") == turns
+        and currents_ok
+        and identity.get("resolved_complex_currents_a") == currents
+        and regions_ok
+        and identity.get("resolved_region_ids") == region_ids
+        and region_map == expected_map
+        and identity.get("resolved_phase_region_map") == region_map
+        and re.fullmatch(r"[0-9a-f]{64}", digest) is not None
+        and str(identity.get("resolved_winding_input_table_sha256", "")).lower()
+        == digest
+    )
+
+
 def _source_manifest_complete(source_files: object) -> bool:
     if not isinstance(source_files, list) or len(source_files) != 6:
         return False
@@ -1112,6 +1263,8 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
     run_result_iteration_table_contracts: list[bool] = []
     material_region_property_table_contracts: list[bool] = []
     result_observable_frame_unit_contracts: list[bool] = []
+    output_record_layout_contracts: list[bool] = []
+    winding_input_contracts: list[bool] = []
     for run in runs:
         if not isinstance(run, dict):
             run_contracts.append(False)
@@ -1143,6 +1296,8 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
             run_result_iteration_table_contracts.append(False)
             material_region_property_table_contracts.append(False)
             result_observable_frame_unit_contracts.append(False)
+            output_record_layout_contracts.append(False)
+            winding_input_contracts.append(False)
             continue
         role = str(run.get("role", ""))
         parsed_rows = run.get("parsed_rows")
@@ -1225,6 +1380,12 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
         )
         result_observable_frame_unit_contracts.append(
             _result_observables_match_frame_unit_generation(run)
+        )
+        output_record_layout_contracts.append(
+            _output_record_matches_version_endian_length_generation(run)
+        )
+        winding_input_contracts.append(
+            _winding_matches_turn_current_phase_region_generation(run)
         )
         run_contracts.append(
             role in _CASE_ROLES
@@ -1357,6 +1518,12 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
         ),
         "result_observables_use_current_scalar_vector_frame_and_units": all(
             result_observable_frame_unit_contracts
+        ),
+        "output_records_use_current_version_endian_length_and_file_generation": all(
+            output_record_layout_contracts
+        ),
+        "windings_use_current_turns_currents_phases_and_region_map": all(
+            winding_input_contracts
         ),
         "two_replays_per_source_role": all(
             replays == {1, 2} for replays in role_replays.values()

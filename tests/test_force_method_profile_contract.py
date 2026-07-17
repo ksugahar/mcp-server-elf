@@ -1045,3 +1045,121 @@ def test_v20_source_result_scalar_vector_coordinate_frame_unit_generation_mismat
     assert result["checks"][
         "result_observables_use_current_scalar_vector_frame_and_units"
     ] is False
+
+
+def _summary_v21():
+    summary = _summary_v20()
+    for index, run in enumerate(summary["runs"]):
+        terminal = run["output_artifacts"][".mao"]["terminal_record"]
+        job_generation = terminal["job_generation"]
+        output_generation = f"output-file-{31 + index}"
+        run["output_record_version_endian_length_generation_identity"] = {
+            "job_generation": job_generation,
+            "result_job_generation": job_generation,
+            "output_file_generation": output_generation,
+            "record_version_output_file_generation": output_generation,
+            "byte_order_output_file_generation": output_generation,
+            "record_length_output_file_generation": output_generation,
+            "record_version": 6,
+            "parsed_record_version": 6,
+            "byte_order": "little",
+            "parsed_byte_order": "little",
+            "record_length_bytes": 256,
+            "parsed_record_length_bytes": 256,
+            "payload_length_bytes": 240,
+            "parsed_payload_length_bytes": 240,
+            "output_record_sha256": "4" * 64,
+            "parsed_output_record_sha256": "4" * 64,
+        }
+        model_generation = f"winding-model-{31 + index}"
+        run["winding_turn_current_phase_region_map_generation_identity"] = {
+            "job_generation": job_generation,
+            "result_job_generation": job_generation,
+            "model_generation": model_generation,
+            "turn_count_model_generation": model_generation,
+            "current_phase_model_generation": model_generation,
+            "region_map_model_generation": model_generation,
+            "phase_order": ["u", "v", "w"],
+            "resolved_phase_order": ["u", "v", "w"],
+            "turn_counts": [120, 120, 120],
+            "resolved_turn_counts": [120, 120, 120],
+            "complex_currents_a": [[10.0, 0.0], [-5.0, -8.66], [-5.0, 8.66]],
+            "resolved_complex_currents_a": [
+                [10.0, 0.0],
+                [-5.0, -8.66],
+                [-5.0, 8.66],
+            ],
+            "region_ids": [101, 102, 103],
+            "resolved_region_ids": [101, 102, 103],
+            "phase_region_map": [["u", 101], ["v", 102], ["w", 103]],
+            "resolved_phase_region_map": [["u", 101], ["v", 102], ["w", 103]],
+            "winding_input_table_sha256": "5" * 64,
+            "resolved_winding_input_table_sha256": "5" * 64,
+        }
+    return summary
+
+
+def test_v21_source_positive_output_record_and_winding_identity() -> None:
+    result = force_method_profile_contract_gate(json.dumps(_summary_v21()))
+    assert result["status"] == "ok"
+    assert result["checks"][
+        "output_records_use_current_version_endian_length_and_file_generation"
+    ]
+    assert result["checks"][
+        "windings_use_current_turns_currents_phases_and_region_map"
+    ]
+
+
+def test_v21_source_output_record_version_endian_length_generation_mismatch() -> None:
+    summary = _summary_v21()
+    summary["runs"][0][
+        "output_record_version_endian_length_generation_identity"
+    ].update(
+        {
+            "record_version_output_file_generation": "output-file-30",
+            "byte_order_output_file_generation": "output-file-29",
+            "record_length_output_file_generation": "output-file-28",
+            "parsed_record_version": 5,
+            "parsed_byte_order": "big",
+            "parsed_record_length_bytes": 248,
+            "parsed_payload_length_bytes": 232,
+            "parsed_output_record_sha256": "d" * 64,
+        }
+    )
+    result = force_method_profile_contract_gate(json.dumps(summary))
+    assert result["status"] == "needs_attention"
+    assert result["checks"][
+        "output_records_use_current_version_endian_length_and_file_generation"
+    ] is False
+
+
+def test_v21_source_winding_turn_current_phase_region_map_generation_mismatch() -> None:
+    summary = _summary_v21()
+    summary["runs"][0][
+        "winding_turn_current_phase_region_map_generation_identity"
+    ].update(
+        {
+            "turn_count_model_generation": "winding-model-30",
+            "current_phase_model_generation": "winding-model-29",
+            "region_map_model_generation": "winding-model-28",
+            "resolved_phase_order": ["u", "w", "v"],
+            "resolved_turn_counts": [120, 118, 120],
+            "resolved_complex_currents_a": [
+                [10.0, 0.0],
+                [-5.0, 8.66],
+                [-5.0, -8.66],
+            ],
+            "resolved_region_ids": [101, 103, 102],
+            "resolved_phase_region_map": [
+                ["u", 101],
+                ["w", 103],
+                ["v", 102],
+            ],
+            "resolved_winding_input_table_sha256": "e" * 64,
+        }
+    )
+    result = force_method_profile_contract_gate(json.dumps(summary))
+    assert result["status"] == "needs_attention"
+    assert result["checks"][
+        "windings_use_current_turns_currents_phases_and_region_map"
+    ] is False
