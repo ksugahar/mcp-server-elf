@@ -1830,6 +1830,135 @@ def _public_query_identity_ok(run: dict) -> bool:
     )
 
 
+def _document_evidence_identity_ok(run: dict) -> bool:
+    identity = run.get(
+        "document_edition_language_page_figure_table_anchor_checksum_generation_identity"
+    )
+    if identity is None:
+        return True
+    if not isinstance(identity, dict):
+        return False
+    generation = str(identity.get("evidence_generation", "")).strip()
+    document_id = str(identity.get("document_id", "")).strip()
+    edition = str(identity.get("edition", "")).strip()
+    language = str(identity.get("language", "")).strip().lower()
+    pages = identity.get("page_numbers")
+    figures = identity.get("figure_ids")
+    tables = identity.get("table_ids")
+    anchors = identity.get("anchors")
+
+    def unique_strings(value: object) -> bool:
+        return (
+            isinstance(value, list)
+            and bool(value)
+            and all(isinstance(item, str) and item.strip() for item in value)
+            and len(set(value)) == len(value)
+        )
+
+    return (
+        bool(generation)
+        and all(
+            identity.get(key) == generation
+            for key in (
+                "edition_evidence_generation",
+                "language_evidence_generation",
+                "page_evidence_generation",
+                "figure_evidence_generation",
+                "table_evidence_generation",
+                "anchor_evidence_generation",
+                "checksum_evidence_generation",
+                "result_evidence_generation",
+            )
+        )
+        and bool(document_id)
+        and identity.get("result_document_id") == document_id
+        and bool(edition)
+        and identity.get("result_edition") == edition
+        and language in {"en", "ja"}
+        and str(identity.get("result_language", "")).lower() == language
+        and isinstance(pages, list)
+        and bool(pages)
+        and all(isinstance(item, int) and not isinstance(item, bool) and item > 0 for item in pages)
+        and len(set(pages)) == len(pages)
+        and identity.get("result_page_numbers") == pages
+        and unique_strings(figures)
+        and identity.get("result_figure_ids") == figures
+        and unique_strings(tables)
+        and identity.get("result_table_ids") == tables
+        and unique_strings(anchors)
+        and identity.get("result_anchors") == anchors
+        and re.fullmatch(r"[0-9a-f]{64}", str(identity.get("document_sha256", "")).lower())
+        is not None
+        and identity.get("indexed_document_sha256") == identity.get("document_sha256")
+        and re.fullmatch(r"[0-9a-f]{64}", str(identity.get("evidence_sha256", "")).lower())
+        is not None
+        and identity.get("accepted_evidence_sha256") == identity.get("evidence_sha256")
+    )
+
+
+def _public_query_citation_identity_ok(run: dict) -> bool:
+    identity = run.get(
+        "public_query_synonym_topic_category_version_citation_redaction_generation_identity"
+    )
+    if identity is None:
+        return True
+    if not isinstance(identity, dict):
+        return False
+    generation = str(identity.get("public_query_generation", "")).strip()
+    query_term = str(identity.get("query_term", "")).strip()
+    synonyms = identity.get("synonym_terms")
+    resolved = str(identity.get("resolved_query_term", "")).strip()
+    topic = str(identity.get("canonical_topic", "")).strip()
+    category = str(identity.get("category", "")).strip()
+    version = str(identity.get("document_version", "")).strip()
+    citations = identity.get("citation_allowlist")
+    returned = identity.get("returned_citation_ids")
+    redacted = identity.get("redacted_field_names")
+    return (
+        bool(generation)
+        and all(
+            identity.get(key) == generation
+            for key in (
+                "synonym_public_query_generation",
+                "topic_public_query_generation",
+                "category_public_query_generation",
+                "version_public_query_generation",
+                "citation_public_query_generation",
+                "redaction_public_query_generation",
+                "result_public_query_generation",
+            )
+        )
+        and bool(query_term)
+        and isinstance(synonyms, list)
+        and bool(synonyms)
+        and all(isinstance(item, str) and item.strip() for item in synonyms)
+        and len(set(synonyms)) == len(synonyms)
+        and resolved in {query_term, *synonyms}
+        and bool(topic)
+        and identity.get("result_canonical_topic") == topic
+        and category in {"force_methods", "torque_methods", "demagnetization", "maglev"}
+        and identity.get("result_category") == category
+        and bool(version)
+        and identity.get("result_document_version") == version
+        and isinstance(citations, list)
+        and bool(citations)
+        and all(isinstance(item, str) and item.startswith("doc-") for item in citations)
+        and len(set(citations)) == len(citations)
+        and isinstance(returned, list)
+        and bool(returned)
+        and all(item in citations for item in returned)
+        and len(set(returned)) == len(returned)
+        and isinstance(redacted, list)
+        and {"api_token", "license_key", "local_path"}.issubset(set(redacted))
+        and identity.get("result_redacted_field_names") == redacted
+        and identity.get("redaction_applied") is True
+        and identity.get("sensitive_fields_present") == []
+        and re.fullmatch(r"[0-9a-f]{64}", str(identity.get("query_sha256", "")).lower())
+        is not None
+        and identity.get("result_query_sha256") == identity.get("query_sha256")
+    )
+
+
 def force_method_profile_contract_gate(summary_json: str) -> dict:
     """Validate deck roles and GUI-free replay metadata without opening files."""
     try:
@@ -1899,6 +2028,8 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
     public_artifact_boundary_contracts: list[bool] = []
     document_index_contracts: list[bool] = []
     public_query_contracts: list[bool] = []
+    document_evidence_contracts: list[bool] = []
+    public_query_citation_contracts: list[bool] = []
     for run in runs:
         if not isinstance(run, dict):
             run_contracts.append(False)
@@ -1942,6 +2073,8 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
             public_artifact_boundary_contracts.append(False)
             document_index_contracts.append(False)
             public_query_contracts.append(False)
+            document_evidence_contracts.append(False)
+            public_query_citation_contracts.append(False)
             continue
         role = str(run.get("role", ""))
         parsed_rows = run.get("parsed_rows")
@@ -2057,6 +2190,8 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
         )
         document_index_contracts.append(_document_index_identity_ok(run))
         public_query_contracts.append(_public_query_identity_ok(run))
+        document_evidence_contracts.append(_document_evidence_identity_ok(run))
+        public_query_citation_contracts.append(_public_query_citation_identity_ok(run))
         run_contracts.append(
             role in _CASE_ROLES
             and run.get("case_id") == _CASE_ROLES[role]
@@ -2224,6 +2359,12 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
         ),
         "public_queries_use_current_category_schema_document_allowlist_redaction_and_result": all(
             public_query_contracts
+        ),
+        "document_evidence_uses_current_edition_language_pages_figures_tables_anchors_and_checksums": all(
+            document_evidence_contracts
+        ),
+        "public_queries_use_current_synonyms_topics_categories_versions_citations_and_redaction": all(
+            public_query_citation_contracts
         ),
         "two_replays_per_source_role": all(
             replays == {1, 2} for replays in role_replays.values()
