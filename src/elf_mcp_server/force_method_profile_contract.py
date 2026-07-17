@@ -919,6 +919,127 @@ def _run_result_iteration_table_matches_solver_generation(run: dict) -> bool:
     )
 
 
+def _material_region_property_table_matches_unit_index_generation(run: dict) -> bool:
+    identity = run.get(
+        "material_region_property_table_unit_index_generation_identity"
+    )
+    if identity is None:
+        return True
+    if not isinstance(identity, dict):
+        return False
+    artifacts = run.get("output_artifacts")
+    mao = artifacts.get(".mao") if isinstance(artifacts, dict) else {}
+    terminal = mao.get("terminal_record") if isinstance(mao, dict) else {}
+    terminal = terminal if isinstance(terminal, dict) else {}
+    job_generation = str(identity.get("job_generation", ""))
+    table_generation = str(identity.get("material_table_generation", ""))
+    region_ids = identity.get("region_ids")
+    row_indices = identity.get("property_row_indices")
+    units = identity.get("property_units")
+    digest = str(identity.get("material_region_table_sha256", "")).lower()
+    return (
+        bool(job_generation)
+        and terminal.get("job_generation") == job_generation
+        and identity.get("result_job_generation") == job_generation
+        and bool(table_generation)
+        and all(
+            identity.get(key) == table_generation
+            for key in (
+                "region_material_table_generation",
+                "unit_material_table_generation",
+                "index_material_table_generation",
+            )
+        )
+        and isinstance(region_ids, list)
+        and bool(region_ids)
+        and all(
+            isinstance(value, int) and not isinstance(value, bool)
+            for value in region_ids
+        )
+        and len(set(region_ids)) == len(region_ids)
+        and identity.get("result_region_ids") == region_ids
+        and isinstance(row_indices, list)
+        and len(row_indices) == len(region_ids)
+        and all(
+            isinstance(value, int) and not isinstance(value, bool) and value >= 0
+            for value in row_indices
+        )
+        and len(set(row_indices)) == len(row_indices)
+        and identity.get("result_property_row_indices") == row_indices
+        and isinstance(units, list)
+        and len(units) == len(region_ids)
+        and all(bool(str(value)) for value in units)
+        and identity.get("result_property_units") == units
+        and re.fullmatch(r"[0-9a-f]{64}", digest) is not None
+        and str(identity.get("result_material_region_table_sha256", "")).lower()
+        == digest
+    )
+
+
+def _result_observables_match_frame_unit_generation(run: dict) -> bool:
+    identity = run.get(
+        "result_scalar_vector_coordinate_frame_unit_generation_identity"
+    )
+    if identity is None:
+        return True
+    if not isinstance(identity, dict):
+        return False
+    artifacts = run.get("output_artifacts")
+    mao = artifacts.get(".mao") if isinstance(artifacts, dict) else {}
+    terminal = mao.get("terminal_record") if isinstance(mao, dict) else {}
+    terminal = terminal if isinstance(terminal, dict) else {}
+    job_generation = str(identity.get("job_generation", ""))
+    observable_generation = str(identity.get("observable_generation", ""))
+    scalar_names = identity.get("scalar_names")
+    scalar_units = identity.get("scalar_units")
+    vector_names = identity.get("vector_names")
+    vector_units = identity.get("vector_units")
+    frame = str(identity.get("coordinate_frame_id", ""))
+    transform_digest = str(
+        identity.get("coordinate_transform_sha256", "")
+    ).lower()
+    table_digest = str(identity.get("observable_table_sha256", "")).lower()
+    return (
+        bool(job_generation)
+        and terminal.get("job_generation") == job_generation
+        and identity.get("result_job_generation") == job_generation
+        and bool(observable_generation)
+        and all(
+            identity.get(key) == observable_generation
+            for key in (
+                "scalar_observable_generation",
+                "vector_observable_generation",
+                "frame_observable_generation",
+                "unit_observable_generation",
+            )
+        )
+        and isinstance(scalar_names, list)
+        and bool(scalar_names)
+        and len(set(scalar_names)) == len(scalar_names)
+        and identity.get("parsed_scalar_names") == scalar_names
+        and isinstance(scalar_units, list)
+        and len(scalar_units) == len(scalar_names)
+        and identity.get("parsed_scalar_units") == scalar_units
+        and isinstance(vector_names, list)
+        and bool(vector_names)
+        and len(set(vector_names)) == len(vector_names)
+        and identity.get("parsed_vector_names") == vector_names
+        and isinstance(vector_units, list)
+        and len(vector_units) == len(vector_names)
+        and identity.get("parsed_vector_units") == vector_units
+        and frame in {"global-cartesian", "body-local"}
+        and identity.get("parsed_coordinate_frame_id") == frame
+        and re.fullmatch(r"[0-9a-f]{64}", transform_digest) is not None
+        and str(
+            identity.get("parsed_coordinate_transform_sha256", "")
+        ).lower()
+        == transform_digest
+        and re.fullmatch(r"[0-9a-f]{64}", table_digest) is not None
+        and str(identity.get("parsed_observable_table_sha256", "")).lower()
+        == table_digest
+    )
+
+
 def _source_manifest_complete(source_files: object) -> bool:
     if not isinstance(source_files, list) or len(source_files) != 6:
         return False
@@ -989,6 +1110,8 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
     material_curve_region_map_contracts: list[bool] = []
     hysteresis_curve_region_contracts: list[bool] = []
     run_result_iteration_table_contracts: list[bool] = []
+    material_region_property_table_contracts: list[bool] = []
+    result_observable_frame_unit_contracts: list[bool] = []
     for run in runs:
         if not isinstance(run, dict):
             run_contracts.append(False)
@@ -1018,6 +1141,8 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
             material_curve_region_map_contracts.append(False)
             hysteresis_curve_region_contracts.append(False)
             run_result_iteration_table_contracts.append(False)
+            material_region_property_table_contracts.append(False)
+            result_observable_frame_unit_contracts.append(False)
             continue
         role = str(run.get("role", ""))
         parsed_rows = run.get("parsed_rows")
@@ -1094,6 +1219,12 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
         )
         run_result_iteration_table_contracts.append(
             _run_result_iteration_table_matches_solver_generation(run)
+        )
+        material_region_property_table_contracts.append(
+            _material_region_property_table_matches_unit_index_generation(run)
+        )
+        result_observable_frame_unit_contracts.append(
+            _result_observables_match_frame_unit_generation(run)
         )
         run_contracts.append(
             role in _CASE_ROLES
@@ -1220,6 +1351,12 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
         ),
         "run_result_iteration_table_matches_current_solver_generation": all(
             run_result_iteration_table_contracts
+        ),
+        "material_regions_use_current_property_rows_units_and_indices": all(
+            material_region_property_table_contracts
+        ),
+        "result_observables_use_current_scalar_vector_frame_and_units": all(
+            result_observable_frame_unit_contracts
         ),
         "two_replays_per_source_role": all(
             replays == {1, 2} for replays in role_replays.values()

@@ -943,3 +943,105 @@ def test_v19_source_run_result_step_solver_iteration_table_generation_mismatch()
         ]
         is False
     )
+
+
+def _summary_v20():
+    summary = copy.deepcopy(_summary())
+    for index, run in enumerate(summary["runs"]):
+        terminal = run["output_artifacts"][".mao"]["terminal_record"]
+        job_generation = terminal["job_generation"]
+        run["material_region_property_table_unit_index_generation_identity"] = {
+            "job_generation": job_generation,
+            "result_job_generation": job_generation,
+            "material_table_generation": f"material-table-{22 + index}",
+            "region_material_table_generation": f"material-table-{22 + index}",
+            "unit_material_table_generation": f"material-table-{22 + index}",
+            "index_material_table_generation": f"material-table-{22 + index}",
+            "region_ids": [101, 102],
+            "result_region_ids": [101, 102],
+            "property_row_indices": [0, 1],
+            "result_property_row_indices": [0, 1],
+            "property_units": ["T", "A/m"],
+            "result_property_units": ["T", "A/m"],
+            "material_region_table_sha256": "6" * 64,
+            "result_material_region_table_sha256": "6" * 64,
+        }
+        run["result_scalar_vector_coordinate_frame_unit_generation_identity"] = {
+            "job_generation": job_generation,
+            "result_job_generation": job_generation,
+            "observable_generation": f"observable-{22 + index}",
+            "scalar_observable_generation": f"observable-{22 + index}",
+            "vector_observable_generation": f"observable-{22 + index}",
+            "frame_observable_generation": f"observable-{22 + index}",
+            "unit_observable_generation": f"observable-{22 + index}",
+            "scalar_names": ["energy", "force_norm"],
+            "parsed_scalar_names": ["energy", "force_norm"],
+            "scalar_units": ["J", "N"],
+            "parsed_scalar_units": ["J", "N"],
+            "vector_names": ["force", "moment"],
+            "parsed_vector_names": ["force", "moment"],
+            "vector_units": ["N", "N*m"],
+            "parsed_vector_units": ["N", "N*m"],
+            "coordinate_frame_id": "global-cartesian",
+            "parsed_coordinate_frame_id": "global-cartesian",
+            "coordinate_transform_sha256": "7" * 64,
+            "parsed_coordinate_transform_sha256": "7" * 64,
+            "observable_table_sha256": "8" * 64,
+            "parsed_observable_table_sha256": "8" * 64,
+        }
+    return summary
+
+
+def test_v20_source_positive_material_and_observable_identity() -> None:
+    result = force_method_profile_contract_gate(json.dumps(_summary_v20()))
+    assert result["status"] == "ok"
+    assert result["checks"][
+        "material_regions_use_current_property_rows_units_and_indices"
+    ]
+    assert result["checks"][
+        "result_observables_use_current_scalar_vector_frame_and_units"
+    ]
+
+
+def test_v20_source_material_region_property_table_unit_index_generation_mismatch() -> None:
+    summary = _summary_v20()
+    summary["runs"][0][
+        "material_region_property_table_unit_index_generation_identity"
+    ].update(
+        {
+            "unit_material_table_generation": "material-table-21",
+            "index_material_table_generation": "material-table-21",
+            "result_region_ids": [102, 101],
+            "result_property_row_indices": [1, 0],
+            "result_property_units": ["G", "Oe"],
+            "result_material_region_table_sha256": "f" * 64,
+        }
+    )
+    result = force_method_profile_contract_gate(json.dumps(summary))
+    assert result["status"] == "needs_attention"
+    assert result["checks"][
+        "material_regions_use_current_property_rows_units_and_indices"
+    ] is False
+
+
+def test_v20_source_result_scalar_vector_coordinate_frame_unit_generation_mismatch() -> None:
+    summary = _summary_v20()
+    summary["runs"][0][
+        "result_scalar_vector_coordinate_frame_unit_generation_identity"
+    ].update(
+        {
+            "vector_observable_generation": "observable-21",
+            "frame_observable_generation": "observable-21",
+            "parsed_scalar_units": ["N", "J"],
+            "parsed_vector_names": ["moment", "force"],
+            "parsed_vector_units": ["N*m", "N"],
+            "parsed_coordinate_frame_id": "body-local",
+            "parsed_coordinate_transform_sha256": "f" * 64,
+            "parsed_observable_table_sha256": "f" * 64,
+        }
+    )
+    result = force_method_profile_contract_gate(json.dumps(summary))
+    assert result["status"] == "needs_attention"
+    assert result["checks"][
+        "result_observables_use_current_scalar_vector_frame_and_units"
+    ] is False
