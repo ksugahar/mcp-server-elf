@@ -2590,6 +2590,162 @@ def _mao_transient_table_identity_ok(run: dict) -> bool:
     )
 
 
+def _mao_table_graph_identity_ok(run: dict) -> bool:
+    identity = run.get(
+        "mao_table_graph_axis_unit_case_solver_version_timestamp_export_owner_digest_identity"
+    )
+    if identity is None:
+        return True
+    if not isinstance(identity, dict):
+        return False
+    generation = str(identity.get("mao_view_generation", "")).strip()
+    try:
+        case_row = identity.get("case_row", [])
+        parsed_case_row = identity.get("parsed_case_row", [])
+        if len(case_row) != 3 or len(parsed_case_row) != 3:
+            return False
+        normalized_case_row = [
+            str(case_row[0]).strip(),
+            float(case_row[1]),
+            float(case_row[2]),
+        ]
+        normalized_parsed_case_row = [
+            str(parsed_case_row[0]).strip(),
+            float(parsed_case_row[1]),
+            float(parsed_case_row[2]),
+        ]
+        exported_at = datetime.fromisoformat(
+            str(identity.get("exported_at_utc", "")).replace("Z", "+00:00")
+        )
+        parsed_exported_at = datetime.fromisoformat(
+            str(identity.get("parsed_exported_at_utc", "")).replace("Z", "+00:00")
+        )
+    except (TypeError, ValueError):
+        return False
+    return (
+        bool(generation)
+        and all(
+            identity.get(key) == generation
+            for key in (
+                "table_generation",
+                "graph_generation",
+                "x_axis_generation",
+                "y_axis_generation",
+                "case_generation",
+                "solver_generation",
+                "timestamp_generation",
+                "export_generation",
+                "owner_generation",
+                "digest_generation",
+                "result_generation",
+            )
+        )
+        and bool(str(identity.get("table_id", "")).strip())
+        and identity.get("parsed_table_id") == identity.get("table_id")
+        and bool(str(identity.get("graph_id", "")).strip())
+        and identity.get("parsed_graph_id") == identity.get("graph_id")
+        and identity.get("x_axis_name") == "position"
+        and identity.get("parsed_x_axis_name") == identity.get("x_axis_name")
+        and identity.get("x_axis_unit") == "mm"
+        and identity.get("parsed_x_axis_unit") == identity.get("x_axis_unit")
+        and identity.get("y_axis_name") == "force"
+        and identity.get("parsed_y_axis_name") == identity.get("y_axis_name")
+        and identity.get("y_axis_unit") == "N"
+        and identity.get("parsed_y_axis_unit") == identity.get("y_axis_unit")
+        and bool(normalized_case_row[0])
+        and all(math.isfinite(item) for item in normalized_case_row[1:])
+        and normalized_parsed_case_row == normalized_case_row
+        and re.fullmatch(r"\d+\.\d+(?:\.\d+)?", str(identity.get("solver_version", "")))
+        is not None
+        and identity.get("parsed_solver_version") == identity.get("solver_version")
+        and exported_at.tzinfo is not None
+        and parsed_exported_at == exported_at
+        and bool(str(identity.get("export_generation_id", "")).strip())
+        and identity.get("parsed_export_generation_id")
+        == identity.get("export_generation_id")
+        and bool(str(identity.get("source_owner", "")).strip())
+        and identity.get("parsed_source_owner") == identity.get("source_owner")
+        and re.fullmatch(
+            r"[0-9a-f]{64}", str(identity.get("artifact_sha256", "")).lower()
+        )
+        is not None
+        and identity.get("parsed_artifact_sha256") == identity.get("artifact_sha256")
+        and re.fullmatch(
+            r"[0-9a-f]{64}", str(identity.get("response_sha256", "")).lower()
+        )
+        is not None
+        and identity.get("accepted_response_sha256") == identity.get("response_sha256")
+    )
+
+
+def _document_option_identity_ok(run: dict) -> bool:
+    identity = run.get(
+        "document_option_enum_default_version_scope_example_revision_boundary_response_identity"
+    )
+    if identity is None:
+        return True
+    if not isinstance(identity, dict):
+        return False
+    generation = str(identity.get("document_option_generation", "")).strip()
+    enum_members = [str(item).strip() for item in identity.get("enum_members", [])]
+    resolved_enum_members = [
+        str(item).strip() for item in identity.get("resolved_enum_members", [])
+    ]
+    default_value = str(identity.get("default_value", "")).strip()
+    return (
+        bool(generation)
+        and all(
+            identity.get(key) == generation
+            for key in (
+                "option_generation",
+                "enum_generation",
+                "default_generation",
+                "version_generation",
+                "scope_generation",
+                "example_generation",
+                "revision_generation",
+                "boundary_generation",
+                "response_generation",
+            )
+        )
+        and bool(str(identity.get("option_name", "")).strip())
+        and identity.get("resolved_option_name") == identity.get("option_name")
+        and len(enum_members) >= 2
+        and all(enum_members)
+        and len(set(enum_members)) == len(enum_members)
+        and resolved_enum_members == enum_members
+        and default_value in enum_members
+        and identity.get("resolved_default_value") == default_value
+        and re.fullmatch(
+            r"\d+\.\d+(?:\.\d+)?",
+            str(identity.get("available_since_version", "")),
+        )
+        is not None
+        and identity.get("resolved_available_since_version")
+        == identity.get("available_since_version")
+        and bool(str(identity.get("argument_scope", "")).strip())
+        and identity.get("resolved_argument_scope") == identity.get("argument_scope")
+        and re.fullmatch(
+            r"[0-9a-f]{64}",
+            str(identity.get("documented_example_sha256", "")).lower(),
+        )
+        is not None
+        and identity.get("resolved_documented_example_sha256")
+        == identity.get("documented_example_sha256")
+        and bool(str(identity.get("documentation_revision", "")).strip())
+        and identity.get("resolved_documentation_revision")
+        == identity.get("documentation_revision")
+        and identity.get("public_boundary") == "documentation_only"
+        and identity.get("resolved_public_boundary")
+        == identity.get("public_boundary")
+        and re.fullmatch(
+            r"[0-9a-f]{64}", str(identity.get("response_sha256", "")).lower()
+        )
+        is not None
+        and identity.get("accepted_response_sha256") == identity.get("response_sha256")
+    )
+
+
 def force_method_profile_contract_gate(summary_json: str) -> dict:
     """Validate deck roles and GUI-free replay metadata without opening files."""
     try:
@@ -2673,6 +2829,8 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
     mao_stepped_parameter_table_contracts: list[bool] = []
     mag_material_variable_record_contracts: list[bool] = []
     mao_transient_table_contracts: list[bool] = []
+    mao_table_graph_contracts: list[bool] = []
+    document_option_contracts: list[bool] = []
     for run in runs:
         if not isinstance(run, dict):
             run_contracts.append(False)
@@ -2730,6 +2888,8 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
             mao_stepped_parameter_table_contracts.append(False)
             mag_material_variable_record_contracts.append(False)
             mao_transient_table_contracts.append(False)
+            mao_table_graph_contracts.append(False)
+            document_option_contracts.append(False)
             continue
         role = str(run.get("role", ""))
         parsed_rows = run.get("parsed_rows")
@@ -2865,6 +3025,8 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
         mao_transient_table_contracts.append(
             _mao_transient_table_identity_ok(run)
         )
+        mao_table_graph_contracts.append(_mao_table_graph_identity_ok(run))
+        document_option_contracts.append(_document_option_identity_ok(run))
         run_contracts.append(
             role in _CASE_ROLES
             and run.get("case_id") == _CASE_ROLES[role]
@@ -3074,6 +3236,12 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
         ),
         "mao_transient_tables_use_current_channels_units_times_rows_event_completion_owners_count_and_digest": all(
             mao_transient_table_contracts
+        ),
+        "mao_result_views_use_current_table_graph_axes_units_case_solver_timestamp_export_owner_and_digests": all(
+            mao_table_graph_contracts
+        ),
+        "document_options_use_current_enum_default_version_scope_example_revision_public_boundary_and_response": all(
+            document_option_contracts
         ),
         "two_replays_per_source_role": all(
             replays == {1, 2} for replays in role_replays.values()
