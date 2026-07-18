@@ -2888,6 +2888,180 @@ def _bilingual_citation_identity_ok(run: dict) -> bool:
     )
 
 
+def _document_equation_identity_ok(run: dict) -> bool:
+    identity = run.get(
+        "document_equation_symbol_unit_sign_section_release_citation_owner_response_identity"
+    )
+    if identity is None:
+        return True
+    if not isinstance(identity, dict):
+        return False
+    generation = str(identity.get("equation_generation", "")).strip()
+    symbols = identity.get("symbols")
+    units = identity.get("symbol_units")
+    page = identity.get("document_page")
+    section = str(identity.get("document_section", "")).strip()
+    owner = str(identity.get("document_owner", "")).strip()
+    if not isinstance(symbols, list) or not isinstance(units, list):
+        return False
+    unit_rows_ok = all(
+        isinstance(row, list)
+        and len(row) == 2
+        and isinstance(row[0], str)
+        and row[0].strip()
+        and isinstance(row[1], str)
+        and row[1].strip()
+        for row in units
+    )
+    unit_symbols = [row[0] for row in units] if unit_rows_ok else []
+    return (
+        bool(generation)
+        and all(
+            identity.get(key) == generation
+            for key in (
+                "symbol_generation",
+                "unit_generation",
+                "sign_generation",
+                "section_generation",
+                "release_generation",
+                "citation_generation",
+                "owner_generation",
+                "response_generation",
+            )
+        )
+        and bool(str(identity.get("equation_id", "")).strip())
+        and identity.get("resolved_equation_id") == identity.get("equation_id")
+        and len(symbols) >= 2
+        and all(isinstance(item, str) and item.strip() for item in symbols)
+        and len(set(symbols)) == len(symbols)
+        and identity.get("resolved_symbols") == symbols
+        and unit_rows_ok
+        and len(unit_symbols) == len(symbols)
+        and set(unit_symbols) == set(symbols)
+        and len(set(unit_symbols)) == len(unit_symbols)
+        and identity.get("resolved_symbol_units") == units
+        and bool(str(identity.get("sign_convention", "")).strip())
+        and identity.get("resolved_sign_convention") == identity.get("sign_convention")
+        and bool(section)
+        and not section.startswith("private/")
+        and identity.get("resolved_document_section") == section
+        and isinstance(page, int)
+        and not isinstance(page, bool)
+        and page > 0
+        and identity.get("resolved_document_page") == page
+        and re.fullmatch(r"\d+\.\d+", str(identity.get("document_release", "")))
+        is not None
+        and identity.get("resolved_document_release") == identity.get("document_release")
+        and identity.get("release_scope") == "documentation_only"
+        and identity.get("resolved_release_scope") == identity.get("release_scope")
+        and re.fullmatch(
+            r"[0-9a-f]{64}", str(identity.get("citation_sha256", "")).lower()
+        )
+        is not None
+        and identity.get("resolved_citation_sha256") == identity.get("citation_sha256")
+        and bool(owner)
+        and not owner.startswith("private/")
+        and identity.get("resolved_document_owner") == owner
+        and re.fullmatch(
+            r"[0-9a-f]{64}", str(identity.get("response_sha256", "")).lower()
+        )
+        is not None
+        and identity.get("accepted_response_sha256") == identity.get("response_sha256")
+    )
+
+
+def _input_region_reference_identity_ok(run: dict) -> bool:
+    identity = run.get(
+        "input_region_material_source_boundary_numbering_continuation_unit_release_owner_response_identity"
+    )
+    if identity is None:
+        return True
+    if not isinstance(identity, dict):
+        return False
+    generation = str(identity.get("input_generation", "")).strip()
+    regions = identity.get("region_numbers")
+    materials = identity.get("material_references")
+    sources = identity.get("source_references")
+    boundaries = identity.get("boundary_references")
+    continuations = identity.get("continuation_markers")
+    owner = str(identity.get("document_owner", "")).strip()
+    if not isinstance(regions, list):
+        return False
+
+    def reference_rows(value: object, prefix: str) -> bool:
+        return (
+            isinstance(value, list)
+            and bool(value)
+            and all(
+                isinstance(row, list)
+                and len(row) == 2
+                and isinstance(row[0], int)
+                and not isinstance(row[0], bool)
+                and row[0] in regions
+                and isinstance(row[1], str)
+                and row[1].startswith(prefix)
+                and len(row[1]) > len(prefix)
+                for row in value
+            )
+        )
+
+    material_ok = reference_rows(materials, "material:")
+    source_ok = reference_rows(sources, "source:")
+    boundary_ok = reference_rows(boundaries, "boundary:")
+    material_regions = {row[0] for row in materials} if material_ok else set()
+    return (
+        bool(generation)
+        and all(
+            identity.get(key) == generation
+            for key in (
+                "region_generation",
+                "material_generation",
+                "source_generation",
+                "boundary_generation",
+                "continuation_generation",
+                "unit_generation",
+                "release_generation",
+                "owner_generation",
+                "response_generation",
+            )
+        )
+        and len(regions) >= 2
+        and all(
+            isinstance(item, int) and not isinstance(item, bool) and item > 0
+            for item in regions
+        )
+        and len(set(regions)) == len(regions)
+        and regions == sorted(regions)
+        and identity.get("parsed_region_numbers") == regions
+        and material_ok
+        and material_regions == set(regions)
+        and identity.get("parsed_material_references") == materials
+        and source_ok
+        and identity.get("parsed_source_references") == sources
+        and boundary_ok
+        and identity.get("parsed_boundary_references") == boundaries
+        and isinstance(continuations, list)
+        and bool(continuations)
+        and len(continuations) <= 4
+        and all(item in {"\\", "&"} for item in continuations)
+        and len(set(continuations)) == len(continuations)
+        and identity.get("parsed_continuation_markers") == continuations
+        and identity.get("length_unit") in {"m", "cm", "mm"}
+        and identity.get("parsed_length_unit") == identity.get("length_unit")
+        and re.fullmatch(r"\d+\.\d+", str(identity.get("schema_release", "")))
+        is not None
+        and identity.get("parsed_schema_release") == identity.get("schema_release")
+        and bool(owner)
+        and not owner.startswith("private/")
+        and identity.get("parsed_document_owner") == owner
+        and re.fullmatch(
+            r"[0-9a-f]{64}", str(identity.get("response_sha256", "")).lower()
+        )
+        is not None
+        and identity.get("accepted_response_sha256") == identity.get("response_sha256")
+    )
+
+
 def force_method_profile_contract_gate(summary_json: str) -> dict:
     """Validate deck roles and GUI-free replay metadata without opening files."""
     try:
@@ -2975,6 +3149,8 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
     document_option_contracts: list[bool] = []
     input_schema_contracts: list[bool] = []
     bilingual_citation_contracts: list[bool] = []
+    document_equation_contracts: list[bool] = []
+    input_region_reference_contracts: list[bool] = []
     for run in runs:
         if not isinstance(run, dict):
             run_contracts.append(False)
@@ -3036,6 +3212,8 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
             document_option_contracts.append(False)
             input_schema_contracts.append(False)
             bilingual_citation_contracts.append(False)
+            document_equation_contracts.append(False)
+            input_region_reference_contracts.append(False)
             continue
         role = str(run.get("role", ""))
         parsed_rows = run.get("parsed_rows")
@@ -3175,6 +3353,10 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
         document_option_contracts.append(_document_option_identity_ok(run))
         input_schema_contracts.append(_input_schema_identity_ok(run))
         bilingual_citation_contracts.append(_bilingual_citation_identity_ok(run))
+        document_equation_contracts.append(_document_equation_identity_ok(run))
+        input_region_reference_contracts.append(
+            _input_region_reference_identity_ok(run)
+        )
         run_contracts.append(
             role in _CASE_ROLES
             and run.get("case_id") == _CASE_ROLES[role]
@@ -3396,6 +3578,12 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
         ),
         "bilingual_documentation_uses_current_aliases_section_page_release_scope_citation_boundary_owner_and_response": all(
             bilingual_citation_contracts
+        ),
+        "document_equations_use_current_symbols_units_sign_section_release_citation_owner_and_response": all(
+            document_equation_contracts
+        ),
+        "input_regions_use_current_numbering_material_source_boundary_continuation_unit_release_owner_and_response": all(
+            input_region_reference_contracts
         ),
         "two_replays_per_source_role": all(
             replays == {1, 2} for replays in role_replays.values()
