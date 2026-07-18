@@ -2297,6 +2297,128 @@ def _solver_result_lineage_identity_ok(run: dict) -> bool:
     )
 
 
+def _mag_block_record_identity_ok(run: dict) -> bool:
+    identity = run.get(
+        "mag_block_schema_endian_index_connectivity_material_offset_model_checksum_identity"
+    )
+    if identity is None:
+        return True
+    if not isinstance(identity, dict):
+        return False
+    generation = str(identity.get("mag_generation", "")).strip()
+    connectivity = identity.get("connectivity")
+    return (
+        bool(generation)
+        and all(
+            identity.get(key) == generation
+            for key in (
+                "schema_mag_generation",
+                "endian_mag_generation",
+                "index_mag_generation",
+                "connectivity_mag_generation",
+                "material_mag_generation",
+                "offset_mag_generation",
+                "model_mag_generation",
+                "result_mag_generation",
+            )
+        )
+        and identity.get("record_schema") == "mag-model-block-v6"
+        and identity.get("parsed_record_schema") == identity.get("record_schema")
+        and identity.get("byte_order") == "little"
+        and identity.get("parsed_byte_order") == "little"
+        and identity.get("index_base") == 0
+        and identity.get("parsed_index_base") == 0
+        and isinstance(connectivity, list)
+        and len(connectivity) >= 4
+        and all(isinstance(item, int) and item >= 0 for item in connectivity)
+        and len(set(connectivity)) == len(connectivity)
+        and identity.get("parsed_connectivity") == connectivity
+        and isinstance(identity.get("material_id"), int)
+        and identity.get("material_id") >= 0
+        and identity.get("parsed_material_id") == identity.get("material_id")
+        and isinstance(identity.get("block_offset_bytes"), int)
+        and identity.get("block_offset_bytes") >= 0
+        and identity.get("parsed_block_offset_bytes")
+        == identity.get("block_offset_bytes")
+        and bool(str(identity.get("model_generation", "")).strip())
+        and identity.get("parsed_model_generation") == identity.get("model_generation")
+        and re.fullmatch(
+            r"[0-9a-f]{64}", str(identity.get("file_sha256", "")).lower()
+        )
+        is not None
+        and identity.get("parsed_file_sha256") == identity.get("file_sha256")
+    )
+
+
+def _mao_stepped_parameter_table_identity_ok(run: dict) -> bool:
+    identity = run.get(
+        "mao_stepped_parameter_tuple_row_convergence_unit_owner_count_digest_identity"
+    )
+    if identity is None:
+        return True
+    if not isinstance(identity, dict):
+        return False
+    generation = str(identity.get("step_generation", "")).strip()
+    names = identity.get("parameter_names")
+    tuples = identity.get("parameter_tuples")
+    row_order = identity.get("row_order")
+    converged = identity.get("converged")
+    if not (
+        isinstance(names, list)
+        and names
+        and all(isinstance(item, str) and item.strip() for item in names)
+        and len(set(names)) == len(names)
+        and isinstance(tuples, list)
+        and tuples
+        and all(isinstance(row, list) and len(row) == len(names) for row in tuples)
+    ):
+        return False
+    try:
+        numeric_tuples = [[float(item) for item in row] for row in tuples]
+    except (TypeError, ValueError):
+        return False
+    row_count = len(numeric_tuples)
+    return (
+        bool(generation)
+        and all(
+            identity.get(key) == generation
+            for key in (
+                "tuple_step_generation",
+                "row_step_generation",
+                "convergence_step_generation",
+                "unit_step_generation",
+                "owner_step_generation",
+                "count_step_generation",
+                "digest_step_generation",
+                "result_step_generation",
+            )
+        )
+        and identity.get("parsed_parameter_names") == names
+        and all(math.isfinite(item) for row in numeric_tuples for item in row)
+        and identity.get("parsed_parameter_tuples") == numeric_tuples
+        and row_order == list(range(row_count))
+        and identity.get("parsed_row_order") == row_order
+        and isinstance(converged, list)
+        and len(converged) == row_count
+        and all(item is True for item in converged)
+        and identity.get("parsed_converged") == converged
+        and bool(str(identity.get("observable_unit", "")).strip())
+        and identity.get("parsed_observable_unit") == identity.get("observable_unit")
+        and bool(str(identity.get("model_owner", "")).strip())
+        and identity.get("parsed_model_owner") == identity.get("model_owner")
+        and bool(str(identity.get("run_owner", "")).strip())
+        and identity.get("parsed_run_owner") == identity.get("run_owner")
+        and identity.get("row_count") == row_count
+        and identity.get("parsed_row_count") == row_count
+        and re.fullmatch(
+            r"[0-9a-f]{64}", str(identity.get("artifact_sha256", "")).lower()
+        )
+        is not None
+        and identity.get("parsed_artifact_sha256")
+        == identity.get("artifact_sha256")
+    )
+
+
 def force_method_profile_contract_gate(summary_json: str) -> dict:
     """Validate deck roles and GUI-free replay metadata without opening files."""
     try:
@@ -2376,6 +2498,8 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
     mao_vector_schema_contracts: list[bool] = []
     mao_record_schema_contracts: list[bool] = []
     solver_result_lineage_contracts: list[bool] = []
+    mag_block_record_contracts: list[bool] = []
+    mao_stepped_parameter_table_contracts: list[bool] = []
     for run in runs:
         if not isinstance(run, dict):
             run_contracts.append(False)
@@ -2429,6 +2553,8 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
             mao_vector_schema_contracts.append(False)
             mao_record_schema_contracts.append(False)
             solver_result_lineage_contracts.append(False)
+            mag_block_record_contracts.append(False)
+            mao_stepped_parameter_table_contracts.append(False)
             continue
         role = str(run.get("role", ""))
         parsed_rows = run.get("parsed_rows")
@@ -2554,6 +2680,10 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
         mao_vector_schema_contracts.append(_mao_vector_schema_identity_ok(run))
         mao_record_schema_contracts.append(_mao_record_schema_identity_ok(run))
         solver_result_lineage_contracts.append(_solver_result_lineage_identity_ok(run))
+        mag_block_record_contracts.append(_mag_block_record_identity_ok(run))
+        mao_stepped_parameter_table_contracts.append(
+            _mao_stepped_parameter_table_identity_ok(run)
+        )
         run_contracts.append(
             role in _CASE_ROLES
             and run.get("case_id") == _CASE_ROLES[role]
@@ -2751,6 +2881,12 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
         ),
         "solver_results_use_session_model_run_completion_generation_and_artifact_lineage_not_entitlement": all(
             solver_result_lineage_contracts
+        ),
+        "mag_blocks_use_current_schema_endian_zero_based_connectivity_material_offset_model_and_checksum": all(
+            mag_block_record_contracts
+        ),
+        "mao_parameter_tables_use_current_tuples_row_order_convergence_unit_owners_count_and_digest": all(
+            mao_stepped_parameter_table_contracts
         ),
         "two_replays_per_source_role": all(
             replays == {1, 2} for replays in role_replays.values()
