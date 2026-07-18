@@ -2097,6 +2097,96 @@ def _bibliography_evidence_identity_ok(run: dict) -> bool:
     )
 
 
+def _command_option_schema_identity_ok(run: dict) -> bool:
+    identity = run.get("command_option_schema_document_generation_identity")
+    if identity is None:
+        return True
+    if not isinstance(identity, dict):
+        return False
+    generation = str(identity.get("command_generation", "")).strip()
+    command = str(identity.get("command_name", "")).strip()
+    options = identity.get("option_names")
+    defaults = identity.get("default_values")
+    enum_values = identity.get("enum_values")
+    units = identity.get("unit_symbols")
+    version = str(identity.get("document_version", "")).strip()
+    anchor = str(identity.get("section_anchor", "")).strip()
+    return (
+        bool(generation)
+        and all(identity.get(key) == generation for key in (
+            "option_command_generation", "default_command_generation",
+            "enum_command_generation", "unit_command_generation",
+            "document_command_generation", "anchor_command_generation",
+            "result_command_generation"))
+        and bool(command) and identity.get("result_command_name") == command
+        and isinstance(options, list) and bool(options)
+        and len(set(options)) == len(options)
+        and all(isinstance(item, str) and item.strip() for item in options)
+        and identity.get("result_option_names") == options
+        and isinstance(defaults, dict) and set(defaults).issubset(set(options))
+        and identity.get("result_default_values") == defaults
+        and isinstance(enum_values, dict) and set(enum_values).issubset(set(options))
+        and all(isinstance(values, list) and values for values in enum_values.values())
+        and identity.get("result_enum_values") == enum_values
+        and isinstance(units, dict) and set(units).issubset(set(options))
+        and all(isinstance(item, str) and item.strip() for item in units.values())
+        and identity.get("result_unit_symbols") == units
+        and bool(version) and identity.get("result_document_version") == version
+        and bool(anchor) and identity.get("result_section_anchor") == anchor
+        and re.fullmatch(r"[0-9a-f]{64}", str(identity.get("document_sha256", "")).lower()) is not None
+        and identity.get("indexed_document_sha256") == identity.get("document_sha256")
+        and re.fullmatch(r"[0-9a-f]{64}", str(identity.get("response_sha256", "")).lower()) is not None
+        and identity.get("accepted_response_sha256") == identity.get("response_sha256")
+    )
+
+
+def _mao_section_schema_identity_ok(run: dict) -> bool:
+    identity = run.get("mao_section_header_column_unit_locale_row_owner_generation_identity")
+    if identity is None:
+        return True
+    if not isinstance(identity, dict):
+        return False
+    generation = str(identity.get("mao_generation", "")).strip()
+    header = str(identity.get("section_header", "")).strip()
+    columns = identity.get("column_names")
+    units = identity.get("unit_symbols")
+    owner = str(identity.get("section_owner_id", "")).strip()
+    try:
+        row_count = int(identity.get("row_count"))
+        parsed_row_count = int(identity.get("parsed_row_count"))
+        rows = [[float(item) for item in row] for row in identity.get("rows", [])]
+        parsed_rows = [[float(item) for item in row] for row in identity.get("parsed_rows", [])]
+    except (TypeError, ValueError):
+        return False
+    return (
+        bool(generation)
+        and all(identity.get(key) == generation for key in (
+            "header_mao_generation", "column_mao_generation", "unit_mao_generation",
+            "locale_mao_generation", "row_mao_generation", "owner_mao_generation",
+            "result_mao_generation"))
+        and bool(header) and identity.get("parsed_section_header") == header
+        and isinstance(columns, list) and bool(columns)
+        and len(set(columns)) == len(columns)
+        and all(isinstance(item, str) and item.strip() for item in columns)
+        and identity.get("parsed_column_names") == columns
+        and isinstance(units, list) and len(units) == len(columns)
+        and all(isinstance(item, str) and item.strip() for item in units)
+        and identity.get("parsed_unit_symbols") == units
+        and identity.get("numeric_locale") == "C-dot"
+        and identity.get("parsed_numeric_locale") == "C-dot"
+        and row_count >= 1 and parsed_row_count == row_count
+        and len(rows) == row_count
+        and all(len(row) == len(columns) for row in rows)
+        and all(math.isfinite(item) for row in rows for item in row)
+        and parsed_rows == rows
+        and bool(owner) and identity.get("parsed_section_owner_id") == owner
+        and re.fullmatch(r"[0-9a-f]{64}", str(identity.get("section_sha256", "")).lower()) is not None
+        and identity.get("parsed_section_sha256") == identity.get("section_sha256")
+        and re.fullmatch(r"[0-9a-f]{64}", str(identity.get("result_sha256", "")).lower()) is not None
+        and identity.get("accepted_result_sha256") == identity.get("result_sha256")
+    )
+
+
 def force_method_profile_contract_gate(summary_json: str) -> dict:
     """Validate deck roles and GUI-free replay metadata without opening files."""
     try:
@@ -2170,6 +2260,8 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
     public_query_citation_contracts: list[bool] = []
     document_glossary_contracts: list[bool] = []
     bibliography_evidence_contracts: list[bool] = []
+    command_option_schema_contracts: list[bool] = []
+    mao_section_schema_contracts: list[bool] = []
     for run in runs:
         if not isinstance(run, dict):
             run_contracts.append(False)
@@ -2217,6 +2309,8 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
             public_query_citation_contracts.append(False)
             document_glossary_contracts.append(False)
             bibliography_evidence_contracts.append(False)
+            command_option_schema_contracts.append(False)
+            mao_section_schema_contracts.append(False)
             continue
         role = str(run.get("role", ""))
         parsed_rows = run.get("parsed_rows")
@@ -2336,6 +2430,8 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
         public_query_citation_contracts.append(_public_query_citation_identity_ok(run))
         document_glossary_contracts.append(_document_glossary_identity_ok(run))
         bibliography_evidence_contracts.append(_bibliography_evidence_identity_ok(run))
+        command_option_schema_contracts.append(_command_option_schema_identity_ok(run))
+        mao_section_schema_contracts.append(_mao_section_schema_identity_ok(run))
         run_contracts.append(
             role in _CASE_ROLES
             and run.get("case_id") == _CASE_ROLES[role]
@@ -2515,6 +2611,12 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
         ),
         "bibliography_evidence_uses_current_citation_doi_edition_pages_figures_allowlist_and_checksums": all(
             bibliography_evidence_contracts
+        ),
+        "command_guidance_uses_current_option_schema_defaults_enums_units_document_and_anchor": all(
+            command_option_schema_contracts
+        ),
+        "mao_sections_use_current_header_columns_units_locale_rows_owner_and_checksums": all(
+            mao_section_schema_contracts
         ),
         "two_replays_per_source_role": all(
             replays == {1, 2} for replays in role_replays.values()
