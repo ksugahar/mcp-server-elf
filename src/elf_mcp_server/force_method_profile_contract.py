@@ -2419,6 +2419,177 @@ def _mao_stepped_parameter_table_identity_ok(run: dict) -> bool:
     )
 
 
+def _mag_material_variable_record_identity_ok(run: dict) -> bool:
+    identity = run.get(
+        "mag_material_variable_record_offset_count_unit_bh_order_material_crc_model_file_identity"
+    )
+    if identity is None:
+        return True
+    if not isinstance(identity, dict):
+        return False
+    generation = str(identity.get("material_generation", "")).strip()
+    try:
+        offsets = [int(item) for item in identity.get("record_offsets_bytes", [])]
+        parsed_offsets = [
+            int(item) for item in identity.get("parsed_record_offsets_bytes", [])
+        ]
+        point_count = int(identity.get("point_count"))
+        parsed_point_count = int(identity.get("parsed_point_count"))
+        points = [
+            [float(item) for item in row] for row in identity.get("bh_points", [])
+        ]
+        parsed_points = [
+            [float(item) for item in row]
+            for row in identity.get("parsed_bh_points", [])
+        ]
+        material_id = int(identity.get("material_id"))
+        parsed_material_id = int(identity.get("parsed_material_id"))
+    except (TypeError, ValueError):
+        return False
+    return (
+        bool(generation)
+        and all(
+            identity.get(key) == generation
+            for key in (
+                "offset_generation",
+                "count_generation",
+                "unit_generation",
+                "bh_generation",
+                "order_generation",
+                "index_generation",
+                "crc_generation",
+                "model_generation",
+                "file_generation",
+                "result_generation",
+            )
+        )
+        and len(offsets) == point_count
+        and point_count >= 2
+        and offsets[0] >= 0
+        and all(left < right for left, right in zip(offsets, offsets[1:]))
+        and parsed_offsets == offsets
+        and parsed_point_count == point_count
+        and identity.get("field_unit") == "A/m"
+        and identity.get("parsed_field_unit") == identity.get("field_unit")
+        and identity.get("flux_density_unit") == "T"
+        and identity.get("parsed_flux_density_unit")
+        == identity.get("flux_density_unit")
+        and len(points) == point_count
+        and all(len(row) == 2 for row in points)
+        and all(math.isfinite(item) for row in points for item in row)
+        and all(left[0] < right[0] for left, right in zip(points, points[1:]))
+        and all(left[1] <= right[1] for left, right in zip(points, points[1:]))
+        and parsed_points == points
+        and material_id >= 0
+        and parsed_material_id == material_id
+        and re.fullmatch(
+            r"[0-9a-f]{8}", str(identity.get("record_crc32", "")).lower()
+        )
+        is not None
+        and identity.get("parsed_record_crc32") == identity.get("record_crc32")
+        and bool(str(identity.get("model_generation_id", "")).strip())
+        and identity.get("parsed_model_generation_id")
+        == identity.get("model_generation_id")
+        and re.fullmatch(
+            r"[0-9a-f]{64}", str(identity.get("file_sha256", "")).lower()
+        )
+        is not None
+        and identity.get("parsed_file_sha256") == identity.get("file_sha256")
+    )
+
+
+def _mao_transient_table_identity_ok(run: dict) -> bool:
+    identity = run.get(
+        "mao_transient_channel_header_sample_time_unit_event_completion_owner_count_digest_identity"
+    )
+    if identity is None:
+        return True
+    if not isinstance(identity, dict):
+        return False
+    generation = str(identity.get("transient_generation", "")).strip()
+    headers = [str(item).strip() for item in identity.get("channel_headers", [])]
+    parsed_headers = [
+        str(item).strip() for item in identity.get("parsed_channel_headers", [])
+    ]
+    units = [str(item).strip() for item in identity.get("channel_units", [])]
+    parsed_units = [
+        str(item).strip() for item in identity.get("parsed_channel_units", [])
+    ]
+    try:
+        sample_times = [
+            float(item) for item in identity.get("sample_times_s", [])
+        ]
+        parsed_sample_times = [
+            float(item) for item in identity.get("parsed_sample_times_s", [])
+        ]
+        rows = [[float(item) for item in row] for row in identity.get("rows", [])]
+        parsed_rows = [
+            [float(item) for item in row] for row in identity.get("parsed_rows", [])
+        ]
+        event_row = int(identity.get("event_row_index"))
+        parsed_event_row = int(identity.get("parsed_event_row_index"))
+        row_count = int(identity.get("row_count"))
+        parsed_row_count = int(identity.get("parsed_row_count"))
+    except (TypeError, ValueError):
+        return False
+    expected_event_row = (
+        max(range(len(rows)), key=lambda index: abs(rows[index][1]))
+        if rows and all(len(row) >= 2 for row in rows)
+        else -1
+    )
+    return (
+        bool(generation)
+        and all(
+            identity.get(key) == generation
+            for key in (
+                "channel_generation",
+                "sample_generation",
+                "unit_generation",
+                "event_generation",
+                "completion_generation",
+                "owner_generation",
+                "count_generation",
+                "digest_generation",
+                "result_generation",
+            )
+        )
+        and headers == ["time", "current", "force"]
+        and len(set(headers)) == len(headers)
+        and parsed_headers == headers
+        and units == ["s", "A", "N"]
+        and parsed_units == units
+        and len(sample_times) >= 3
+        and all(math.isfinite(item) for item in sample_times)
+        and all(
+            left < right for left, right in zip(sample_times, sample_times[1:])
+        )
+        and parsed_sample_times == sample_times
+        and len(rows) == row_count == len(sample_times)
+        and all(len(row) == len(headers) for row in rows)
+        and all(math.isfinite(item) for row in rows for item in row)
+        and all(
+            math.isclose(row[0], time, rel_tol=0.0, abs_tol=1.0e-15)
+            for row, time in zip(rows, sample_times)
+        )
+        and parsed_rows == rows
+        and event_row == expected_event_row
+        and parsed_event_row == event_row
+        and identity.get("solver_completed") is True
+        and identity.get("parsed_solver_completed") is True
+        and bool(str(identity.get("model_owner", "")).strip())
+        and identity.get("parsed_model_owner") == identity.get("model_owner")
+        and bool(str(identity.get("run_owner", "")).strip())
+        and identity.get("parsed_run_owner") == identity.get("run_owner")
+        and parsed_row_count == row_count
+        and re.fullmatch(
+            r"[0-9a-f]{64}", str(identity.get("artifact_sha256", "")).lower()
+        )
+        is not None
+        and identity.get("parsed_artifact_sha256")
+        == identity.get("artifact_sha256")
+    )
+
+
 def force_method_profile_contract_gate(summary_json: str) -> dict:
     """Validate deck roles and GUI-free replay metadata without opening files."""
     try:
@@ -2500,6 +2671,8 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
     solver_result_lineage_contracts: list[bool] = []
     mag_block_record_contracts: list[bool] = []
     mao_stepped_parameter_table_contracts: list[bool] = []
+    mag_material_variable_record_contracts: list[bool] = []
+    mao_transient_table_contracts: list[bool] = []
     for run in runs:
         if not isinstance(run, dict):
             run_contracts.append(False)
@@ -2555,6 +2728,8 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
             solver_result_lineage_contracts.append(False)
             mag_block_record_contracts.append(False)
             mao_stepped_parameter_table_contracts.append(False)
+            mag_material_variable_record_contracts.append(False)
+            mao_transient_table_contracts.append(False)
             continue
         role = str(run.get("role", ""))
         parsed_rows = run.get("parsed_rows")
@@ -2683,6 +2858,12 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
         mag_block_record_contracts.append(_mag_block_record_identity_ok(run))
         mao_stepped_parameter_table_contracts.append(
             _mao_stepped_parameter_table_identity_ok(run)
+        )
+        mag_material_variable_record_contracts.append(
+            _mag_material_variable_record_identity_ok(run)
+        )
+        mao_transient_table_contracts.append(
+            _mao_transient_table_identity_ok(run)
         )
         run_contracts.append(
             role in _CASE_ROLES
@@ -2887,6 +3068,12 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
         ),
         "mao_parameter_tables_use_current_tuples_row_order_convergence_unit_owners_count_and_digest": all(
             mao_stepped_parameter_table_contracts
+        ),
+        "mag_material_records_use_current_offsets_count_si_units_ordered_bh_material_crc_model_and_file": all(
+            mag_material_variable_record_contracts
+        ),
+        "mao_transient_tables_use_current_channels_units_times_rows_event_completion_owners_count_and_digest": all(
+            mao_transient_table_contracts
         ),
         "two_replays_per_source_role": all(
             replays == {1, 2} for replays in role_replays.values()
