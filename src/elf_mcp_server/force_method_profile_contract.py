@@ -2746,6 +2746,148 @@ def _document_option_identity_ok(run: dict) -> bool:
     )
 
 
+def _input_schema_identity_ok(run: dict) -> bool:
+    identity = run.get(
+        "input_section_continuation_encoding_unit_dependency_enum_release_owner_schema_identity"
+    )
+    if identity is None:
+        return True
+    if not isinstance(identity, dict):
+        return False
+    generation = str(identity.get("input_schema_generation", "")).strip()
+    sections = identity.get("section_order")
+    continuations = identity.get("continuation_markers")
+    release = str(identity.get("available_since_release", "")).strip()
+    owner = str(identity.get("document_owner", "")).strip()
+    scope = str(identity.get("enum_scope", "")).strip()
+    dependency = str(identity.get("dependency_expression", "")).strip()
+    return (
+        bool(generation)
+        and all(
+            identity.get(key) == generation
+            for key in (
+                "section_generation",
+                "continuation_generation",
+                "encoding_generation",
+                "unit_generation",
+                "dependency_generation",
+                "enum_generation",
+                "release_generation",
+                "owner_generation",
+                "schema_generation",
+                "response_generation",
+            )
+        )
+        and isinstance(sections, list)
+        and len(sections) >= 2
+        and all(isinstance(item, str) and item.strip() for item in sections)
+        and len(set(sections)) == len(sections)
+        and identity.get("parsed_section_order") == sections
+        and isinstance(continuations, list)
+        and bool(continuations)
+        and len(continuations) <= 4
+        and all(isinstance(item, str) and item for item in continuations)
+        and len(set(continuations)) == len(continuations)
+        and identity.get("parsed_continuation_markers") == continuations
+        and identity.get("text_encoding") in {"utf-8", "shift_jis"}
+        and identity.get("parsed_text_encoding") == identity.get("text_encoding")
+        and identity.get("length_unit") in {"m", "cm", "mm"}
+        and identity.get("parsed_length_unit") == identity.get("length_unit")
+        and bool(str(identity.get("dependent_option", "")).strip())
+        and identity.get("parsed_dependent_option") == identity.get("dependent_option")
+        and bool(dependency)
+        and identity.get("parsed_dependency_expression") == dependency
+        and bool(scope)
+        and not scope.startswith("private.")
+        and identity.get("parsed_enum_scope") == scope
+        and re.fullmatch(r"\d+\.\d+", release) is not None
+        and identity.get("parsed_available_since_release") == release
+        and bool(owner)
+        and not owner.startswith("private/")
+        and identity.get("parsed_document_owner") == owner
+        and re.fullmatch(
+            r"[0-9a-f]{64}", str(identity.get("schema_sha256", "")).lower()
+        )
+        is not None
+        and identity.get("parsed_schema_sha256") == identity.get("schema_sha256")
+        and identity.get("public_boundary") == "documentation_only"
+        and identity.get("resolved_public_boundary") == identity.get("public_boundary")
+        and re.fullmatch(
+            r"[0-9a-f]{64}", str(identity.get("response_sha256", "")).lower()
+        )
+        is not None
+        and identity.get("accepted_response_sha256") == identity.get("response_sha256")
+    )
+
+
+def _bilingual_citation_identity_ok(run: dict) -> bool:
+    identity = run.get(
+        "bilingual_keyword_alias_section_page_release_scope_citation_boundary_owner_response_identity"
+    )
+    if identity is None:
+        return True
+    if not isinstance(identity, dict):
+        return False
+    generation = str(identity.get("bilingual_index_generation", "")).strip()
+    japanese_alias = str(identity.get("japanese_keyword_alias", "")).strip()
+    english_alias = str(identity.get("english_keyword_alias", "")).strip()
+    section = str(identity.get("document_section", "")).strip()
+    release = str(identity.get("document_release", "")).strip()
+    scope = str(identity.get("option_scope", "")).strip()
+    owner = str(identity.get("source_owner", "")).strip()
+    page = identity.get("document_page")
+    return (
+        bool(generation)
+        and all(
+            identity.get(key) == generation
+            for key in (
+                "alias_generation",
+                "section_generation",
+                "page_generation",
+                "release_generation",
+                "scope_generation",
+                "citation_generation",
+                "boundary_generation",
+                "owner_generation",
+                "response_generation",
+            )
+        )
+        and bool(japanese_alias)
+        and bool(english_alias)
+        and japanese_alias != english_alias
+        and identity.get("resolved_japanese_keyword_alias") == japanese_alias
+        and identity.get("resolved_english_keyword_alias") == english_alias
+        and bool(section)
+        and not section.startswith("private/")
+        and identity.get("resolved_document_section") == section
+        and isinstance(page, int)
+        and not isinstance(page, bool)
+        and page > 0
+        and identity.get("resolved_document_page") == page
+        and re.fullmatch(r"\d+\.\d+", release) is not None
+        and identity.get("resolved_document_release") == release
+        and bool(scope)
+        and not scope.startswith("private.")
+        and identity.get("resolved_option_scope") == scope
+        and re.fullmatch(
+            r"[0-9a-f]{64}", str(identity.get("cited_excerpt_sha256", "")).lower()
+        )
+        is not None
+        and identity.get("resolved_cited_excerpt_sha256")
+        == identity.get("cited_excerpt_sha256")
+        and identity.get("public_boundary") == "documentation_only"
+        and identity.get("resolved_public_boundary") == identity.get("public_boundary")
+        and bool(owner)
+        and not owner.startswith("private/")
+        and identity.get("resolved_source_owner") == owner
+        and re.fullmatch(
+            r"[0-9a-f]{64}", str(identity.get("response_sha256", "")).lower()
+        )
+        is not None
+        and identity.get("accepted_response_sha256") == identity.get("response_sha256")
+    )
+
+
 def force_method_profile_contract_gate(summary_json: str) -> dict:
     """Validate deck roles and GUI-free replay metadata without opening files."""
     try:
@@ -2831,6 +2973,8 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
     mao_transient_table_contracts: list[bool] = []
     mao_table_graph_contracts: list[bool] = []
     document_option_contracts: list[bool] = []
+    input_schema_contracts: list[bool] = []
+    bilingual_citation_contracts: list[bool] = []
     for run in runs:
         if not isinstance(run, dict):
             run_contracts.append(False)
@@ -2890,6 +3034,8 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
             mao_transient_table_contracts.append(False)
             mao_table_graph_contracts.append(False)
             document_option_contracts.append(False)
+            input_schema_contracts.append(False)
+            bilingual_citation_contracts.append(False)
             continue
         role = str(run.get("role", ""))
         parsed_rows = run.get("parsed_rows")
@@ -3027,6 +3173,8 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
         )
         mao_table_graph_contracts.append(_mao_table_graph_identity_ok(run))
         document_option_contracts.append(_document_option_identity_ok(run))
+        input_schema_contracts.append(_input_schema_identity_ok(run))
+        bilingual_citation_contracts.append(_bilingual_citation_identity_ok(run))
         run_contracts.append(
             role in _CASE_ROLES
             and run.get("case_id") == _CASE_ROLES[role]
@@ -3242,6 +3390,12 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
         ),
         "document_options_use_current_enum_default_version_scope_example_revision_public_boundary_and_response": all(
             document_option_contracts
+        ),
+        "input_descriptions_use_current_sections_continuations_encoding_units_dependencies_enums_release_owner_schema_and_boundary": all(
+            input_schema_contracts
+        ),
+        "bilingual_documentation_uses_current_aliases_section_page_release_scope_citation_boundary_owner_and_response": all(
+            bilingual_citation_contracts
         ),
         "two_replays_per_source_role": all(
             replays == {1, 2} for replays in role_replays.values()
