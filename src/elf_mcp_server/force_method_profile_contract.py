@@ -2187,6 +2187,79 @@ def _mao_section_schema_identity_ok(run: dict) -> bool:
     )
 
 
+def _command_alias_platform_identity_ok(run: dict) -> bool:
+    identity = run.get("command_alias_platform_option_version_anchor_document_digest_identity")
+    if identity is None:
+        return True
+    if not isinstance(identity, dict):
+        return False
+    generation = str(identity.get("command_generation", "")).strip()
+    command = str(identity.get("canonical_command", "")).strip()
+    aliases = identity.get("command_aliases")
+    options = identity.get("available_options")
+    return (
+        bool(generation)
+        and all(identity.get(key) == generation for key in (
+            "alias_command_generation", "platform_command_generation", "option_command_generation",
+            "version_command_generation", "anchor_command_generation", "document_command_generation",
+            "result_command_generation"))
+        and bool(command) and identity.get("resolved_canonical_command") == command
+        and isinstance(aliases, list) and bool(aliases) and len(set(aliases)) == len(aliases)
+        and all(isinstance(item, str) and item.strip() for item in aliases)
+        and identity.get("resolved_command_aliases") == aliases
+        and identity.get("platform") == "windows-x64"
+        and identity.get("resolved_platform") == "windows-x64"
+        and isinstance(options, list) and bool(options) and len(set(options)) == len(options)
+        and identity.get("resolved_available_options") == options
+        and bool(identity.get("product_version"))
+        and identity.get("resolved_product_version") == identity.get("product_version")
+        and bool(identity.get("section_anchor"))
+        and identity.get("resolved_section_anchor") == identity.get("section_anchor")
+        and bool(identity.get("document_owner"))
+        and identity.get("resolved_document_owner") == identity.get("document_owner")
+        and re.fullmatch(r"[0-9a-f]{64}", str(identity.get("document_sha256", "")).lower()) is not None
+        and identity.get("indexed_document_sha256") == identity.get("document_sha256")
+    )
+
+
+def _mao_vector_schema_identity_ok(run: dict) -> bool:
+    identity = run.get("mao_vector_component_frame_unit_point_owner_digest_identity")
+    if identity is None:
+        return True
+    if not isinstance(identity, dict):
+        return False
+    generation = str(identity.get("mao_generation", "")).strip()
+    components = identity.get("component_order")
+    units = identity.get("unit_symbols")
+    points = identity.get("point_ids")
+    try:
+        vectors = [[float(item) for item in row] for row in identity.get("vectors", [])]
+        parsed_vectors = [[float(item) for item in row] for row in identity.get("parsed_vectors", [])]
+    except (TypeError, ValueError):
+        return False
+    return (
+        bool(generation)
+        and all(identity.get(key) == generation for key in (
+            "component_mao_generation", "frame_mao_generation", "unit_mao_generation",
+            "point_mao_generation", "owner_mao_generation", "digest_mao_generation",
+            "result_mao_generation"))
+        and components == ["x", "y", "z"] and identity.get("parsed_component_order") == components
+        and identity.get("coordinate_frame") == "global_cartesian"
+        and identity.get("parsed_coordinate_frame") == "global_cartesian"
+        and units == ["N", "N", "N"] and identity.get("parsed_unit_symbols") == units
+        and isinstance(points, list) and bool(points) and len(set(points)) == len(points)
+        and all(isinstance(item, int) and item > 0 for item in points)
+        and identity.get("parsed_point_ids") == points
+        and len(vectors) == len(points) and all(len(row) == 3 for row in vectors)
+        and all(math.isfinite(item) for row in vectors for item in row)
+        and parsed_vectors == vectors
+        and bool(identity.get("section_owner_id"))
+        and identity.get("parsed_section_owner_id") == identity.get("section_owner_id")
+        and re.fullmatch(r"[0-9a-f]{64}", str(identity.get("section_sha256", "")).lower()) is not None
+        and identity.get("parsed_section_sha256") == identity.get("section_sha256")
+    )
+
+
 def force_method_profile_contract_gate(summary_json: str) -> dict:
     """Validate deck roles and GUI-free replay metadata without opening files."""
     try:
@@ -2262,6 +2335,8 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
     bibliography_evidence_contracts: list[bool] = []
     command_option_schema_contracts: list[bool] = []
     mao_section_schema_contracts: list[bool] = []
+    command_alias_platform_contracts: list[bool] = []
+    mao_vector_schema_contracts: list[bool] = []
     for run in runs:
         if not isinstance(run, dict):
             run_contracts.append(False)
@@ -2311,6 +2386,8 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
             bibliography_evidence_contracts.append(False)
             command_option_schema_contracts.append(False)
             mao_section_schema_contracts.append(False)
+            command_alias_platform_contracts.append(False)
+            mao_vector_schema_contracts.append(False)
             continue
         role = str(run.get("role", ""))
         parsed_rows = run.get("parsed_rows")
@@ -2432,6 +2509,8 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
         bibliography_evidence_contracts.append(_bibliography_evidence_identity_ok(run))
         command_option_schema_contracts.append(_command_option_schema_identity_ok(run))
         mao_section_schema_contracts.append(_mao_section_schema_identity_ok(run))
+        command_alias_platform_contracts.append(_command_alias_platform_identity_ok(run))
+        mao_vector_schema_contracts.append(_mao_vector_schema_identity_ok(run))
         run_contracts.append(
             role in _CASE_ROLES
             and run.get("case_id") == _CASE_ROLES[role]
@@ -2617,6 +2696,12 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
         ),
         "mao_sections_use_current_header_columns_units_locale_rows_owner_and_checksums": all(
             mao_section_schema_contracts
+        ),
+        "command_guidance_uses_current_alias_platform_options_version_anchor_document_and_digest": all(
+            command_alias_platform_contracts
+        ),
+        "mao_vectors_use_current_components_frame_units_point_order_owner_and_digest": all(
+            mao_vector_schema_contracts
         ),
         "two_replays_per_source_role": all(
             replays == {1, 2} for replays in role_replays.values()
