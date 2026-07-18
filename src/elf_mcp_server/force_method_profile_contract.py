@@ -3062,6 +3062,113 @@ def _input_region_reference_identity_ok(run: dict) -> bool:
     )
 
 
+def _mao_output_identity_ok(run: dict) -> bool:
+    identity = run.get(
+        "mao_output_section_record_unit_case_iteration_owner_input_output_digest_identity"
+    )
+    if identity is None:
+        return True
+    if not isinstance(identity, dict):
+        return False
+    generation = str(identity.get("mao_generation", "")).strip()
+    section = str(identity.get("section_name", "")).strip()
+    units = identity.get("unit_convention")
+    owner = str(identity.get("run_owner", "")).strip()
+    try:
+        record_count = int(identity.get("record_count"))
+        iteration = int(identity.get("nonlinear_iteration"))
+    except (TypeError, ValueError):
+        return False
+    mirrored = (
+        "output_extension", "section_name", "record_count", "unit_convention",
+        "analysis_case", "nonlinear_iteration", "run_owner", "input_sha256",
+        "output_sha256",
+    )
+    return (
+        bool(generation)
+        and all(identity.get(key) == generation for key in (
+            "section_generation", "record_generation", "unit_generation",
+            "case_generation", "iteration_generation", "owner_generation",
+            "input_generation", "output_generation", "response_generation"))
+        and identity.get("output_extension") == ".mao"
+        and bool(section)
+        and record_count > 0
+        and isinstance(units, list)
+        and len(units) >= 2
+        and all(isinstance(item, str) and item.strip() for item in units)
+        and bool(str(identity.get("analysis_case", "")).strip())
+        and iteration >= 0
+        and bool(owner)
+        and not owner.startswith("private/")
+        and re.fullmatch(r"[0-9a-f]{64}", str(identity.get("input_sha256", "")).lower())
+        is not None
+        and re.fullmatch(r"[0-9a-f]{64}", str(identity.get("output_sha256", "")).lower())
+        is not None
+        and all(identity.get(f"parsed_{field}") == identity.get(field) for field in mirrored)
+    )
+
+
+def _document_table_identity_ok(run: dict) -> bool:
+    identity = run.get(
+        "document_table_interpolation_axis_order_row_column_unit_release_selected_row_owner_citation_response_identity"
+    )
+    if identity is None:
+        return True
+    if not isinstance(identity, dict):
+        return False
+    generation = str(identity.get("table_generation", "")).strip()
+    axis = str(identity.get("interpolation_axis", "")).strip()
+    order = str(identity.get("interpolation_order", "")).strip()
+    owner = str(identity.get("document_owner", "")).strip()
+    rows = identity.get("selected_row")
+    row_ok = (
+        isinstance(rows, list)
+        and len(rows) >= 2
+        and all(
+            isinstance(row, list)
+            and len(row) == 2
+            and isinstance(row[0], str)
+            and row[0].strip()
+            and isinstance(row[1], (int, float))
+            and not isinstance(row[1], bool)
+            and math.isfinite(float(row[1]))
+            for row in rows
+        )
+    )
+    return (
+        bool(generation)
+        and all(identity.get(key) == generation for key in (
+            "axis_generation", "order_generation", "unit_generation",
+            "release_generation", "row_generation", "owner_generation",
+            "citation_generation", "response_generation"))
+        and axis.endswith("_hz")
+        and identity.get("resolved_interpolation_axis") == axis
+        and order in {"linear", "nearest"}
+        and identity.get("resolved_interpolation_order") == order
+        and identity.get("row_unit") == "Hz"
+        and identity.get("resolved_row_unit") == identity.get("row_unit")
+        and bool(str(identity.get("column_unit", "")).strip())
+        and identity.get("resolved_column_unit") == identity.get("column_unit")
+        and re.fullmatch(r"\d+\.\d+", str(identity.get("document_release", "")))
+        is not None
+        and identity.get("resolved_document_release") == identity.get("document_release")
+        and identity.get("release_applicability") == "6.x"
+        and identity.get("resolved_release_applicability")
+        == identity.get("release_applicability")
+        and row_ok
+        and identity.get("resolved_selected_row") == rows
+        and bool(owner)
+        and not owner.startswith("private/")
+        and identity.get("resolved_document_owner") == owner
+        and re.fullmatch(r"[0-9a-f]{64}", str(identity.get("citation_sha256", "")).lower())
+        is not None
+        and identity.get("resolved_citation_sha256") == identity.get("citation_sha256")
+        and re.fullmatch(r"[0-9a-f]{64}", str(identity.get("response_sha256", "")).lower())
+        is not None
+        and identity.get("accepted_response_sha256") == identity.get("response_sha256")
+    )
+
+
 def force_method_profile_contract_gate(summary_json: str) -> dict:
     """Validate deck roles and GUI-free replay metadata without opening files."""
     try:
@@ -3151,6 +3258,8 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
     bilingual_citation_contracts: list[bool] = []
     document_equation_contracts: list[bool] = []
     input_region_reference_contracts: list[bool] = []
+    mao_output_identity_contracts: list[bool] = []
+    document_table_identity_contracts: list[bool] = []
     for run in runs:
         if not isinstance(run, dict):
             run_contracts.append(False)
@@ -3214,6 +3323,8 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
             bilingual_citation_contracts.append(False)
             document_equation_contracts.append(False)
             input_region_reference_contracts.append(False)
+            mao_output_identity_contracts.append(False)
+            document_table_identity_contracts.append(False)
             continue
         role = str(run.get("role", ""))
         parsed_rows = run.get("parsed_rows")
@@ -3357,6 +3468,8 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
         input_region_reference_contracts.append(
             _input_region_reference_identity_ok(run)
         )
+        mao_output_identity_contracts.append(_mao_output_identity_ok(run))
+        document_table_identity_contracts.append(_document_table_identity_ok(run))
         run_contracts.append(
             role in _CASE_ROLES
             and run.get("case_id") == _CASE_ROLES[role]
@@ -3584,6 +3697,12 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
         ),
         "input_regions_use_current_numbering_material_source_boundary_continuation_unit_release_owner_and_response": all(
             input_region_reference_contracts
+        ),
+        "mao_outputs_use_current_section_records_units_case_iteration_owner_input_and_output_digests": all(
+            mao_output_identity_contracts
+        ),
+        "document_tables_use_current_axis_order_units_release_row_owner_citation_and_response": all(
+            document_table_identity_contracts
         ),
         "two_replays_per_source_role": all(
             replays == {1, 2} for replays in role_replays.values()
