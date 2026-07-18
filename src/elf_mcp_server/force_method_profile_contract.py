@@ -3169,6 +3169,204 @@ def _document_table_identity_ok(run: dict) -> bool:
     )
 
 
+def _command_grammar_identity_ok(run: dict) -> bool:
+    identity = run.get(
+        "command_grammar_required_mutex_dependency_default_unit_release_citation_owner_response_identity"
+    )
+    if identity is None:
+        return True
+    if not isinstance(identity, dict):
+        return False
+    generation = str(identity.get("grammar_generation", "")).strip()
+    command = str(identity.get("command_name", "")).strip()
+    options = identity.get("option_names")
+    required = identity.get("required_options")
+    mutex_groups = identity.get("mutually_exclusive_groups")
+    dependencies = identity.get("dependency_rules")
+    defaults = identity.get("default_values")
+    units = identity.get("option_units")
+    owner = str(identity.get("document_owner", "")).strip()
+    options_ok = (
+        isinstance(options, list)
+        and bool(options)
+        and all(isinstance(item, str) and item.strip() for item in options)
+        and len(set(options)) == len(options)
+    )
+    option_set = set(options) if options_ok else set()
+    required_ok = (
+        isinstance(required, list)
+        and bool(required)
+        and all(isinstance(item, str) and item in option_set for item in required)
+        and len(set(required)) == len(required)
+    )
+    mutex_ok = (
+        isinstance(mutex_groups, list)
+        and bool(mutex_groups)
+        and all(
+            isinstance(group, list)
+            and len(group) >= 2
+            and len(set(group)) == len(group)
+            and all(isinstance(item, str) and item in option_set for item in group)
+            for group in mutex_groups
+        )
+    )
+    dependency_ok = (
+        isinstance(dependencies, list)
+        and bool(dependencies)
+        and all(
+            isinstance(rule, list)
+            and len(rule) == 2
+            and rule[0] != rule[1]
+            and all(isinstance(item, str) and item in option_set for item in rule)
+            for rule in dependencies
+        )
+    )
+    defaults_ok = (
+        isinstance(defaults, dict)
+        and bool(defaults)
+        and set(defaults).issubset(option_set)
+    )
+    units_ok = (
+        isinstance(units, dict)
+        and bool(units)
+        and set(units).issubset(option_set)
+        and all(isinstance(unit, str) and unit.strip() for unit in units.values())
+    )
+    if defaults_ok and mutex_ok:
+        active_defaults = {key for key, item in defaults.items() if bool(item)}
+        defaults_ok = all(
+            len(active_defaults.intersection(group)) <= 1 for group in mutex_groups
+        )
+    mirrored = (
+        "command_name", "option_names", "required_options",
+        "mutually_exclusive_groups", "dependency_rules", "default_values",
+        "option_units", "release_scope", "section_citation", "document_owner",
+    )
+    return (
+        bool(generation)
+        and all(identity.get(key) == generation for key in (
+            "option_generation", "required_generation", "mutex_generation",
+            "dependency_generation", "default_generation", "unit_generation",
+            "release_generation", "citation_generation", "owner_generation",
+            "response_generation"))
+        and bool(command)
+        and options_ok and required_ok and mutex_ok and dependency_ok
+        and defaults_ok and units_ok
+        and identity.get("release_scope") == "6.x"
+        and command in str(identity.get("section_citation", ""))
+        and bool(owner) and not owner.startswith("private")
+        and all(identity.get(f"resolved_{field}") == identity.get(field) for field in mirrored)
+        and re.fullmatch(r"[0-9a-f]{64}", str(identity.get("citation_sha256", "")).lower())
+        is not None
+        and identity.get("resolved_citation_sha256") == identity.get("citation_sha256")
+        and re.fullmatch(r"[0-9a-f]{64}", str(identity.get("response_sha256", "")).lower())
+        is not None
+        and identity.get("accepted_response_sha256") == identity.get("response_sha256")
+    )
+
+
+def _vector_output_identity_ok(run: dict) -> bool:
+    identity = run.get(
+        "vector_output_basis_component_order_handedness_unit_transform_record_release_citation_response_identity"
+    )
+    if identity is None:
+        return True
+    if not isinstance(identity, dict):
+        return False
+    generation = str(identity.get("vector_generation", "")).strip()
+    transform = identity.get("local_to_global_transform")
+    source = identity.get("source_vector")
+    observed = identity.get("global_vector")
+    owner = str(identity.get("record_owner", "")).strip()
+    matrix_ok = (
+        isinstance(transform, list)
+        and len(transform) == 3
+        and all(isinstance(row, list) and len(row) == 3 for row in transform)
+        and all(
+            isinstance(item, (int, float))
+            and not isinstance(item, bool)
+            and math.isfinite(float(item))
+            for row in transform
+            for item in row
+        )
+    )
+    vectors_ok = (
+        isinstance(source, list)
+        and isinstance(observed, list)
+        and len(source) == len(observed) == 3
+        and all(
+            isinstance(item, (int, float))
+            and not isinstance(item, bool)
+            and math.isfinite(float(item))
+            for item in source + observed
+        )
+    )
+    orthonormal = False
+    expected: list[float] = []
+    if matrix_ok and vectors_ok:
+        matrix = [[float(item) for item in row] for row in transform]
+        rows_orthonormal = all(
+            math.isclose(
+                sum(matrix[i][k] * matrix[j][k] for k in range(3)),
+                1.0 if i == j else 0.0,
+                rel_tol=0.0,
+                abs_tol=1.0e-12,
+            )
+            for i in range(3)
+            for j in range(3)
+        )
+        determinant = (
+            matrix[0][0] * (matrix[1][1] * matrix[2][2] - matrix[1][2] * matrix[2][1])
+            - matrix[0][1] * (matrix[1][0] * matrix[2][2] - matrix[1][2] * matrix[2][0])
+            + matrix[0][2] * (matrix[1][0] * matrix[2][1] - matrix[1][1] * matrix[2][0])
+        )
+        orthonormal = rows_orthonormal and math.isclose(
+            determinant, 1.0, rel_tol=0.0, abs_tol=1.0e-12
+        )
+        try:
+            scale = float(identity.get("unit_scale"))
+        except (TypeError, ValueError):
+            scale = math.nan
+        expected = [
+            sum(matrix[i][j] * float(source[j]) * scale for j in range(3))
+            for i in range(3)
+        ]
+    else:
+        scale = math.nan
+    mirrored = (
+        "coordinate_basis", "component_order", "handedness", "source_unit",
+        "output_unit", "unit_scale", "local_to_global_transform",
+        "source_vector", "global_vector", "record_owner", "schema_release",
+    )
+    return (
+        bool(generation)
+        and all(identity.get(key) == generation for key in (
+            "basis_generation", "component_generation", "handedness_generation",
+            "unit_generation", "transform_generation", "record_generation",
+            "release_generation", "citation_generation", "response_generation"))
+        and identity.get("coordinate_basis") == "global_cartesian"
+        and identity.get("component_order") == ["x", "y", "z"]
+        and identity.get("handedness") == "right_handed"
+        and identity.get("source_unit") == "mT"
+        and identity.get("output_unit") == "T"
+        and math.isclose(scale, 1.0e-3, rel_tol=0.0, abs_tol=1.0e-15)
+        and matrix_ok and vectors_ok and orthonormal
+        and all(
+            math.isclose(float(item), reference, rel_tol=1.0e-12, abs_tol=1.0e-12)
+            for item, reference in zip(observed, expected)
+        )
+        and bool(owner) and not owner.startswith("private")
+        and re.fullmatch(r"6\.\d+", str(identity.get("schema_release", ""))) is not None
+        and all(identity.get(f"resolved_{field}") == identity.get(field) for field in mirrored)
+        and re.fullmatch(r"[0-9a-f]{64}", str(identity.get("citation_sha256", "")).lower())
+        is not None
+        and identity.get("resolved_citation_sha256") == identity.get("citation_sha256")
+        and re.fullmatch(r"[0-9a-f]{64}", str(identity.get("response_sha256", "")).lower())
+        is not None
+        and identity.get("accepted_response_sha256") == identity.get("response_sha256")
+    )
+
+
 def force_method_profile_contract_gate(summary_json: str) -> dict:
     """Validate deck roles and GUI-free replay metadata without opening files."""
     try:
@@ -3260,6 +3458,8 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
     input_region_reference_contracts: list[bool] = []
     mao_output_identity_contracts: list[bool] = []
     document_table_identity_contracts: list[bool] = []
+    command_grammar_identity_contracts: list[bool] = []
+    vector_output_identity_contracts: list[bool] = []
     for run in runs:
         if not isinstance(run, dict):
             run_contracts.append(False)
@@ -3325,6 +3525,8 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
             input_region_reference_contracts.append(False)
             mao_output_identity_contracts.append(False)
             document_table_identity_contracts.append(False)
+            command_grammar_identity_contracts.append(False)
+            vector_output_identity_contracts.append(False)
             continue
         role = str(run.get("role", ""))
         parsed_rows = run.get("parsed_rows")
@@ -3470,6 +3672,8 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
         )
         mao_output_identity_contracts.append(_mao_output_identity_ok(run))
         document_table_identity_contracts.append(_document_table_identity_ok(run))
+        command_grammar_identity_contracts.append(_command_grammar_identity_ok(run))
+        vector_output_identity_contracts.append(_vector_output_identity_ok(run))
         run_contracts.append(
             role in _CASE_ROLES
             and run.get("case_id") == _CASE_ROLES[role]
@@ -3703,6 +3907,12 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
         ),
         "document_tables_use_current_axis_order_units_release_row_owner_citation_and_response": all(
             document_table_identity_contracts
+        ),
+        "command_grammar_uses_current_required_mutex_dependency_defaults_units_release_citation_owner_and_response": all(
+            command_grammar_identity_contracts
+        ),
+        "vector_outputs_use_current_basis_component_order_handedness_units_transform_record_release_citation_and_response": all(
+            vector_output_identity_contracts
         ),
         "two_replays_per_source_role": all(
             replays == {1, 2} for replays in role_replays.values()
