@@ -2260,6 +2260,43 @@ def _mao_vector_schema_identity_ok(run: dict) -> bool:
     )
 
 
+def _mao_record_schema_identity_ok(run: dict) -> bool:
+    identity = run.get("mao_record_schema_endian_offset_model_observable_unit_file_digest_identity")
+    if identity is None: return True
+    if not isinstance(identity, dict): return False
+    generation = str(identity.get("mao_generation", "")).strip()
+    return (
+        bool(generation) and all(identity.get(key) == generation for key in ("schema_mao_generation", "endian_mao_generation", "offset_mao_generation", "model_mao_generation", "observable_mao_generation", "unit_mao_generation", "digest_mao_generation", "result_mao_generation"))
+        and identity.get("record_schema") == "mao-result-v6" and identity.get("parsed_record_schema") == identity.get("record_schema")
+        and identity.get("byte_order") == "little" and identity.get("parsed_byte_order") == "little"
+        and isinstance(identity.get("record_offset_bytes"), int) and identity.get("record_offset_bytes") >= 0 and identity.get("parsed_record_offset_bytes") == identity.get("record_offset_bytes")
+        and bool(identity.get("model_generation")) and identity.get("parsed_model_generation") == identity.get("model_generation")
+        and bool(identity.get("observable_owner")) and identity.get("parsed_observable_owner") == identity.get("observable_owner")
+        and isinstance(identity.get("unit_metadata"), dict) and bool(identity.get("unit_metadata")) and identity.get("parsed_unit_metadata") == identity.get("unit_metadata")
+        and re.fullmatch(r"[0-9a-f]{64}", str(identity.get("file_sha256", "")).lower()) is not None
+        and identity.get("parsed_file_sha256") == identity.get("file_sha256")
+    )
+
+
+def _solver_result_lineage_identity_ok(run: dict) -> bool:
+    identity = run.get("solver_entitlement_session_model_run_completion_result_lineage_identity")
+    if identity is None: return True
+    if not isinstance(identity, dict): return False
+    generation = str(identity.get("lineage_generation", "")).strip()
+    return (
+        bool(generation) and all(identity.get(key) == generation for key in ("session_lineage_generation", "model_lineage_generation", "run_lineage_generation", "completion_lineage_generation", "result_lineage_generation", "digest_lineage_generation"))
+        and isinstance(identity.get("entitlement_present"), bool) and isinstance(identity.get("dongle_present"), bool)
+        and identity.get("entitlement_is_result_provenance") is False
+        and bool(identity.get("solver_session_id")) and identity.get("result_solver_session_id") == identity.get("solver_session_id")
+        and bool(identity.get("model_owner")) and identity.get("result_model_owner") == identity.get("model_owner")
+        and bool(identity.get("run_owner")) and identity.get("result_run_owner") == identity.get("run_owner")
+        and identity.get("completion_marker") == "completed" and identity.get("result_completion_marker") == "completed"
+        and bool(identity.get("result_generation")) and identity.get("accepted_result_generation") == identity.get("result_generation")
+        and re.fullmatch(r"[0-9a-f]{64}", str(identity.get("artifact_sha256", "")).lower()) is not None
+        and identity.get("accepted_artifact_sha256") == identity.get("artifact_sha256")
+    )
+
+
 def force_method_profile_contract_gate(summary_json: str) -> dict:
     """Validate deck roles and GUI-free replay metadata without opening files."""
     try:
@@ -2337,6 +2374,8 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
     mao_section_schema_contracts: list[bool] = []
     command_alias_platform_contracts: list[bool] = []
     mao_vector_schema_contracts: list[bool] = []
+    mao_record_schema_contracts: list[bool] = []
+    solver_result_lineage_contracts: list[bool] = []
     for run in runs:
         if not isinstance(run, dict):
             run_contracts.append(False)
@@ -2388,6 +2427,8 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
             mao_section_schema_contracts.append(False)
             command_alias_platform_contracts.append(False)
             mao_vector_schema_contracts.append(False)
+            mao_record_schema_contracts.append(False)
+            solver_result_lineage_contracts.append(False)
             continue
         role = str(run.get("role", ""))
         parsed_rows = run.get("parsed_rows")
@@ -2511,6 +2552,8 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
         mao_section_schema_contracts.append(_mao_section_schema_identity_ok(run))
         command_alias_platform_contracts.append(_command_alias_platform_identity_ok(run))
         mao_vector_schema_contracts.append(_mao_vector_schema_identity_ok(run))
+        mao_record_schema_contracts.append(_mao_record_schema_identity_ok(run))
+        solver_result_lineage_contracts.append(_solver_result_lineage_identity_ok(run))
         run_contracts.append(
             role in _CASE_ROLES
             and run.get("case_id") == _CASE_ROLES[role]
@@ -2702,6 +2745,12 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
         ),
         "mao_vectors_use_current_components_frame_units_point_order_owner_and_digest": all(
             mao_vector_schema_contracts
+        ),
+        "mao_records_use_current_schema_endian_offset_model_observable_units_and_digest": all(
+            mao_record_schema_contracts
+        ),
+        "solver_results_use_session_model_run_completion_generation_and_artifact_lineage_not_entitlement": all(
+            solver_result_lineage_contracts
         ),
         "two_replays_per_source_role": all(
             replays == {1, 2} for replays in role_replays.values()
