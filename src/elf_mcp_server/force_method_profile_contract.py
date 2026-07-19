@@ -3447,6 +3447,102 @@ def _import_remap_identity_ok(run: dict) -> bool:
     )
 
 
+def _solver_matrix_replay_identity_ok(run: dict) -> bool:
+    identity = run.get(
+        "solver_matrix_reorder_preconditioner_iteration_residual_convergence_analysis_resultfile_identity"
+    )
+    if identity is None:
+        return True
+    if not isinstance(identity, dict):
+        return False
+    generation = str(identity.get("solver_generation", "")).strip()
+    try:
+        shape = [int(item) for item in identity.get("matrix_shape", [])]
+        nnz = int(identity.get("matrix_nnz"))
+        iterations = int(identity.get("iteration_count"))
+        residuals = [float(item) for item in identity.get("residual_history", [])]
+        tolerance = float(identity.get("relative_tolerance"))
+    except (TypeError, ValueError):
+        return False
+    mirrored = (
+        "matrix_shape", "matrix_nnz", "reordering", "preconditioner",
+        "iteration_count", "residual_history", "relative_tolerance", "converged",
+        "analysis_owner", "result_file_owner",
+    )
+    return (
+        bool(generation)
+        and all(identity.get(key) == generation for key in (
+            "matrix_generation", "reorder_generation", "preconditioner_generation",
+            "iteration_generation", "residual_generation", "convergence_generation",
+            "analysis_generation", "result_generation"))
+        and all(identity.get(f"resolved_{field}") == identity.get(field) for field in mirrored)
+        and len(shape) == 2 and shape[0] == shape[1] > 0
+        and nnz >= shape[0] and nnz <= shape[0] * shape[1]
+        and identity.get("reordering") in {"amd", "rcm", "metis"}
+        and identity.get("preconditioner") in {"ilu0", "icc", "jacobi"}
+        and iterations > 0 and len(residuals) == iterations + 1
+        and all(math.isfinite(item) and item >= 0.0 for item in residuals)
+        and residuals[0] > 0.0
+        and all(right < left for left, right in zip(residuals, residuals[1:]))
+        and math.isfinite(tolerance) and 0.0 < tolerance < 1.0
+        and residuals[-1] <= tolerance * residuals[0]
+        and identity.get("converged") is True
+        and str(identity.get("analysis_owner", "")).startswith("analysis:")
+        and str(identity.get("result_file_owner", "")).startswith("result-file:")
+        and re.fullmatch(r"[0-9a-f]{64}", str(identity.get("solver_result_sha256", "")).lower()) is not None
+        and identity.get("accepted_solver_result_sha256") == identity.get("solver_result_sha256")
+    )
+
+
+def _symmetry_plane_replay_identity_ok(run: dict) -> bool:
+    identity = run.get(
+        "symmetry_plane_location_normal_parity_sign_region_boundary_mesh_model_result_identity"
+    )
+    if identity is None:
+        return True
+    if not isinstance(identity, dict):
+        return False
+    generation = str(identity.get("symmetry_generation", "")).strip()
+    try:
+        point = [float(item) for item in identity.get("plane_point_m", [])]
+        normal = [float(item) for item in identity.get("plane_normal", [])]
+        offset = float(identity.get("plane_offset_m"))
+        sign = int(identity.get("field_sign"))
+    except (TypeError, ValueError):
+        return False
+    mapping = identity.get("paired_region_mapping")
+    boundaries = identity.get("boundary_assignment")
+    mirrored = (
+        "plane_point_m", "plane_normal", "plane_offset_m", "symmetry_parity",
+        "field_sign", "paired_region_mapping", "boundary_assignment", "mesh_owner",
+        "model_owner",
+    )
+    expected_sign = {"even": 1, "odd": -1}.get(identity.get("symmetry_parity"))
+    return (
+        bool(generation)
+        and all(identity.get(key) == generation for key in (
+            "plane_generation", "normal_generation", "parity_generation",
+            "region_generation", "boundary_generation", "mesh_generation",
+            "model_generation", "result_generation"))
+        and all(identity.get(f"resolved_{field}") == identity.get(field) for field in mirrored)
+        and len(point) == len(normal) == 3
+        and all(math.isfinite(item) for item in point + normal)
+        and math.isclose(math.sqrt(sum(item * item for item in normal)), 1.0, rel_tol=1.0e-12, abs_tol=1.0e-12)
+        and math.isclose(offset, sum(component * coordinate for component, coordinate in zip(normal, point)), rel_tol=1.0e-12, abs_tol=1.0e-15)
+        and expected_sign is not None and sign == expected_sign
+        and isinstance(mapping, dict) and bool(mapping)
+        and all(str(left).strip() and str(right).strip() and left != right for left, right in mapping.items())
+        and len(set(mapping.values())) == len(mapping)
+        and isinstance(boundaries, list) and bool(boundaries)
+        and all(isinstance(item, str) and item.strip() for item in boundaries)
+        and len(set(boundaries)) == len(boundaries)
+        and str(identity.get("mesh_owner", "")).startswith("mesh:")
+        and str(identity.get("model_owner", "")).startswith("model:")
+        and re.fullmatch(r"[0-9a-f]{64}", str(identity.get("symmetry_result_sha256", "")).lower()) is not None
+        and identity.get("accepted_symmetry_result_sha256") == identity.get("symmetry_result_sha256")
+    )
+
+
 def force_method_profile_contract_gate(summary_json: str) -> dict:
     """Validate deck roles and GUI-free replay metadata without opening files."""
     try:
@@ -3542,6 +3638,8 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
     vector_output_identity_contracts: list[bool] = []
     result_table_identity_contracts: list[bool] = []
     import_remap_identity_contracts: list[bool] = []
+    solver_matrix_replay_contracts: list[bool] = []
+    symmetry_plane_replay_contracts: list[bool] = []
     for run in runs:
         if not isinstance(run, dict):
             run_contracts.append(False)
@@ -3611,6 +3709,8 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
             vector_output_identity_contracts.append(False)
             result_table_identity_contracts.append(False)
             import_remap_identity_contracts.append(False)
+            solver_matrix_replay_contracts.append(False)
+            symmetry_plane_replay_contracts.append(False)
             continue
         role = str(run.get("role", ""))
         parsed_rows = run.get("parsed_rows")
@@ -3760,6 +3860,8 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
         vector_output_identity_contracts.append(_vector_output_identity_ok(run))
         result_table_identity_contracts.append(_result_table_identity_ok(run))
         import_remap_identity_contracts.append(_import_remap_identity_ok(run))
+        solver_matrix_replay_contracts.append(_solver_matrix_replay_identity_ok(run))
+        symmetry_plane_replay_contracts.append(_symmetry_plane_replay_identity_ok(run))
         run_contracts.append(
             role in _CASE_ROLES
             and run.get("case_id") == _CASE_ROLES[role]
@@ -4005,6 +4107,12 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
         ),
         "imports_preserve_region_material_boundary_element_mesh_model_source_and_result_lineage": all(
             import_remap_identity_contracts
+        ),
+        "solver_replays_preserve_matrix_reorder_preconditioner_iterations_residuals_convergence_owners_and_result": all(
+            solver_matrix_replay_contracts
+        ),
+        "symmetry_replays_preserve_plane_normal_parity_sign_regions_boundaries_mesh_model_and_result": all(
+            symmetry_plane_replay_contracts
         ),
         "two_replays_per_source_role": all(
             replays == {1, 2} for replays in role_replays.values()
