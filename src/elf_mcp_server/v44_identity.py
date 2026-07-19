@@ -7,6 +7,7 @@ from collections.abc import Mapping, Sequence
 
 from .v45_identity import validate_source_v45_identity
 from .v46_identity import validate_source_v46_identity
+from .v47_identity import validate_source_v47_identity
 
 
 _TABLE = "mao_result_table_release_units_column_order_model_owner_digest_identity"
@@ -90,4 +91,5 @@ def validate_source_identity(identities: list[object]) -> dict[str, bool]:
         checks["source_v44_virtualwork_force_identity"] = len(force_rows) == len(rows) and all(isinstance(row, Mapping) and _force_ok(row) for row in force_rows)
     checks.update(validate_source_v45_identity(identities))
     checks.update(validate_source_v46_identity(identities))
+    checks.update(validate_source_v47_identity(identities))
     return checks
