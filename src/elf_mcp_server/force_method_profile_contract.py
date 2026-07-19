@@ -3669,6 +3669,125 @@ def _mesh_region_material_replay_identity_ok(run: dict) -> bool:
     )
 
 
+def _bem_panel_replay_identity_ok(run: dict) -> bool:
+    identity = run.get(
+        "bem_panel_normal_solidangle_singularquadrature_region_mesh_result_owner_identity"
+    )
+    if identity is None:
+        return True
+    if not isinstance(identity, dict):
+        return False
+    generation = str(identity.get("bem_panel_generation", "")).strip()
+    try:
+        panel_ids = [int(item) for item in identity.get("panel_ids", [])]
+        normals = [
+            [float(item) for item in row] for row in identity.get("panel_normals", [])
+        ]
+        solid_angle = float(identity.get("solid_angle_sum_sr"))
+        region_ids = [int(item) for item in identity.get("region_ids", [])]
+    except (TypeError, ValueError):
+        return False
+    mirrored = (
+        "panel_ids", "panel_normals", "normal_orientation", "solid_angle_sum_sr",
+        "singular_quadrature_rule", "region_ids", "mesh_owner", "result_owner",
+    )
+    return (
+        bool(generation)
+        and all(
+            identity.get(key) == generation
+            for key in (
+                "normal_generation", "solidangle_generation",
+                "quadrature_generation", "region_generation", "mesh_generation",
+                "owner_generation", "result_generation",
+            )
+        )
+        and len(panel_ids) >= 4
+        and len(panel_ids) == len(set(panel_ids))
+        and all(panel_id > 0 for panel_id in panel_ids)
+        and len(normals) == len(panel_ids)
+        and all(
+            len(normal) == 3
+            and all(math.isfinite(item) for item in normal)
+            and math.isclose(
+                sum(item * item for item in normal), 1.0,
+                rel_tol=1.0e-12, abs_tol=1.0e-12,
+            )
+            for normal in normals
+        )
+        and identity.get("normal_orientation") == "outward"
+        and math.isclose(solid_angle, 4.0 * math.pi, rel_tol=1.0e-12, abs_tol=1.0e-12)
+        and identity.get("singular_quadrature_rule") in {"duffy_p1", "singular_gauss_p1"}
+        and len(region_ids) == len(panel_ids)
+        and all(region_id > 0 for region_id in region_ids)
+        and all(identity.get(f"resolved_{field}") == identity.get(field) for field in mirrored)
+        and str(identity.get("mesh_owner", "")).startswith("mesh:")
+        and str(identity.get("result_owner", "")).startswith("result:")
+        and re.fullmatch(
+            r"[0-9a-f]{64}", str(identity.get("bem_panel_result_sha256") or "")
+        )
+        and identity.get("accepted_bem_panel_result_sha256")
+        == identity.get("bem_panel_result_sha256")
+    )
+
+
+def _nonlinear_material_replay_identity_ok(run: dict) -> bool:
+    identity = run.get(
+        "nonlinear_material_iteration_order_relaxation_residual_branch_convergence_result_owner_identity"
+    )
+    if identity is None:
+        return True
+    if not isinstance(identity, dict):
+        return False
+    generation = str(identity.get("nonlinear_material_generation", "")).strip()
+    try:
+        iteration_order = [int(item) for item in identity.get("iteration_order", [])]
+        relaxation = [float(item) for item in identity.get("relaxation_factors", [])]
+        residuals = [float(item) for item in identity.get("residual_history", [])]
+        tolerance = float(identity.get("relative_tolerance"))
+    except (TypeError, ValueError):
+        return False
+    branches = identity.get("constitutive_branches")
+    mirrored = (
+        "iteration_order", "relaxation_factors", "residual_history",
+        "constitutive_branches", "relative_tolerance", "converged", "result_owner",
+    )
+    count = len(iteration_order)
+    return (
+        bool(generation)
+        and all(
+            identity.get(key) == generation
+            for key in (
+                "iteration_generation", "relaxation_generation",
+                "residual_generation", "branch_generation",
+                "convergence_generation", "owner_generation", "result_generation",
+            )
+        )
+        and count >= 3
+        and iteration_order == list(range(count))
+        and len(relaxation) == count
+        and all(math.isfinite(item) and 0.0 < item <= 1.0 for item in relaxation)
+        and len(residuals) == count
+        and all(math.isfinite(item) and item >= 0.0 for item in residuals)
+        and all(right <= left for left, right in zip(residuals, residuals[1:]))
+        and isinstance(branches, list)
+        and len(branches) == count
+        and branches[0] == "initial"
+        and all(branch in {"ascending", "descending"} for branch in branches[1:])
+        and math.isfinite(tolerance)
+        and tolerance > 0.0
+        and residuals[-1] <= tolerance
+        and identity.get("converged") is True
+        and all(identity.get(f"resolved_{field}") == identity.get(field) for field in mirrored)
+        and str(identity.get("result_owner", "")).startswith("result:")
+        and re.fullmatch(
+            r"[0-9a-f]{64}",
+            str(identity.get("nonlinear_material_result_sha256") or ""),
+        )
+        and identity.get("accepted_nonlinear_material_result_sha256")
+        == identity.get("nonlinear_material_result_sha256")
+    )
+
+
 def force_method_profile_contract_gate(summary_json: str) -> dict:
     """Validate deck roles and GUI-free replay metadata without opening files."""
     try:
@@ -3768,6 +3887,8 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
     symmetry_plane_replay_contracts: list[bool] = []
     nonlinear_bh_replay_contracts: list[bool] = []
     mesh_region_material_replay_contracts: list[bool] = []
+    bem_panel_replay_contracts: list[bool] = []
+    nonlinear_material_replay_contracts: list[bool] = []
     for run in runs:
         if not isinstance(run, dict):
             run_contracts.append(False)
@@ -3841,6 +3962,8 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
             symmetry_plane_replay_contracts.append(False)
             nonlinear_bh_replay_contracts.append(False)
             mesh_region_material_replay_contracts.append(False)
+            bem_panel_replay_contracts.append(False)
+            nonlinear_material_replay_contracts.append(False)
             continue
         role = str(run.get("role", ""))
         parsed_rows = run.get("parsed_rows")
@@ -3995,6 +4118,10 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
         nonlinear_bh_replay_contracts.append(_nonlinear_bh_replay_identity_ok(run))
         mesh_region_material_replay_contracts.append(
             _mesh_region_material_replay_identity_ok(run)
+        )
+        bem_panel_replay_contracts.append(_bem_panel_replay_identity_ok(run))
+        nonlinear_material_replay_contracts.append(
+            _nonlinear_material_replay_identity_ok(run)
         )
         run_contracts.append(
             role in _CASE_ROLES
@@ -4253,6 +4380,12 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
         ),
         "mesh_replays_preserve_regions_materials_orientations_boundary_faces_owners_and_result": all(
             mesh_region_material_replay_contracts
+        ),
+        "bem_panel_replays_preserve_normals_solid_angle_singular_quadrature_regions_owners_and_result": all(
+            bem_panel_replay_contracts
+        ),
+        "nonlinear_material_replays_preserve_iteration_relaxation_residual_branch_convergence_owner_and_result": all(
+            nonlinear_material_replay_contracts
         ),
         "two_replays_per_source_role": all(
             replays == {1, 2} for replays in role_replays.values()
