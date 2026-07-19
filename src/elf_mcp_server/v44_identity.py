@@ -10,6 +10,7 @@ from .v46_identity import validate_source_v46_identity
 from .v47_identity import validate_source_v47_identity
 from .v48_identity import validate_source_v48_identity
 from .v49_identity import validate_source_v49_identity
+from .v50_identity import validate_source_v50_identity
 
 
 _TABLE = "mao_result_table_release_units_column_order_model_owner_digest_identity"
@@ -96,4 +97,5 @@ def validate_source_identity(identities: list[object]) -> dict[str, bool]:
     checks.update(validate_source_v47_identity(identities))
     checks.update(validate_source_v48_identity(identities))
     checks.update(validate_source_v49_identity(identities))
+    checks.update(validate_source_v50_identity(identities))
     return checks
