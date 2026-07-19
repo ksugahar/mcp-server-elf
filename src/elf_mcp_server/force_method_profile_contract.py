@@ -3367,6 +3367,86 @@ def _vector_output_identity_ok(run: dict) -> bool:
     )
 
 
+def _result_table_identity_ok(run: dict) -> bool:
+    identity = run.get(
+        "result_table_variable_unit_step_sort_complex_owner_file_response_identity"
+    )
+    if identity is None:
+        return True
+    if not isinstance(identity, dict):
+        return False
+    generation = str(identity.get("table_generation", "")).strip()
+    steps = identity.get("step_keys")
+    order = identity.get("row_order")
+    mirrored = (
+        "variable_name", "value_unit", "step_keys", "row_order",
+        "complex_value_convention", "analysis_owner",
+        "result_file_generation",
+    )
+    return (
+        bool(generation)
+        and all(identity.get(key) == generation for key in (
+            "variable_generation", "unit_generation", "step_generation",
+            "sort_generation", "complex_generation", "owner_generation",
+            "file_generation", "response_generation"))
+        and all(identity.get(f"resolved_{field}") == identity.get(field) for field in mirrored)
+        and bool(str(identity.get("variable_name", "")).strip())
+        and bool(str(identity.get("value_unit", "")).strip())
+        and isinstance(steps, list) and len(steps) >= 2
+        and all(isinstance(item, str) and item.strip() for item in steps)
+        and len(set(steps)) == len(steps)
+        and isinstance(order, list) and order == list(range(len(steps)))
+        and identity.get("complex_value_convention") == "real_imag_columns"
+        and str(identity.get("analysis_owner", "")).startswith("analysis:")
+        and str(identity.get("result_file_generation", "")).startswith("result-file-")
+        and re.fullmatch(r"[0-9a-f]{64}", str(identity.get("table_response_sha256", "")).lower()) is not None
+        and identity.get("accepted_table_response_sha256") == identity.get("table_response_sha256")
+    )
+
+
+def _import_remap_identity_ok(run: dict) -> bool:
+    identity = run.get(
+        "import_region_material_boundary_element_mesh_model_source_result_identity"
+    )
+    if identity is None:
+        return True
+    if not isinstance(identity, dict):
+        return False
+    generation = str(identity.get("import_generation", "")).strip()
+    regions = identity.get("region_ids")
+    materials = identity.get("material_assignments")
+    boundaries = identity.get("boundary_remap")
+    try:
+        order = int(identity.get("element_order"))
+    except (TypeError, ValueError):
+        return False
+    mirrored = (
+        "region_ids", "material_assignments", "boundary_remap", "element_order",
+        "mesh_generation", "model_owner", "source_sha256",
+    )
+    return (
+        bool(generation)
+        and all(identity.get(key) == generation for key in (
+            "region_generation", "material_generation", "boundary_generation",
+            "element_generation", "mesh_lineage_generation", "owner_generation",
+            "source_generation", "result_generation"))
+        and all(identity.get(f"resolved_{field}") == identity.get(field) for field in mirrored)
+        and isinstance(regions, list) and len(regions) >= 2
+        and all(isinstance(item, int) and not isinstance(item, bool) and item > 0 for item in regions)
+        and regions == sorted(regions) and len(set(regions)) == len(regions)
+        and isinstance(materials, dict) and set(materials) == {str(item) for item in regions}
+        and all(isinstance(item, str) and item.strip() for item in materials.values())
+        and isinstance(boundaries, dict) and bool(boundaries)
+        and all(str(key).isdigit() and str(value).strip() for key, value in boundaries.items())
+        and order in {1, 2}
+        and str(identity.get("mesh_generation", "")).startswith("mesh-")
+        and str(identity.get("model_owner", "")).startswith("model:")
+        and re.fullmatch(r"[0-9a-f]{64}", str(identity.get("source_sha256", "")).lower()) is not None
+        and re.fullmatch(r"[0-9a-f]{64}", str(identity.get("result_sha256", "")).lower()) is not None
+        and identity.get("accepted_result_sha256") == identity.get("result_sha256")
+    )
+
+
 def force_method_profile_contract_gate(summary_json: str) -> dict:
     """Validate deck roles and GUI-free replay metadata without opening files."""
     try:
@@ -3460,6 +3540,8 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
     document_table_identity_contracts: list[bool] = []
     command_grammar_identity_contracts: list[bool] = []
     vector_output_identity_contracts: list[bool] = []
+    result_table_identity_contracts: list[bool] = []
+    import_remap_identity_contracts: list[bool] = []
     for run in runs:
         if not isinstance(run, dict):
             run_contracts.append(False)
@@ -3527,6 +3609,8 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
             document_table_identity_contracts.append(False)
             command_grammar_identity_contracts.append(False)
             vector_output_identity_contracts.append(False)
+            result_table_identity_contracts.append(False)
+            import_remap_identity_contracts.append(False)
             continue
         role = str(run.get("role", ""))
         parsed_rows = run.get("parsed_rows")
@@ -3674,6 +3758,8 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
         document_table_identity_contracts.append(_document_table_identity_ok(run))
         command_grammar_identity_contracts.append(_command_grammar_identity_ok(run))
         vector_output_identity_contracts.append(_vector_output_identity_ok(run))
+        result_table_identity_contracts.append(_result_table_identity_ok(run))
+        import_remap_identity_contracts.append(_import_remap_identity_ok(run))
         run_contracts.append(
             role in _CASE_ROLES
             and run.get("case_id") == _CASE_ROLES[role]
@@ -3913,6 +3999,12 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
         ),
         "vector_outputs_use_current_basis_component_order_handedness_units_transform_record_release_citation_and_response": all(
             vector_output_identity_contracts
+        ),
+        "result_tables_use_current_variable_units_steps_order_complex_convention_owner_file_and_response": all(
+            result_table_identity_contracts
+        ),
+        "imports_preserve_region_material_boundary_element_mesh_model_source_and_result_lineage": all(
+            import_remap_identity_contracts
         ),
         "two_replays_per_source_role": all(
             replays == {1, 2} for replays in role_replays.values()
