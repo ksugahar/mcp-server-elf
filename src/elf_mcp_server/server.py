@@ -45,6 +45,7 @@ from .ipm_two_run_contract import ipm_two_run_ldlq_contract_gate
 from .source_off_relaxation_contract import source_off_relaxation_contract_gate
 from .material_force_contrast_contract import material_force_contrast_contract_gate
 from .force_method_profile_contract import force_method_profile_contract_gate
+from .v44_identity import validate_source_identity
 from .rotating_conductor_contract import rotating_conductor_periodic_contract_gate
 from .magnetization_group_contract import magnetization_group_handoff_contract_gate
 from .two_winding_frequency_contract import two_winding_frequency_contract_gate
@@ -3464,9 +3465,20 @@ def elf_force_method_profile_contract_gate(summary_json: str) -> str:
     fresh native outputs, and replay evidence. It opens no local paths and
     exposes no solved values.
     """
-    return json.dumps(
-        force_method_profile_contract_gate(summary_json), indent=2, sort_keys=True
-    )
+    result = force_method_profile_contract_gate(summary_json)
+    try:
+        payload = json.loads(summary_json)
+    except (TypeError, ValueError):
+        return json.dumps(result, indent=2, sort_keys=True)
+    runs = payload.get("runs") if isinstance(payload, dict) else None
+    identities = [row for row in (runs or []) if isinstance(row, dict)]
+    v44_checks = validate_source_identity(identities)
+    if v44_checks:
+        result.setdefault("checks", {}).update(v44_checks)
+        result["force_v44_identity_checks"] = v44_checks
+        if not all(v44_checks.values()):
+            result["status"] = "needs_attention"
+    return json.dumps(result, indent=2, sort_keys=True)
 
 
 @mcp.tool()
