@@ -8,6 +8,7 @@ from collections.abc import Mapping, Sequence
 from .v45_identity import validate_source_v45_identity
 from .v46_identity import validate_source_v46_identity
 from .v47_identity import validate_source_v47_identity
+from .v48_identity import validate_source_v48_identity
 
 
 _TABLE = "mao_result_table_release_units_column_order_model_owner_digest_identity"
@@ -92,4 +93,5 @@ def validate_source_identity(identities: list[object]) -> dict[str, bool]:
     checks.update(validate_source_v45_identity(identities))
     checks.update(validate_source_v46_identity(identities))
     checks.update(validate_source_v47_identity(identities))
+    checks.update(validate_source_v48_identity(identities))
     return checks
