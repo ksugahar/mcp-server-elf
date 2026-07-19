@@ -3788,6 +3788,87 @@ def _nonlinear_material_replay_identity_ok(run: dict) -> bool:
     )
 
 
+def _v43_scalar_potential_identity_ok(run: dict) -> bool:
+    identity = run.get(
+        "scalarpotential_gauge_body_topology_region_interface_normal_solution_owner_result_identity"
+    )
+    if identity is None:
+        return True
+    if not isinstance(identity, dict):
+        return False
+    generation = str(identity.get("scalarpotential_generation", "")).strip()
+    try:
+        topology = [int(item) for item in identity.get("body_topology_ids", [])]
+        replayed_topology = [int(item) for item in identity.get("replayed_body_topology_ids", [])]
+    except (TypeError, ValueError):
+        return False
+    return (
+        bool(generation)
+        and all(identity.get(key) == generation for key in (
+            "gauge_generation", "topology_generation", "region_generation",
+            "interface_generation", "normal_generation", "solution_generation",
+            "owner_generation", "result_generation"))
+        and identity.get("gauge_reference") == 0.0
+        and identity.get("replayed_gauge_reference") == identity.get("gauge_reference")
+        and len(topology) >= 3 and topology == replayed_topology and all(item > 0 for item in topology)
+        and identity.get("region_interface") == "air/steel"
+        and identity.get("replayed_region_interface") == identity.get("region_interface")
+        and identity.get("normal_convention") == "outward"
+        and identity.get("replayed_normal_convention") == identity.get("normal_convention")
+        and str(identity.get("solution_owner", "")).startswith("solution:")
+        and identity.get("replayed_solution_owner") == identity.get("solution_owner")
+        and str(identity.get("model_owner", "")).startswith("model:")
+        and identity.get("replayed_model_owner") == identity.get("model_owner")
+        and re.fullmatch(r"[0-9a-f]{64}", str(identity.get("scalarpotential_result_sha256") or ""))
+        and identity.get("accepted_scalarpotential_result_sha256") == identity.get("scalarpotential_result_sha256")
+    )
+
+
+def _v43_virtual_displacement_identity_ok(run: dict) -> bool:
+    identity = run.get(
+        "virtualdisplacement_force_step_convergence_reference_result_owner_identity"
+    )
+    if identity is None:
+        return True
+    if not isinstance(identity, dict):
+        return False
+    generation = str(identity.get("virtualdisplacement_generation", "")).strip()
+    try:
+        direction = [float(item) for item in identity.get("displacement_direction", [])]
+        steps = [float(item) for item in identity.get("perturbation_steps_m", [])]
+        energies = [float(item) for item in identity.get("energy_samples_j", [])]
+        residuals = [float(item) for item in identity.get("convergence_residuals", [])]
+    except (TypeError, ValueError):
+        return False
+    return (
+        bool(generation)
+        and all(identity.get(key) == generation for key in (
+            "direction_generation", "step_generation", "energy_generation",
+            "convergence_generation", "reference_generation", "solution_generation",
+            "owner_generation", "result_generation"))
+        and len(direction) == 3 and all(math.isfinite(item) for item in direction)
+        and math.isclose(sum(item * item for item in direction), 1.0, rel_tol=1.0e-12, abs_tol=1.0e-12)
+        and identity.get("replayed_displacement_direction") == direction
+        and len(steps) == len(energies) == len(residuals) >= 3
+        and all(math.isfinite(item) and item > 0.0 for item in steps)
+        and all(left < right for left, right in zip(steps, steps[1:]))
+        and identity.get("replayed_perturbation_steps_m") == steps
+        and all(math.isfinite(item) for item in energies)
+        and identity.get("replayed_energy_samples_j") == energies
+        and all(math.isfinite(item) and item >= 0.0 for item in residuals)
+        and all(right <= left for left, right in zip(residuals, residuals[1:]))
+        and identity.get("replayed_convergence_residuals") == residuals
+        and str(identity.get("reference_geometry", "")).startswith("geometry:")
+        and identity.get("replayed_reference_geometry") == identity.get("reference_geometry")
+        and str(identity.get("solution_owner", "")).startswith("solution:")
+        and identity.get("replayed_solution_owner") == identity.get("solution_owner")
+        and str(identity.get("result_owner", "")).startswith("result:")
+        and identity.get("replayed_result_owner") == identity.get("result_owner")
+        and re.fullmatch(r"[0-9a-f]{64}", str(identity.get("virtualdisplacement_result_sha256") or ""))
+        and identity.get("accepted_virtualdisplacement_result_sha256") == identity.get("virtualdisplacement_result_sha256")
+    )
+
+
 def force_method_profile_contract_gate(summary_json: str) -> dict:
     """Validate deck roles and GUI-free replay metadata without opening files."""
     try:
@@ -3889,6 +3970,8 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
     mesh_region_material_replay_contracts: list[bool] = []
     bem_panel_replay_contracts: list[bool] = []
     nonlinear_material_replay_contracts: list[bool] = []
+    v43_scalar_potential_contracts: list[bool] = []
+    v43_virtual_displacement_contracts: list[bool] = []
     for run in runs:
         if not isinstance(run, dict):
             run_contracts.append(False)
@@ -3964,6 +4047,8 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
             mesh_region_material_replay_contracts.append(False)
             bem_panel_replay_contracts.append(False)
             nonlinear_material_replay_contracts.append(False)
+            v43_scalar_potential_contracts.append(False)
+            v43_virtual_displacement_contracts.append(False)
             continue
         role = str(run.get("role", ""))
         parsed_rows = run.get("parsed_rows")
@@ -4123,6 +4208,8 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
         nonlinear_material_replay_contracts.append(
             _nonlinear_material_replay_identity_ok(run)
         )
+        v43_scalar_potential_contracts.append(_v43_scalar_potential_identity_ok(run))
+        v43_virtual_displacement_contracts.append(_v43_virtual_displacement_identity_ok(run))
         run_contracts.append(
             role in _CASE_ROLES
             and run.get("case_id") == _CASE_ROLES[role]
@@ -4386,6 +4473,12 @@ def force_method_profile_contract_gate(summary_json: str) -> dict:
         ),
         "nonlinear_material_replays_preserve_iteration_relaxation_residual_branch_convergence_owner_and_result": all(
             nonlinear_material_replay_contracts
+        ),
+        "scalar_potential_replays_preserve_gauge_topology_region_interface_normal_solution_owner_and_result": all(
+            v43_scalar_potential_contracts
+        ),
+        "virtual_displacement_replays_preserve_direction_steps_energy_convergence_reference_solution_owner_and_result": all(
+            v43_virtual_displacement_contracts
         ),
         "two_replays_per_source_role": all(
             replays == {1, 2} for replays in role_replays.values()
