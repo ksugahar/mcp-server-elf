@@ -5,6 +5,8 @@ from __future__ import annotations
 import math
 from collections.abc import Mapping, Sequence
 
+from .v45_identity import validate_source_v45_identity
+
 
 _TABLE = "mao_result_table_release_units_column_order_model_owner_digest_identity"
 _FORCE = "mao_force_virtualwork_displacement_energyfit_reference_owner_identity"
@@ -85,4 +87,5 @@ def validate_source_identity(identities: list[object]) -> dict[str, bool]:
         checks["source_v44_mao_table_release_units_identity"] = len(table_rows) == len(rows) and all(isinstance(row, Mapping) and _table_ok(row) for row in table_rows)
     if force_rows:
         checks["source_v44_virtualwork_force_identity"] = len(force_rows) == len(rows) and all(isinstance(row, Mapping) and _force_ok(row) for row in force_rows)
+    checks.update(validate_source_v45_identity(identities))
     return checks
