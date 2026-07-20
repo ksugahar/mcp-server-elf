@@ -5,6 +5,8 @@ from __future__ import annotations
 import math
 from collections.abc import Mapping
 
+from .v53_identity import validate_source_v53_identity
+
 
 LINEAR_SYSTEM = "linear_system_preconditioner_ordering_tolerance_residual_matrix_owner_identity"
 SURFACE = "surface_component_closedness_genus_orientation_mesh_owner_identity"
@@ -91,7 +93,7 @@ def validate_source_v52_identity(identities: list[object]) -> dict[str, bool]:
         return {}
     linear_systems = [row[LINEAR_SYSTEM] for row in rows if LINEAR_SYSTEM in row]
     surfaces = [row[SURFACE] for row in rows if SURFACE in row]
-    checks: dict[str, bool] = {}
+    checks = validate_source_v53_identity(identities)
     if linear_systems:
         checks["source_v52_linear_system_preconditioner_ordering_residual_owner"] = len(linear_systems) == len(rows) and all(isinstance(row, Mapping) and _linear_system_ok(row) for row in linear_systems)
     if surfaces:
