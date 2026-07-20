@@ -5,6 +5,8 @@ from __future__ import annotations
 import math
 from collections.abc import Mapping, Sequence
 
+from .v52_identity import validate_source_v52_identity
+
 
 MULTIZONE = "mao_multizone_timeblock_header_timestep_rowcount_result_owner_identity"
 VECTOR = "mao_vector_component_order_coordinate_frame_unit_result_owner_identity"
@@ -85,7 +87,7 @@ def validate_source_v51_identity(identities: list[object]) -> dict[str, bool]:
         return {}
     multizone_rows = [row[MULTIZONE] for row in rows if MULTIZONE in row]
     vector_rows = [row[VECTOR] for row in rows if VECTOR in row]
-    checks: dict[str, bool] = {}
+    checks = validate_source_v52_identity(identities)
     if multizone_rows:
         checks["source_v51_mao_multizone_headers_timesteps_rows_owner"] = len(multizone_rows) == len(rows) and all(isinstance(row, Mapping) and _multizone_ok(row) for row in multizone_rows)
     if vector_rows:
