@@ -5,6 +5,8 @@ from __future__ import annotations
 import math
 from collections.abc import Mapping, Sequence
 
+from .v55_identity import validate_source_v55_identity
+
 
 NEAR = "bem_nearsingular_quadrature_distance_panelorder_orientation_owner_identity"
 RESTART = "nonlinear_restart_curvebranch_iteration_residual_checkpoint_owner_identity"
@@ -97,7 +99,7 @@ def validate_source_v54_identity(identities: list[object]) -> dict[str, bool]:
         return {}
     near_rows = [row[NEAR] for row in rows if NEAR in row]
     restarts = [row[RESTART] for row in rows if RESTART in row]
-    checks: dict[str, bool] = {}
+    checks = validate_source_v55_identity(identities)
     if near_rows:
         checks["source_v54_nearsingular_distance_quadrature_order_orientation_owner"] = len(near_rows) == len(rows) and all(isinstance(row, Mapping) and _near_ok(row) for row in near_rows)
     if restarts:
