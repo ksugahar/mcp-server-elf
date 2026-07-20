@@ -5,6 +5,8 @@ from __future__ import annotations
 import math
 from collections.abc import Mapping, Sequence
 
+from .v54_identity import validate_source_v54_identity
+
 
 CURVE = "magnetization_curve_interpolation_extrapolation_branch_material_owner_identity"
 SEAM = "cad_surface_seam_duplicate_panel_normal_mesh_owner_identity"
@@ -92,7 +94,7 @@ def validate_source_v53_identity(identities: list[object]) -> dict[str, bool]:
         return {}
     curves = [row[CURVE] for row in rows if CURVE in row]
     seams = [row[SEAM] for row in rows if SEAM in row]
-    checks: dict[str, bool] = {}
+    checks = validate_source_v54_identity(identities)
     if curves:
         checks["source_v53_curve_interpolation_extrapolation_branch_owner"] = len(curves) == len(rows) and all(isinstance(row, Mapping) and _curve_ok(row) for row in curves)
     if seams:
