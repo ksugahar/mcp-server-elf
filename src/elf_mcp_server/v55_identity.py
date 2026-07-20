@@ -5,6 +5,8 @@ from __future__ import annotations
 import math
 from collections.abc import Mapping, Sequence
 
+from .v56_identity import validate_source_v56_identity
+
 
 HMATRIX = "hmatrix_cluster_admissibility_rank_tolerance_block_owner_identity"
 FARFIELD = "bem_farfield_multipoleorder_expansioncenter_error_owner_identity"
@@ -61,7 +63,7 @@ def validate_source_v55_identity(identities: list[object]) -> dict[str, bool]:
     if not rows:
         return {}
     hmatrices = [row[HMATRIX] for row in rows if HMATRIX in row]; farfields = [row[FARFIELD] for row in rows if FARFIELD in row]
-    checks: dict[str, bool] = {}
+    checks: dict[str, bool] = validate_source_v56_identity(identities)
     if hmatrices:
         checks["source_v55_hmatrix_cluster_admissibility_rank_tolerance_owner"] = len(hmatrices) == len(rows) and all(isinstance(item, Mapping) and _hmatrix_ok(item) for item in hmatrices)
     if farfields:
