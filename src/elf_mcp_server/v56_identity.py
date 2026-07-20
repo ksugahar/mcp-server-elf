@@ -5,6 +5,8 @@ from __future__ import annotations
 import math
 from collections.abc import Mapping, Sequence
 
+from .v57_identity import validate_source_v57_identity
+
 MESH = "bem_closedmesh_solidangle_orientation_region_owner_identity"
 SOLVER = "solver_residual_tolerance_iteration_matrixrevision_owner_identity"
 
@@ -58,7 +60,7 @@ def validate_source_v56_identity(identities: list[object]) -> dict[str, bool]:
     if not rows:
         return {}
     meshes = [row[MESH] for row in rows if MESH in row]; solvers = [row[SOLVER] for row in rows if SOLVER in row]
-    checks: dict[str, bool] = {}
+    checks: dict[str, bool] = validate_source_v57_identity(identities)
     if meshes:
         checks["source_v56_bem_closedmesh_solidangle_region_owner"] = len(meshes) == len(rows) and all(isinstance(item, Mapping) and _mesh_ok(item) for item in meshes)
     if solvers:
