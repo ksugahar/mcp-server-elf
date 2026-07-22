@@ -30,6 +30,7 @@ import sys
 from mcp.server.fastmcp import FastMCP
 
 from .learning_quality import build_balanced_learning_profile
+from .mcp_contract import apply_tool_contract, build_runtime_contract
 from .phase_flux_contract import phase_flux_run_contract_gate
 from .mesh_solver_contract import mesh_solver_pipeline_gate
 from .magnet_model_contract import magnet_model_producer_contract_gate
@@ -702,6 +703,10 @@ def elf_agentic_profile() -> dict:
         "schema": "cae-ai-lab.agentic-mcp-profile.v1",
         "server": "ELF-mcp-server",
         "runtime_pattern": "FastMCP public documentation/input-deck server; no ELF/MAGIC solver execution",
+        "runtime_contract": build_runtime_contract(
+            ["public-documentation", "input-contracts", "scrubbed-artifact-gates"],
+            "documentation MCP only; solver execution and private RunResult artifacts remain outside this server",
+        ),
         "mathworks_reference_pattern": {
             "runtime_vs_skills": "Keep callable public docs/contracts separate from private runner skills, mirroring MATLAB MCP Server plus Agentic Toolkit.",
             "environment_probe": "Call elf_overview and elf_mcp_readiness before release or tag push claims.",
@@ -3842,6 +3847,9 @@ def _use_utf8_stdout() -> None:
             reconfigure(encoding="utf-8", errors="replace")
         except (OSError, ValueError):
             pass
+
+
+apply_tool_contract(mcp, server_name="elf-mcp-server", version="1.60.0")
 
 
 def main():
