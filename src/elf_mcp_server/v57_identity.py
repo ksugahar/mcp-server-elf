@@ -5,6 +5,8 @@ from __future__ import annotations
 import math
 from collections.abc import Mapping
 
+from .v58_identity import validate_source_v58_identity
+
 
 SINGULAR = "bem_singularquadrature_panelorientation_solidangle_collocation_owner_identity"
 MULTIPOLE = "multipole_tree_order_translation_error_blockowner_resultowner_identity"
@@ -70,7 +72,7 @@ def validate_source_v57_identity(identities: list[object]) -> dict[str, bool]:
         return {}
     singular = [row[SINGULAR] for row in rows if SINGULAR in row]
     multipole = [row[MULTIPOLE] for row in rows if MULTIPOLE in row]
-    checks: dict[str, bool] = {}
+    checks: dict[str, bool] = validate_source_v58_identity(identities)
     if singular:
         checks["source_v57_bem_singular_orientation_angle_owner"] = len(singular) == len(rows) and all(isinstance(item, Mapping) and _singular_ok(item) for item in singular)
     if multipole:
