@@ -12,17 +12,17 @@ This server does **not** execute ELF600 simulations — it provides curated docu
 
 ## Features
 
-**84 tools + 1 prompt** providing curated docs, workflow recipes, ELF-runnable public sample decks, representative sample tours, quality labels, physical-quantity coverage, validation matrices, observable-contract audits, cross-validation audits, duplicate/reuse audits, motor-readiness audits, ELF/radia/MMM hybrid motor routing, 2D MMM/BEM-like motor quick checks, local simulation handoff contracts, public Python-interface design contracts, an LLM-oriented API manual, typed Python facade schemas, motor-design variables/objectives/sweeps, advanced motor-model coverage for PMa-SynRM, BLDC, line-start PM, deep-bar IM, flux-switching PM, Vernier PM, transverse-flux PM, slotless/coreless PM, claw-pole/Lundell, and commutator/universal motors, winding-layout plans, topology-parameter plans, demagnetization-margin plans, voltage/field-weakening plans, cogging/ripple plans, air-gap harmonic NVH plans, thermal-network plans, manufacturing-tolerance plans, material-variation plans, feasibility gates, drive-cycle plans, optimization-study plans, concrete operating-point run queues, inverter/PWM harmonic screening, saturated Ld/Lq maps, high-speed rotor stress/retention gates, validation scorecards, RunResult payload/path parsing, efficiency-map numeric grid generation, closed-loop candidate ranking, NGSolve runtime cross-checks, drawing/BOM prototype handoffs, dq-axis maps, MTPA searches, reluctance/SynRM/SRM design plans, efficiency-map operating grids, loss-model contracts, torque-speed envelopes, IM slip sweeps, robotics/drone design-agent handoffs, executable NGSolve thermal/NVH/stress validation script generation, `.mai` deck lint, `.meg` generation routing, constrained 2D motor templates, release-readiness gates, prompt-to-sample routing, validation summaries, promotion copy, and raw access to ELF600 help HTM, example inputs, vendor wiki, and Python ctypes API:
+**100+ tools + 1 prompt** providing curated docs, workflow recipes, ELF-runnable public sample decks, representative sample tours, quality labels, physical-quantity coverage, validation matrices, observable-contract audits, cross-validation audits, duplicate/reuse audits, motor-readiness audits, ELF/radia/MMM hybrid motor routing, 2D MMM/BEM-like motor quick checks, local simulation handoff contracts, public Python-interface design contracts, an LLM-oriented API manual, typed Python facade schemas, motor-design variables/objectives/sweeps, advanced motor-model coverage for PMa-SynRM, BLDC, line-start PM, deep-bar IM, flux-switching PM, Vernier PM, transverse-flux PM, slotless/coreless PM, claw-pole/Lundell, and commutator/universal motors, winding-layout plans, topology-parameter plans, demagnetization-margin plans, voltage/field-weakening plans, cogging/ripple plans, air-gap harmonic NVH plans, thermal-network plans, manufacturing-tolerance plans, material-variation plans, feasibility gates, drive-cycle plans, optimization-study plans, concrete operating-point run queues, inverter/PWM harmonic screening, saturated Ld/Lq maps, high-speed rotor stress/retention gates, validation scorecards, RunResult payload/path parsing, efficiency-map numeric grid generation, closed-loop candidate ranking, NGSolve runtime cross-checks, drawing/BOM prototype handoffs, dq-axis maps, MTPA searches, reluctance/SynRM/SRM design plans, efficiency-map operating grids, loss-model contracts, torque-speed envelopes, IM slip sweeps, robotics/drone design-agent handoffs, executable NGSolve thermal/NVH/stress validation script generation, `.mai` deck lint, `.meg` generation routing, constrained 2D motor templates, release-readiness gates, prompt-to-sample routing, validation summaries, promotion copy, and bundled ELF600 documentation snapshots. The authoritative runtime count is returned by `elf_overview()["n_tools"]`:
 
 | Tool family | Purpose | Files |
 |---|---|---|
 | `elf_usage(topic)` | 31 curated topics — high-level recipes | (knowledge.py) |
-| `elf_help_*(...)` | Help HTM files from `C:/ELF600/help/` | 1141 files, 1.18M chars |
-| `elf_examples_*(...)` | Example .mai/.mei/.txt plus 100-card playbook from `C:/ELF600/examples/` | 332 files, 533k chars |
+| `elf_help_*(...)` | Bundled ELF600 help snapshot | 1141 files, 1.18M chars |
+| `elf_examples_*(...)` | Bundled example snapshot plus 100-card playbook | 332 files, 533k chars |
 | `elf_sample_decks_*(...)` | Lab-authored ELF-runnable public `.mai`/`.meg` sample decks | 1600 cases, 3200 input files |
 | `elf_recipe_*(...)` | Workflow decision cards for elements, PRE/SOL blocks, outputs, checks, and pitfalls | public-safe recipes |
 | `elf_wiki_*(...)` | Vendor wiki pages from elf.co.jp PukiWiki | 146 pages, 211k chars |
-| `elf_python_*(...)` | Python ctypes API + configs from `C:/ELF600/bin/` | 15 files, 246k chars |
+| `elf_python_*(...)` | Bundled Python ctypes API and configuration reference | 15 files, 246k chars |
 | `elf_python_interface_design(topic)` | Public facade/API design above a user-local product backend | policy, schema, backend, validation |
 | `elf_python_api_manual(topic)` | LLM-oriented Python facade manual | call order, lint rules, examples |
 | `elf_python_api_schema / motor_spec_lint / deck_lint / run_contract / meg_generation_plan / 2d_motor_template` | Concrete public Python facade contracts | MotorSpec, DeckBundle, RunRequest, MEG backend routing |
@@ -128,6 +128,10 @@ The closed-loop tools normalize user-local RunResult payloads into parsed
 observables, rank candidates, reconcile NGSolve runtime JSON with validation
 labels, and prepare drawing/BOM handoff content while keeping raw outputs and
 private run directories outside the public package.
+`elf_python_run_result_parse_path()` is disabled by default. To opt in, set
+`ELF_MCP_RUN_ROOT` to a dedicated result-artifact directory before starting the
+server. The tool rejects paths outside that root; payload-only parsing through
+`elf_python_run_result_parse()` never reads local files.
 The design-agent handoff tools target workflows such as robotics/drone
 outer-rotor or inner-rotor SPM/PMSM: users provide specifications, the agent
 routes ELF/radia/MMM validation, and downstream teams receive drawing/BOM and

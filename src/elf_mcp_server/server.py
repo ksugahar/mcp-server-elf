@@ -1861,7 +1861,9 @@ def elf_python_run_result_parse_path(
 
     This scans JSON/CSV/text-like result files, normalizes known observable
     names, and returns only parsed values plus file basenames. It intentionally
-    does not return raw local paths or raw product output text.
+    does not return raw local paths or raw product output text. Local file
+    access is disabled by default: the server owner must set
+    `ELF_MCP_RUN_ROOT` before startup, and `run_path` must resolve below it.
 
     Args:
         run_path: User-local result file or directory path.

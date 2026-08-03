@@ -23,7 +23,7 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Physics",
 ]
 dependencies = [
-    "mcp>=1.0",
+    "mcp>=1.27,<2",
 ]
 
 [project.urls]

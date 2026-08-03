@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from elf_mcp_server.server import elf_agentic_profile, mcp
 
 
@@ -13,3 +15,8 @@ def test_elf_tools_expose_explicit_runtime_contract() -> None:
     assert mcp._mcp_server.instructions
     assert mcp._mcp_server.version == "1.61.0"
     assert elf_agentic_profile()["runtime_contract"]["explicit_tool_annotations"] is True
+
+
+def test_mcp_sdk_dependency_stays_on_the_supported_v1_api() -> None:
+    pyproject = (Path(__file__).parents[1] / "pyproject.toml").read_text(encoding="utf-8")
+    assert '"mcp>=1.27,<2"' in pyproject

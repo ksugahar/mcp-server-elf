@@ -202,7 +202,7 @@ def test_python_interface_design_public_policy():
     assert "_cross" + "val" not in text
 
 
-def test_python_facade_schema_lint_and_generation_plan(tmp_path):
+def test_python_facade_schema_lint_and_generation_plan(tmp_path, monkeypatch):
     from elf_mcp_server.python_api_manual import build_python_api_manual, format_python_api_manual
     from elf_mcp_server.python_facade import (
         build_meg_generation_plan,
@@ -465,6 +465,14 @@ def test_python_facade_schema_lint_and_generation_plan(tmp_path):
         ),
         encoding="utf-8",
     )
+    monkeypatch.delenv("ELF_MCP_RUN_ROOT", raising=False)
+    denied_path = parse_run_result_path(str(run_dir), motor_type="spm")
+    assert denied_path["status"] == "FAIL"
+    assert denied_path["source_label"] == "run_path"
+    assert denied_path["files_scanned"] == []
+    assert "ELF_MCP_RUN_ROOT" in denied_path["warnings"][0]
+
+    monkeypatch.setenv("ELF_MCP_RUN_ROOT", str(tmp_path))
     parsed_path = parse_run_result_path(
         str(run_dir),
         motor_type="spm",
@@ -499,6 +507,20 @@ def test_python_facade_schema_lint_and_generation_plan(tmp_path):
     assert "api_token" not in secret_text
     assert "SHOULD_NOT_LEAK" not in secret_text
     assert "ignored JSON file without RunResult schema" in secret_text
+
+    outside_root = tmp_path.parent / f"{tmp_path.name}_outside"
+    outside_root.mkdir()
+    outside_result = outside_root / "result.json"
+    outside_result.write_text(
+        json.dumps({"schema_version": "RunResult/v1", "torque_nm": 9.9}),
+        encoding="utf-8",
+    )
+    denied_outside = parse_run_result_path(str(outside_result), motor_type="spm")
+    assert denied_outside["status"] == "FAIL"
+    assert denied_outside["source_label"] == "run_path"
+    assert denied_outside["files_scanned"] == []
+    assert "outside configured ELF_MCP_RUN_ROOT" in denied_outside["warnings"][0]
+    assert "9.9" not in str(denied_outside)
 
     numeric_map = build_motor_efficiency_map_from_results(
         "spm",

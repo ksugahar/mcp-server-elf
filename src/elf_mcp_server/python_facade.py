@@ -12,6 +12,7 @@ from math import atan2, cos, degrees, gcd, hypot, pi, radians, sin
 from typing import Any, Mapping, Sequence
 import csv
 import json
+import os
 import re
 
 
@@ -1370,6 +1371,9 @@ def parse_run_result_payload(
 
 RESULT_FILE_SUFFIXES = {".json", ".csv", ".txt", ".log", ".out", ".mah", ".maf"}
 RESULT_TEXT_MAX_BYTES = 2_000_000
+RESULT_PATH_MAX_FILES = 100
+RESULT_PATH_MAX_DIRECTORIES = 200
+RESULT_PATH_ROOT_ENV = "ELF_MCP_RUN_ROOT"
 
 
 def _is_number_like(value: Any) -> bool:
@@ -1486,15 +1490,69 @@ def _read_result_text(path: Path) -> tuple[str, str]:
     return path.read_text(encoding="utf-8", errors="replace"), ""
 
 
+def _path_parse_failure(motor_type: str, warning: str) -> dict[str, Any]:
+    return {
+        "schema_version": "elf-python-run-result-path-parse/v1",
+        "source_label": "run_path",
+        "motor_type": _infer_motor_type(motor_type, "spm"),
+        "status": "FAIL",
+        "files_scanned": [],
+        "parsed_results": [],
+        "combined_observables": {},
+        "warnings": [warning],
+        "validation_labels": ["local_result_path_parse_denied"],
+        "public_boundary": (
+            "Local file parsing is disabled unless the server owner configures "
+            f"{RESULT_PATH_ROOT_ENV}; paths outside that root are denied."
+        ),
+    }
+
+
+def _resolve_allowed_run_path(run_path: str, motor_type: str) -> tuple[Path | None, dict[str, Any] | None]:
+    root_text = os.environ.get(RESULT_PATH_ROOT_ENV, "").strip()
+    if not root_text:
+        return None, _path_parse_failure(
+            motor_type,
+            f"local path parsing is disabled; configure {RESULT_PATH_ROOT_ENV} before starting the server",
+        )
+    try:
+        root = Path(root_text).expanduser().resolve(strict=True)
+    except (OSError, RuntimeError):
+        return None, _path_parse_failure(
+            motor_type,
+            f"configured {RESULT_PATH_ROOT_ENV} is unavailable",
+        )
+    if not root.is_dir():
+        return None, _path_parse_failure(
+            motor_type,
+            f"configured {RESULT_PATH_ROOT_ENV} is not a directory",
+        )
+
+    raw_path = Path(run_path).expanduser()
+    candidate = raw_path if raw_path.is_absolute() else root / raw_path
+    try:
+        path = candidate.resolve(strict=False)
+        path.relative_to(root)
+    except (OSError, RuntimeError, ValueError):
+        return None, _path_parse_failure(
+            motor_type,
+            f"run_path is outside configured {RESULT_PATH_ROOT_ENV}",
+        )
+    return path, None
+
+
 def parse_run_result_path(
     run_path: str,
     motor_type: str = "spm",
     requested_observables: Sequence[str] = (),
     max_files: int = 20,
 ) -> dict[str, Any]:
-    """Parse user-local run-result files without returning raw text or paths."""
+    """Parse files below the server-owner configured result root."""
     family = _infer_motor_type(motor_type, "spm")
-    path = Path(run_path).expanduser()
+    path, denied = _resolve_allowed_run_path(run_path, family)
+    if denied is not None:
+        return denied
+    assert path is not None
     warnings: list[str] = []
     if not path.exists():
         return {
@@ -1510,15 +1568,38 @@ def parse_run_result_path(
             "public_boundary": "No raw local path or product output text is returned.",
         }
 
+    try:
+        limit = min(max(int(max_files), 1), RESULT_PATH_MAX_FILES)
+    except (TypeError, ValueError):
+        limit = 20
+
     if path.is_file():
         candidates = [path]
     else:
-        candidates = [
-            item
-            for item in sorted(path.rglob("*"))
-            if item.is_file() and item.suffix.lower() in RESULT_FILE_SUFFIXES
-        ]
-    candidates = candidates[: max(int(max_files), 1)]
+        candidates = []
+        directories_seen = 0
+        for directory, directory_names, file_names in os.walk(path, followlinks=False):
+            directories_seen += 1
+            if directories_seen > RESULT_PATH_MAX_DIRECTORIES:
+                warnings.append(
+                    f"directory scan stopped at {RESULT_PATH_MAX_DIRECTORIES} directories"
+                )
+                break
+            directory_names.sort()
+            file_names.sort()
+            for file_name in file_names:
+                item = (Path(directory) / file_name).resolve(strict=False)
+                try:
+                    item.relative_to(path)
+                except ValueError:
+                    continue
+                if item.is_file() and item.suffix.lower() in RESULT_FILE_SUFFIXES:
+                    candidates.append(item)
+                    if len(candidates) >= limit:
+                        break
+            if len(candidates) >= limit:
+                break
+    candidates = candidates[:limit]
 
     parsed_results: list[dict[str, Any]] = []
     files_scanned: list[str] = []
