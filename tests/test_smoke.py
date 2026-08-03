@@ -126,9 +126,10 @@ def test_tool_surface_and_no_work_family():
     assert "elf_python_meg_generation_plan" in names
     assert "elf_python_2d_motor_template" in names
     assert "elf_agentic_profile" in names
+    assert "elf_project_feature_inventory_contract_gate" in names
     overview = elf_overview()
     overview_text = str(overview)
-    assert overview["n_tools"] == 87
+    assert overview["n_tools"] == len(names)
     assert "public_boundary" in overview
     assert "recommended_calls" in overview
     assert "elf_python_interface_design" in overview_text

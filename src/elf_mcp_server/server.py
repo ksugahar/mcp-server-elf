@@ -51,6 +51,7 @@ from .rotating_conductor_contract import rotating_conductor_periodic_contract_ga
 from .magnetization_group_contract import magnetization_group_handoff_contract_gate
 from .two_winding_frequency_contract import two_winding_frequency_contract_gate
 from .conductive_shield_frequency_contract import conductive_shield_frequency_contract_gate
+from .project_feature_inventory_contract import project_feature_inventory_contract_gate
 
 from .elf_knowledge import get_elf_documentation
 from .help_access import list_help_files, search_help, get_help_file
@@ -316,6 +317,7 @@ _TOOL_CATALOG = [
                                                 "recipes for choosing ELF "
                                                 "elements, PRE/SOL blocks, "
                                                 "outputs, checks, and pitfalls"),
+    ("elf_project_feature_inventory_contract_gate", "Metadata-only gate for a normalized whole-project feature inventory, route ownership, and digest identity"),
     ("elf_wiki_index / search / get", "elf.co.jp PukiWiki cache "
                                        "(146 pages, 211 KB)"),
     ("elf_python_index / search / get; elf_python_team28",
@@ -333,16 +335,15 @@ _RELATED_PUBLIC_PACKAGES = [
 
 @mcp.tool()
 def elf_overview() -> dict:
-    """RECOMMENDED FIRST CALL. Catalog of ELF MCP's 87 tools + 1
-    prompt, with public-safe routing hints for MCP clients.
+    """RECOMMENDED FIRST CALL. Catalog of ELF MCP tools and its prompt.
 
     Returns:
-        dict with `tool_families` (curated 85-tool grouping), `n_tools`,
+        dict with `tool_families` (curated grouping), `n_tools`,
         public boundary notes, recommended calls, and public companion package
         hints.
     """
     return {
-        "n_tools": 87,
+        "n_tools": len(mcp._tool_manager._tools),
         "n_prompts": 1,
         "tool_families": [
             {"signature": sig, "description": desc}
@@ -3524,6 +3525,22 @@ def elf_conductive_shield_frequency_contract_gate(summary_json: str) -> str:
 
 
 @mcp.tool()
+def elf_project_feature_inventory_contract_gate(summary_json: str) -> str:
+    """Gate a normalized project-feature inventory without opening local paths.
+
+    The contract binds documented solver families, result/deck artifact kinds,
+    route ownership, and the normalized inventory digest. It returns no solved
+    values and rejects unknown fields such as user-local paths.
+    """
+
+    return json.dumps(
+        project_feature_inventory_contract_gate(summary_json),
+        indent=2,
+        sort_keys=True,
+    )
+
+
+@mcp.tool()
 def elf_recipe_index(tag: str = "", solver: str = "") -> str:
     """
     List public-safe workflow recipe cards.
@@ -3849,7 +3866,7 @@ def _use_utf8_stdout() -> None:
             pass
 
 
-apply_tool_contract(mcp, server_name="elf-mcp-server", version="1.60.0")
+apply_tool_contract(mcp, server_name="elf-mcp-server", version="1.61.0")
 
 
 def main():
