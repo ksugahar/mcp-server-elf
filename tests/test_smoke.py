@@ -10,7 +10,10 @@ import sys
 import asyncio
 import json
 import math
-import tomllib
+try:
+    import tomllib
+except ModuleNotFoundError:  # Python 3.10
+    import tomli as tomllib
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
