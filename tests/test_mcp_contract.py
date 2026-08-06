@@ -13,7 +13,7 @@ def test_elf_tools_expose_explicit_runtime_contract() -> None:
         for hint in ("readOnlyHint", "destructiveHint", "idempotentHint", "openWorldHint")
     )
     assert mcp._mcp_server.instructions
-    assert mcp._mcp_server.version == "1.61.0"
+    assert mcp._mcp_server.version == "1.61.1"
     assert elf_agentic_profile()["runtime_contract"]["explicit_tool_annotations"] is True
 
 

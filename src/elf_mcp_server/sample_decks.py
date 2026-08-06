@@ -4855,7 +4855,7 @@ def build_mcp_readiness() -> dict[str, Any]:
             "python -m elf_mcp_server.policy_lint <repo>",
             "python -m elf_mcp_server.server --selftest",
             "python -m build --outdir <temp-dist-dir>",
-            "git commit, git tag v1.61.0, git push origin main, git push origin v1.61.0",
+            "git commit, git tag v1.61.1, git push origin main, git push origin v1.61.1",
         ],
         "public_boundary": (
             "Readiness uses public input decks and metadata only. It does not "
@@ -5240,8 +5240,8 @@ def _motor_hybrid_family(goal: str) -> dict[str, Any]:
     }
 
 
-def _motor_vim_targets(family: str) -> list[str]:
-    """Public-safe HDiv-VIM / reduced-FEM training targets by motor family."""
+def _motor_coupled_targets(family: str) -> list[str]:
+    """Public-safe HDiv-MMM / HCurl eddy-bubble targets by motor family."""
 
     targets = {
         "induction": ["source_field", "reduced_fem_response", "force_or_torque_trend"],
@@ -5269,9 +5269,9 @@ def build_motor_hybrid_router(goal: str) -> dict[str, Any]:
     plan = _motor_hybrid_family(goal)
     routes = route_sample_decks(plan["elf_query"], limit=3)
     readiness = build_motor_readiness(family=plan["family"])
-    vim_targets = _motor_vim_targets(plan["family"])
+    coupled_targets = _motor_coupled_targets(plan["family"])
     return {
-        "schema_version": "elf-motor-hybrid-router/v1",
+        "schema_version": "elf-motor-hybrid-router/v2",
         "goal": goal,
         "inferred_family": plan["family"],
         "public_boundary": (
@@ -5298,20 +5298,20 @@ def build_motor_hybrid_router(goal: str) -> dict[str, Any]:
         "age_validation": {
             "server": "mcp-server-radia-ngsolve / mcp-server-motor",
             "calls": [f'ngsolve_usage("{target}")' for target in plan["age_targets"]],
-            "lane": "radia-motor-age",
+            "lane": "ngsolve_age",
             "role": "independent 2D AGE / dq / eddy-current validation anchor",
         },
-        "vim_validation": {
+        "coupled_validation": {
             "server": "mcp-server-motor",
             "calls": [
-                'motor_validation_lane_template("hdiv_vim_reduced_fem")',
-                'motor_validation_artifact_gate(..., "hdiv_vim_reduced_fem")',
+                'motor_validation_lane_template("hdiv_mmm_hcurl_eddy_bubble")',
+                'motor_validation_artifact_gate(..., "hdiv_mmm_hcurl_eddy_bubble")',
             ],
-            "lane": "radia-motor-vim",
-            "targets": vim_targets,
+            "lane": "hdiv_mmm_hcurl_eddy_bubble",
+            "targets": coupled_targets,
             "role": (
-                "HDiv-VIM / reduced-FEM source-field lane for pickup flux, "
-                "demag, and reduced-response learning; not a replacement for AGE torque maps"
+                "HDiv-MMM plus HCurl eddy-bubble lane for source field, demag, "
+                "pickup flux, conducting-region response, and force/torque trends"
             ),
         },
         "local_elf_runner": {
@@ -5328,8 +5328,8 @@ def build_motor_hybrid_router(goal: str) -> dict[str, Any]:
         "workflow": [
             "Select an ELF public deck route and inspect the representative .mai/.meg inputs.",
             "Run the radia-motor MMM quick check for sign and scale before spending solver time.",
-            "Use radia-motor-age for the independent FE air-gap, torque, dq, and eddy validation target.",
-            "Use radia-motor-vim for source-field, pickup-flux, demag, and reduced-FEM response learning.",
+            "Use ngsolve_age for the independent FE air-gap, torque, dq, and eddy validation target.",
+            "Use hdiv_mmm_hcurl_eddy_bubble for source-field, pickup-flux, demag, conducting-region response, and force/torque trends.",
             "Run ELF/MAGIC locally only after the deck and reduced physics checks are coherent.",
             "Promote only reduced, public-safe validation labels; keep raw solver outputs private.",
         ],
@@ -5374,13 +5374,13 @@ def format_motor_hybrid_router(route: dict[str, Any]) -> str:
     lines.append(f"- role: {age['role']}")
     lines.extend(f"- `{call}`" for call in age["calls"])
 
-    lines.extend(["", "## VIM / Reduced-FEM Validation"])
-    vim = route["vim_validation"]
-    lines.append(f"- server: `{vim['server']}`")
-    lines.append(f"- lane: `{vim['lane']}`")
-    lines.append(f"- targets: {', '.join(f'`{target}`' for target in vim['targets'])}")
-    lines.append(f"- role: {vim['role']}")
-    lines.extend(f"- `{call}`" for call in vim["calls"])
+    lines.extend(["", "## HDiv-MMM / HCurl Eddy-Bubble Validation"])
+    coupled = route["coupled_validation"]
+    lines.append(f"- server: `{coupled['server']}`")
+    lines.append(f"- lane: `{coupled['lane']}`")
+    lines.append(f"- targets: {', '.join(f'`{target}`' for target in coupled['targets'])}")
+    lines.append(f"- role: {coupled['role']}")
+    lines.extend(f"- `{call}`" for call in coupled["calls"])
 
     lines.extend(["", "## Local ELF/MAGIC Runner"])
     lines.append(f"- `{route['local_elf_runner']['call']}`")

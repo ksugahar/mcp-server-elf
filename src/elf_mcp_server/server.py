@@ -52,6 +52,9 @@ from .magnetization_group_contract import magnetization_group_handoff_contract_g
 from .two_winding_frequency_contract import two_winding_frequency_contract_gate
 from .conductive_shield_frequency_contract import conductive_shield_frequency_contract_gate
 from .project_feature_inventory_contract import project_feature_inventory_contract_gate
+from .nonlinear_magnetic_conductor_contract import (
+    nonlinear_magnetic_conductor_validation_gate,
+)
 
 from .elf_knowledge import get_elf_documentation
 from .help_access import list_help_files, search_help, get_help_file
@@ -318,6 +321,7 @@ _TOOL_CATALOG = [
                                                 "elements, PRE/SOL blocks, "
                                                 "outputs, checks, and pitfalls"),
     ("elf_project_feature_inventory_contract_gate", "Metadata-only gate for a normalized whole-project feature inventory, route ownership, and digest identity"),
+    ("elf_nonlinear_magnetic_conductor_validation_gate", "Metadata-only, observable-specific convergence gate for same-region nonlinear magnetic conductors"),
     ("elf_wiki_index / search / get", "elf.co.jp PukiWiki cache "
                                        "(146 pages, 211 KB)"),
     ("elf_python_index / search / get; elf_python_team28",
@@ -1514,11 +1518,11 @@ def elf_motor_dual_solver_review_packet(
         for card in cards
     ]
     packet = {
-        "schema_version": "motor-source-deck-review-packet/v1",
+        "schema_version": "motor-source-deck-review-packet/v2",
         "family_filter": family,
         "observable_id": str(observable or "").strip(),
         "selected_decks": selected,
-        "required_lanes": ["ngsolve_age", "hdiv_vim_reduced_fem"],
+        "required_lanes": ["ngsolve_age", "hdiv_mmm_hcurl_eddy_bubble"],
         "required_result_fields": [
             "observable_id",
             "observable_unit",
@@ -3543,6 +3547,22 @@ def elf_project_feature_inventory_contract_gate(summary_json: str) -> str:
 
 
 @mcp.tool()
+def elf_nonlinear_magnetic_conductor_validation_gate(summary_json: str) -> str:
+    """Gate same-region nonlinear magnetic-conductor validation metadata.
+
+    Mean magnetic flux density and Joule loss are judged independently. The
+    contract accepts normalized errors and provenance digests only; it rejects
+    local paths, solved fields, and incomplete source-mesh convergence claims.
+    """
+
+    return json.dumps(
+        nonlinear_magnetic_conductor_validation_gate(summary_json),
+        indent=2,
+        sort_keys=True,
+    )
+
+
+@mcp.tool()
 def elf_recipe_index(tag: str = "", solver: str = "") -> str:
     """
     List public-safe workflow recipe cards.
@@ -3868,7 +3888,7 @@ def _use_utf8_stdout() -> None:
             pass
 
 
-apply_tool_contract(mcp, server_name="elf-mcp-server", version="1.61.0")
+apply_tool_contract(mcp, server_name="elf-mcp-server", version="1.61.1")
 
 
 def main():

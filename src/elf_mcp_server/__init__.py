@@ -22,4 +22,4 @@ bundled help/example/wiki/Python API search, and compact planning aids for
 authoring ELF input files, plus release-readiness gates for MCP maintainers.
 """
 
-__version__ = "1.61.0"
+__version__ = "1.61.1"

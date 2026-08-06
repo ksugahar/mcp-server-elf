@@ -130,6 +130,7 @@ def test_tool_surface_and_no_work_family():
     assert "elf_python_2d_motor_template" in names
     assert "elf_agentic_profile" in names
     assert "elf_project_feature_inventory_contract_gate" in names
+    assert "elf_nonlinear_magnetic_conductor_validation_gate" in names
     overview = elf_overview()
     overview_text = str(overview)
     assert overview["n_tools"] == len(names)
@@ -176,7 +177,11 @@ def test_motor_dual_solver_review_packet_is_public_safe_and_two_lane():
         limit=2,
     ))
     assert packet["status"] == "ready"
-    assert packet["required_lanes"] == ["ngsolve_age", "hdiv_vim_reduced_fem"]
+    assert packet["schema_version"] == "motor-source-deck-review-packet/v2"
+    assert packet["required_lanes"] == [
+        "ngsolve_age",
+        "hdiv_mmm_hcurl_eddy_bubble",
+    ]
     assert len(packet["selected_decks"]) == 2
     assert all(row["mai_path"].endswith(".mai") for row in packet["selected_decks"])
     assert "timing_breakdown_s" in packet["required_result_fields"]
@@ -1880,20 +1885,28 @@ def test_public_sample_decks_are_runnable_inputs_only():
     assert "radia-motor targets" in motor_readiness_text
     assert "S:" + "\\" not in motor_readiness_text
     hybrid_route = build_motor_hybrid_router("IPM hairpin motor flux linkage and MTPA")
-    assert hybrid_route["schema_version"] == "elf-motor-hybrid-router/v1"
+    assert hybrid_route["schema_version"] == "elf-motor-hybrid-router/v2"
     assert hybrid_route["inferred_family"] == "ipm"
     assert hybrid_route["elf_deck_routes"][0]["family"] == "application/motor/emdlab_ipm_hairpin_10"
     assert "elf_motor_mmm_quick_check" in hybrid_route["mmm_quick_check"]["call"]
-    assert hybrid_route["age_validation"]["lane"] == "radia-motor-age"
+    assert hybrid_route["age_validation"]["lane"] == "ngsolve_age"
     assert 'ngsolve_usage("mtpa")' in hybrid_route["age_validation"]["calls"]
-    assert hybrid_route["vim_validation"]["lane"] == "radia-motor-vim"
-    assert "demag_field" in hybrid_route["vim_validation"]["targets"]
-    assert 'motor_validation_lane_template("hdiv_vim_reduced_fem")' in hybrid_route["vim_validation"]["calls"]
+    assert (
+        hybrid_route["coupled_validation"]["lane"]
+        == "hdiv_mmm_hcurl_eddy_bubble"
+    )
+    assert "demag_field" in hybrid_route["coupled_validation"]["targets"]
+    assert (
+        'motor_validation_lane_template("hdiv_mmm_hcurl_eddy_bubble")'
+        in hybrid_route["coupled_validation"]["calls"]
+    )
     hybrid_text = format_motor_hybrid_router(hybrid_route)
     assert "ELF/radia motor hybrid router" in hybrid_text
     assert "application/motor/emdlab_ipm_hairpin_10" in hybrid_text
-    assert "radia-motor-vim" in hybrid_text
-    assert "HDiv-VIM" in hybrid_text
+    assert "hdiv_mmm_hcurl_eddy_bubble" in hybrid_text
+    assert "HDiv-MMM" in hybrid_text
+    assert "HCurl Eddy-Bubble" in hybrid_text
+    assert "hdiv_vim_reduced_fem" not in hybrid_text
     assert "elf_local_simulation_handoff" in hybrid_text
     assert "S:" + "\\" not in hybrid_text
     wide_routes = {
@@ -1911,7 +1924,7 @@ def test_public_sample_decks_are_runnable_inputs_only():
         assert wide_route["inferred_family"] == family
         assert wide_route["elf_deck_routes"]
         assert wide_route["age_validation"]["calls"]
-        assert wide_route["vim_validation"]["targets"]
+        assert wide_route["coupled_validation"]["targets"]
     bldc_quick = build_motor_mmm_quick_check(motor_type="outer_rotor_bldc")
     assert bldc_quick["family"] == "outer_rotor_bldc"
     assert "pm_airgap_flux" in bldc_quick["recommended_age_targets"]
