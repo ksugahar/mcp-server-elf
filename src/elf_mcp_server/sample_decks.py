@@ -14,28 +14,30 @@ import math
 import re
 from typing import Any
 
+from .guards import bounded_int
+
 
 ROOT = "public_samples"
 MU0 = 4.0 * math.pi * 1e-7
 
 VALIDATION_LEVEL_DESCRIPTIONS = {
-    "solver_smoke": (
-        "ELF/MAGIC input-pair presence and local solver-run smoke checks passed."
+    "static_input_contract": (
+        "Public input-pair presence, syntax, and forbidden-marker checks passed."
     ),
     "ngsolve_proxy_energy": (
-        "ELF/MAGIC run checks passed, and an independent NGSolve proxy-field "
-        "energy sanity check was positive."
+        "Public input-contract checks and an independent NGSolve proxy-field "
+        "energy sanity check passed."
     ),
     "ngsolve_numeric_invariant": (
-        "ELF FLUM-derived numeric invariants and independent NGSolve proxy "
-        "invariants both passed for numeric anchor cases."
+        "Analytic FLUM-contract invariants and independent NGSolve proxy "
+        "invariants passed for numeric anchor cases."
     ),
 }
 
 VALIDATION_LEVEL_ORDER = (
     "ngsolve_numeric_invariant",
     "ngsolve_proxy_energy",
-    "solver_smoke",
+    "static_input_contract",
 )
 
 VALIDATION_LIMITATIONS = (
@@ -44,7 +46,7 @@ VALIDATION_LIMITATIONS = (
     "`ngsolve_proxy_energy` is a broad independent proxy-field gate for deck "
     "sanity, not a full absolute field/force/torque/loss agreement suite.",
     "`ngsolve_numeric_invariant` is used for numeric anchor families where "
-    "ELF FLUM-derived flux, energy, force/torque-gradient, AC-loss, "
+    "analytic FLUM-contract flux, energy, force/torque-gradient, AC-loss, "
     "magnetic-circuit, and permanent-magnet invariants and NGSolve proxy "
     "invariants are both checked.",
 )
@@ -54,7 +56,7 @@ QUALITY_LABELS = {
         "label": "gold_numeric_invariant",
         "display": "Gold numeric invariant",
         "meaning": (
-            "ELF FLUM-derived numeric laws and independent NGSolve proxy "
+            "Analytic FLUM-contract laws and independent NGSolve proxy "
             "invariants both passed for this family."
         ),
         "recommended_use": (
@@ -66,7 +68,7 @@ QUALITY_LABELS = {
         "label": "silver_proxy_energy",
         "display": "Silver proxy energy",
         "meaning": (
-            "ELF/MAGIC run checks passed and an independent NGSolve "
+            "Public input-contract checks and an independent NGSolve "
             "proxy-field energy sanity gate was positive."
         ),
         "recommended_use": (
@@ -74,11 +76,11 @@ QUALITY_LABELS = {
             "absolute field, force, torque, or loss agreement from this label."
         ),
     },
-    "solver_smoke": {
-        "label": "bronze_solver_smoke",
-        "display": "Bronze solver smoke",
-        "meaning": "Input-pair presence and local solver-run smoke checks passed.",
-        "recommended_use": "Use only as a syntax and workflow smoke-check pattern.",
+    "static_input_contract": {
+        "label": "bronze_input_contract",
+        "display": "Bronze input contract",
+        "meaning": "Input-pair presence, syntax, and forbidden-marker checks passed.",
+        "recommended_use": "Use only as a syntax and workflow-contract pattern.",
     },
 }
 
@@ -86,8 +88,8 @@ ENHANCED_OBSERVABLE_CONTRACT_LABEL = {
     "label": "silver_observable_contract",
     "display": "Silver observable contract",
     "meaning": (
-        "ELF/MAGIC run checks and independent NGSolve proxy-energy checks "
-        "passed, and the public decks expose the expected FLUM/OHM2/FREQ/"
+        "Public input-contract and independent NGSolve proxy-energy checks "
+        "passed, and the decks expose the expected FLUM/OHM2/FREQ/"
         "HBRM/HBCU observable contract for their physical quantity."
     ),
     "recommended_use": (
@@ -101,14 +103,14 @@ QUALITY_LABEL_DEFINITIONS = {
     "gold_numeric_invariant": QUALITY_LABELS["ngsolve_numeric_invariant"],
     ENHANCED_OBSERVABLE_CONTRACT_LABEL["label"]: ENHANCED_OBSERVABLE_CONTRACT_LABEL,
     "silver_proxy_energy": QUALITY_LABELS["ngsolve_proxy_energy"],
-    "bronze_solver_smoke": QUALITY_LABELS["solver_smoke"],
+    "bronze_input_contract": QUALITY_LABELS["static_input_contract"],
 }
 
 QUALITY_LABEL_DISPLAY_ORDER = (
     "gold_numeric_invariant",
     "silver_observable_contract",
     "silver_proxy_energy",
-    "bronze_solver_smoke",
+    "bronze_input_contract",
 )
 
 ENHANCED_OBSERVABLE_CONTRACT_FAMILIES: dict[str, tuple[str, ...]] = {
@@ -163,15 +165,10 @@ PUBLIC_FORBIDDEN_TEXT_MARKERS = (
 
 PUBLIC_FORBIDDEN_OUTPUT_SUFFIXES = (
     ".mao",
+    ".mag",
     ".mat",
     ".mac",
 )
-
-PUBLIC_SMALL_REFERENCE_OUTPUT_SUFFIXES = (
-    ".mag",
-)
-
-PUBLIC_SMALL_REFERENCE_OUTPUT_MAX_BYTES = 64 * 1024
 
 PHYSICAL_QUANTITY_DEFINITIONS: dict[str, dict[str, str]] = {
     "flux_linkage": {
@@ -272,12 +269,12 @@ CROSS_VALIDATION_METHODS: dict[str, dict[str, str]] = {
             "numeric validation law."
         ),
     },
-    "elf_flux_invariants_passed": {
-        "display": "ELF FLUM-derived invariant",
+    "analytic_flux_invariants_passed": {
+        "display": "Analytic FLUM-contract invariant",
         "strength": "gold_observable_invariant",
         "public_observable": "FLUM-derived flux, energy, force, loss, or coupling invariant",
         "meaning": (
-            "Public FLUM-derived scaling, sign, energy, loss, force, or "
+            "Analytic FLUM-contract scaling, sign, energy, loss, force, or "
             "coupling invariants passed for the numeric family."
         ),
     },
@@ -2430,6 +2427,7 @@ def build_public_quality_gates() -> list[dict[str, str]]:
     manifest = load_validated_manifest()
     batches = load_publication_batches()
     decks = load_sample_decks()
+    all_public_files = _walk_public_files(_sample_root())
     mai_paths = {path for path, deck in decks.items() if deck.ext == "mai"}
     meg_paths = {path for path, deck in decks.items() if deck.ext == "meg"}
     mai_stems = {path.rsplit(".", 1)[0] for path in mai_paths}
@@ -2492,6 +2490,26 @@ def build_public_quality_gates() -> list[dict[str, str]]:
             ),
         )
     )
+    digest = hashlib.sha256()
+    input_nodes = [
+        (path, node)
+        for path, node in all_public_files
+        if path.lower().endswith((".mai", ".meg"))
+    ]
+    for path, node in sorted(input_nodes, key=lambda item: item[0]):
+        digest.update(path.encode("utf-8"))
+        digest.update(b"\0")
+        digest.update(node.read_bytes())
+        digest.update(b"\0")
+    current_digest = "sha256:" + digest.hexdigest()
+    gates.append(
+        _public_gate(
+            "manifest_content_digest_matches",
+            manifest.get("content_digest_algorithm") == "sha256-path-and-bytes-v1"
+            and manifest.get("content_sha256") == current_digest,
+            f"{len(input_nodes)} input files bound by {current_digest}",
+        )
+    )
 
     batched_case_paths: list[str] = []
     for batch in batches.get("batches", []):
@@ -2529,28 +2547,17 @@ def build_public_quality_gates() -> list[dict[str, str]]:
         )
     )
 
-    all_public_files = _walk_public_files(_sample_root())
     solver_output_files = []
     for path, node in all_public_files:
         lower_path = path.lower()
         if lower_path.endswith(PUBLIC_FORBIDDEN_OUTPUT_SUFFIXES):
             solver_output_files.append(path)
-        elif lower_path.endswith(PUBLIC_SMALL_REFERENCE_OUTPUT_SUFFIXES):
-            try:
-                size = node.stat().st_size
-            except OSError:
-                solver_output_files.append(path)
-                continue
-            if size > PUBLIC_SMALL_REFERENCE_OUTPUT_MAX_BYTES:
-                solver_output_files.append(path)
     gates.append(
         _public_gate(
             "no_solver_output_files",
             not solver_output_files,
             (
-                f"{len(solver_output_files)} unsafe solver-output files "
-                f"(.mag is allowed only as a <= "
-                f"{PUBLIC_SMALL_REFERENCE_OUTPUT_MAX_BYTES} byte public reference)"
+                f"{len(solver_output_files)} solver-output files"
             ),
         )
     )
@@ -3136,7 +3143,7 @@ def build_cross_validation_summary(
 
         has_dual_gold = (
             entry.get("validation_level") == "ngsolve_numeric_invariant"
-            and "elf_flux_invariants_passed" in checks
+            and "analytic_flux_invariants_passed" in checks
             and "ngsolve_numeric_invariants_passed" in checks
         )
         has_silver_proxy = (
@@ -3209,7 +3216,7 @@ def build_cross_validation_summary(
         for fam, entry in all_manifest_families.items()
         if entry.get("validation_level") == "ngsolve_numeric_invariant"
         and not (
-            "elf_flux_invariants_passed" in entry.get("checks", [])
+            "analytic_flux_invariants_passed" in entry.get("checks", [])
             and "ngsolve_numeric_invariants_passed" in entry.get("checks", [])
         )
     ]
@@ -4382,6 +4389,7 @@ def list_sample_decks(family: str | None = None, case: str | None = None, ext: s
 
 def search_sample_decks(query: str, top_k: int = 10, ext: str | None = None) -> list[dict[str, Any]]:
     """Substring-search public sample deck text and paths."""
+    top_k = bounded_int(top_k, name="top_k", minimum=1, maximum=100)
     keywords = [k.strip() for k in query.split() if k.strip()]
     if not keywords:
         return []
@@ -4443,6 +4451,7 @@ def _route_score(goal_l: str, words: set[str], rule: dict[str, Any]) -> int:
 
 def route_sample_decks(goal: str, limit: int = 5) -> list[dict[str, Any]]:
     """Route a natural-language goal to sample families and follow-up calls."""
+    limit = bounded_int(limit, name="limit", minimum=1, maximum=12)
     goal_l = goal.lower()
     words = set(re.findall(r"[a-z0-9]+", goal_l))
     scored: list[tuple[int, int, dict[str, Any]]] = []
@@ -4767,6 +4776,7 @@ MCP_READINESS_ROUTE_CHECKS: tuple[dict[str, str], ...] = (
 )
 
 
+@lru_cache(maxsize=1)
 def build_mcp_readiness() -> dict[str, Any]:
     """Aggregate MCP-quality gates before public release/tag push."""
     quality = build_quality_summary()
@@ -4855,7 +4865,7 @@ def build_mcp_readiness() -> dict[str, Any]:
             "python -m elf_mcp_server.policy_lint <repo>",
             "python -m elf_mcp_server.server --selftest",
             "python -m build --outdir <temp-dist-dir>",
-            "git commit, git tag v1.61.1, git push origin main, git push origin v1.61.1",
+            "git commit, git tag v1.62.0, git push origin main, git push origin v1.62.0",
         ],
         "public_boundary": (
             "Readiness uses public input decks and metadata only. It does not "
@@ -5567,6 +5577,7 @@ def format_motor_mmm_quick_check(result: dict[str, Any]) -> str:
 
 def get_sample_deck(rel_path: str, max_chars: int = 60000) -> dict[str, Any]:
     """Get full text of a public sample .mai/.meg deck."""
+    max_chars = bounded_int(max_chars, name="max_chars", minimum=256, maximum=60_000)
     decks = load_sample_decks()
     deck = decks.get(rel_path)
     if deck is None and rel_path.startswith("motor/"):

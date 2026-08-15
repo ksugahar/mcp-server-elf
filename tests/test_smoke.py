@@ -1,10 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Smoke tests for the public ELF doc-server (ELF-mcp-server).
-
-Minimal guards for a public package: the server imports, the four bundled
-vendor-doc dumps load, the tool surface is the expected size, and the removed
-work-examples family stays OUT (publish-boundary regression guard).
-"""
+"""Smoke tests for the public ELF knowledge server."""
 import os
 import sys
 import asyncio
@@ -29,26 +24,28 @@ def test_server_imports():
     assert elf_mcp_server.__version__ == project["version"]
 
 
-def test_doc_dumps_load():
+def test_original_public_corpus_loads_without_product_dumps():
     from elf_mcp_server.help_access import list_help_files
     from elf_mcp_server.examples_access import list_examples
     from elf_mcp_server.wiki_access import list_wiki_pages
     from elf_mcp_server.python_access import list_python_files
-    assert len(list_help_files()) > 1000
-    assert len(list_examples()) > 300
-    assert len(list_wiki_pages()) > 50
-    assert len(list_python_files()) > 5
+    assert len(list_help_files()) == 7
+    assert len(list_examples()) == 4
+    assert len(list_wiki_pages()) == 2
+    assert len(list_python_files()) == 3
+    package_dir = os.path.join(os.path.dirname(__file__), "..", "src", "elf_mcp_server")
+    assert not any(name.endswith("_dump.json") for name in os.listdir(package_dir))
 
 
-def test_100_example_playbook_cards_public_safe():
+def test_original_example_playbook_cards_public_safe():
     from elf_mcp_server.example_playbook import build_example_cards, format_example_cards
     cards = build_example_cards(limit=100)
-    assert len(cards) == 100
-    assert sum(1 for c in cards if c["solver"] == "MAGIC") == 97
+    assert len(cards) == 4
+    assert sum(1 for c in cards if c["solver"] == "MAGIC") == 2
     text = format_example_cards(cards)
-    assert "magic/IPM/Motor1.mai" in text
-    assert "flux-linkage" in text
-    assert "maxwell-force" in text
+    assert "public/magic/magnetostatic.mai" in text
+    assert "public/elfin/electrostatic.mai" in text
+    assert "public/beam/trajectory.mai" in text
     assert "C:\\" not in text
     assert "_cross" + "val" not in text
 
@@ -146,7 +143,7 @@ def test_tool_surface_and_no_work_family():
     assert profile["schema"] == "cae-ai-lab.agentic-mcp-profile.v1"
     assert profile["execution_policy"]["executes_solver"] is False
     assert profile["execution_policy"]["ships_solver_outputs"] is False
-    assert "runtime_vs_skills" in profile["mathworks_reference_pattern"]
+    assert "runtime_vs_skills" in profile["reference_runtime_pattern"]
     assert "elf_mcp_readiness" in profile["recommended_first_calls"]
     balanced = profile["balanced_learning"]
     assert balanced["policy"] == "equal_capability_gain_v1"
@@ -1632,42 +1629,42 @@ def test_public_sample_decks_are_runnable_inputs_only():
     ]["checks"]
     numeric_manifest = manifest["families"]["application/numeric_validation_anchors_10"]
     assert numeric_manifest["validation_level"] == "ngsolve_numeric_invariant"
-    assert "elf_flux_invariants_passed" in numeric_manifest["checks"]
+    assert "analytic_flux_invariants_passed" in numeric_manifest["checks"]
     assert "ngsolve_numeric_invariants_passed" in numeric_manifest["checks"]
     flum_law_manifest = manifest["families"]["application/numeric_flum_law_64"]
     assert flum_law_manifest["cases"] == 64
     assert flum_law_manifest["validation_level"] == "ngsolve_numeric_invariant"
-    assert "elf_flux_invariants_passed" in flum_law_manifest["checks"]
+    assert "analytic_flux_invariants_passed" in flum_law_manifest["checks"]
     assert "ngsolve_numeric_invariants_passed" in flum_law_manifest["checks"]
     inductance_manifest = manifest["families"]["application/numeric_inductance_energy_100"]
     assert inductance_manifest["cases"] == 100
     assert inductance_manifest["validation_level"] == "ngsolve_numeric_invariant"
-    assert "elf_flux_invariants_passed" in inductance_manifest["checks"]
+    assert "analytic_flux_invariants_passed" in inductance_manifest["checks"]
     assert "ngsolve_numeric_invariants_passed" in inductance_manifest["checks"]
     force_manifest = manifest["families"]["application/numeric_force_torque_100"]
     assert force_manifest["cases"] == 100
     assert force_manifest["validation_level"] == "ngsolve_numeric_invariant"
-    assert "elf_flux_invariants_passed" in force_manifest["checks"]
+    assert "analytic_flux_invariants_passed" in force_manifest["checks"]
     assert "ngsolve_numeric_invariants_passed" in force_manifest["checks"]
     ac_loss_manifest = manifest["families"]["application/numeric_ac_loss_100"]
     assert ac_loss_manifest["cases"] == 100
     assert ac_loss_manifest["validation_level"] == "ngsolve_numeric_invariant"
-    assert "elf_flux_invariants_passed" in ac_loss_manifest["checks"]
+    assert "analytic_flux_invariants_passed" in ac_loss_manifest["checks"]
     assert "ngsolve_numeric_invariants_passed" in ac_loss_manifest["checks"]
     magnetic_circuit_manifest = manifest["families"]["application/numeric_magnetic_circuit_100"]
     assert magnetic_circuit_manifest["cases"] == 100
     assert magnetic_circuit_manifest["validation_level"] == "ngsolve_numeric_invariant"
-    assert "elf_flux_invariants_passed" in magnetic_circuit_manifest["checks"]
+    assert "analytic_flux_invariants_passed" in magnetic_circuit_manifest["checks"]
     assert "ngsolve_numeric_invariants_passed" in magnetic_circuit_manifest["checks"]
     permanent_magnet_manifest = manifest["families"]["application/numeric_permanent_magnet_100"]
     assert permanent_magnet_manifest["cases"] == 100
     assert permanent_magnet_manifest["validation_level"] == "ngsolve_numeric_invariant"
-    assert "elf_flux_invariants_passed" in permanent_magnet_manifest["checks"]
+    assert "analytic_flux_invariants_passed" in permanent_magnet_manifest["checks"]
     assert "ngsolve_numeric_invariants_passed" in permanent_magnet_manifest["checks"]
     transformer_coupling_manifest = manifest["families"]["application/numeric_transformer_coupling_100"]
     assert transformer_coupling_manifest["cases"] == 100
     assert transformer_coupling_manifest["validation_level"] == "ngsolve_numeric_invariant"
-    assert "elf_flux_invariants_passed" in transformer_coupling_manifest["checks"]
+    assert "analytic_flux_invariants_passed" in transformer_coupling_manifest["checks"]
     assert "ngsolve_numeric_invariants_passed" in transformer_coupling_manifest["checks"]
     validation_summary = build_validation_summary()
     assert validation_summary["total_cases"] == 1600
@@ -1761,7 +1758,7 @@ def test_public_sample_decks_are_runnable_inputs_only():
     assert cross_validation_summary["gaps"]["cases_without_independent_cross_validation"] == 0
     assert cross_validation_summary["method_counts"]["ngsolve_proxy_energy_positive"]["cases"] == 926
     assert cross_validation_summary["method_counts"]["ngsolve_numeric_invariants_passed"]["cases"] == 674
-    assert cross_validation_summary["method_counts"]["elf_flux_invariants_passed"]["cases"] == 674
+    assert cross_validation_summary["method_counts"]["analytic_flux_invariants_passed"]["cases"] == 674
     cross_validation_text = format_cross_validation_summary(cross_validation_summary)
     assert "Cross-Validation Gates (PASS)" in cross_validation_text
     assert "No family is missing independent NGSolve cross-validation" in cross_validation_text
@@ -1975,7 +1972,7 @@ def test_public_sample_decks_are_runnable_inputs_only():
     assert numeric_summary["selected_family_count"] == 1
     assert numeric_summary["families"][0]["family"] == "application/numeric_validation_anchors_10"
     numeric_text = format_validation_summary(numeric_summary)
-    assert "elf_flux_invariants_passed" in numeric_text
+    assert "analytic_flux_invariants_passed" in numeric_text
     flum_law_summary = build_validation_summary(family="numeric_flum_law")
     assert flum_law_summary["selected_family_count"] == 1
     assert flum_law_summary["families"][0]["family"] == "application/numeric_flum_law_64"
@@ -2295,15 +2292,12 @@ def test_public_policy_lint_passes():
 
     from elf_mcp_server.policy_lint import (
         SAMPLE_OUTPUT_SUFFIXES,
-        SMALL_REFERENCE_OUTPUT_MAX_BYTES,
-        SMALL_REFERENCE_OUTPUT_SUFFIXES,
         run_policy_lint,
     )
 
     repo = Path(__file__).resolve().parents[1]
-    assert ".mag" in SMALL_REFERENCE_OUTPUT_SUFFIXES
+    assert ".mag" in SAMPLE_OUTPUT_SUFFIXES
     assert ".mao" in SAMPLE_OUTPUT_SUFFIXES
-    assert SMALL_REFERENCE_OUTPUT_MAX_BYTES <= 64 * 1024
     assert run_policy_lint(repo) == []
 
 

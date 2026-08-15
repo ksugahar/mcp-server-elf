@@ -7,6 +7,7 @@ from pathlib import Path
 
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
+from pydantic import AnyUrl
 
 
 async def _probe_stdio() -> dict:
@@ -29,6 +30,17 @@ async def _probe_stdio() -> dict:
             listed = await session.list_tools()
             tools = listed.tools
             called = await session.call_tool("elf_overview", {})
+            searched = await session.call_tool(
+                "elf_search", {"query": "electrostatic", "source": "help", "top_k": 3}
+            )
+            resources = await session.list_resources()
+            templates = await session.list_resource_templates()
+            read = await session.read_resource(AnyUrl("elf://guides/overview"))
+            prompts = await session.list_prompts()
+            prompted = await session.get_prompt(
+                "new_elf_analysis",
+                {"geometry": "parallel-plate capacitor", "solver": "ELFIN"},
+            )
             hints = (
                 "readOnlyHint",
                 "destructiveHint",
@@ -50,6 +62,13 @@ async def _probe_stdio() -> dict:
                 ],
                 "probe_is_error": bool(called.isError),
                 "probe_has_content": bool(called.content),
+                "structured_is_error": bool(searched.isError),
+                "structured_schema": (searched.structuredContent or {}).get("schema_version"),
+                "resource_count": len(resources.resources),
+                "template_count": len(templates.resourceTemplates),
+                "resource_read": read.contents[0].text,
+                "prompt_names": [prompt.name for prompt in prompts.prompts],
+                "prompt_text": prompted.messages[0].content.text,
             }
 
 
@@ -64,3 +83,10 @@ def test_stdio_initialize_list_and_safe_call_contract() -> None:
     assert result["missing_annotations"] == []
     assert result["probe_is_error"] is False
     assert result["probe_has_content"] is True
+    assert result["structured_is_error"] is False
+    assert result["structured_schema"] == "elf.search.v1"
+    assert result["resource_count"] == 4
+    assert result["template_count"] == 1
+    assert "read-only server" in result["resource_read"]
+    assert result["prompt_names"] == ["new_elf_analysis"]
+    assert "electrostatic" in result["prompt_text"]

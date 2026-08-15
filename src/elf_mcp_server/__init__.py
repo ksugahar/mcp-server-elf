@@ -18,8 +18,8 @@ motor-readiness audits, ELF/radia/MMM hybrid motor routing,
 2D MMM/BEM-like motor quick checks,
 local simulation handoff contracts,
 RunResult file parsing, numeric efficiency-map grids,
-bundled help/example/wiki/Python API search, and compact planning aids for
+original help/example/link/Python-facade summaries, and compact planning aids for
 authoring ELF input files, plus release-readiness gates for MCP maintainers.
 """
 
-__version__ = "1.61.1"
+__version__ = "1.62.0"

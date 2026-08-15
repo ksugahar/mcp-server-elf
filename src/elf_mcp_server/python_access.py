@@ -1,13 +1,7 @@
-"""Raw access to ELF600 Python interface + bin/ config files (python_dump.json).
+"""Access public Python-facade summaries through the legacy API.
 
-Bundles 15 text files from C:/ELF600/bin/:
-- elftypes.py / magtypes.py — ctypes wrappers (83 API functions each)
-  * elftypes wraps elfh1300.dll (ELFIN solver)
-  * magtypes wraps magh1600.dll (MAGIC solver, includes eddy current MAB/MAT/MBB)
-- *.cfg — ELFIN.cfg, MAGIC.cfg
-- *.def — ELFERR.def (error codes), MESERR.def, IEmesh.def, MaiEdit3.def, etc.
-- Wmap2def.txt
-- Regist.bat / UnRegist.bat
+Vendor wrappers, configuration files, error tables, and binaries are not
+bundled or redistributed.
 
 Functions:
     load_python_dump()              -> dict[str, dict]
@@ -17,16 +11,16 @@ Functions:
 """
 from __future__ import annotations
 
-import json
 from functools import lru_cache
-from importlib import resources
 from typing import Any
+
+from .guards import bounded_int
+from .public_corpus import PYTHON
 
 
 @lru_cache(maxsize=1)
 def load_python_dump() -> dict[str, dict[str, Any]]:
-    data = resources.files("elf_mcp_server").joinpath("python_dump.json").read_text(encoding="utf-8")
-    return json.loads(data)
+    return PYTHON
 
 
 def list_python_files(ext: str | None = None) -> list[dict[str, Any]]:
@@ -44,6 +38,7 @@ def list_python_files(ext: str | None = None) -> list[dict[str, Any]]:
 
 
 def search_python(query: str, top_k: int = 10, ext: str | None = None) -> list[dict[str, Any]]:
+    top_k = bounded_int(top_k, name="top_k", minimum=1, maximum=100)
     dump = load_python_dump()
     keywords = [k.strip() for k in query.split() if k.strip()]
     if not keywords:
@@ -79,6 +74,7 @@ def search_python(query: str, top_k: int = 10, ext: str | None = None) -> list[d
 
 
 def get_python_file(rel_path: str, max_chars: int = 30000) -> dict[str, Any]:
+    max_chars = bounded_int(max_chars, name="max_chars", minimum=256, maximum=60_000)
     dump = load_python_dump()
     meta = dump.get(rel_path)
     if not meta:
@@ -90,7 +86,7 @@ def get_python_file(rel_path: str, max_chars: int = 30000) -> dict[str, Any]:
             return {
                 "path": rel_path,
                 "error": f"not found (similar: {candidates[:5]})" if candidates
-                         else "not found in python_dump (use elf_python_index)",
+                         else "not found in the public facade corpus (use elf_python_index)",
             }
     text = meta.get("text", "")
     truncated = len(text) > max_chars

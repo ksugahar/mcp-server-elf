@@ -12,17 +12,19 @@ This server does **not** execute ELF600 simulations — it provides curated docu
 
 ## Features
 
-**100+ tools + 1 prompt** providing curated docs, workflow recipes, ELF-runnable public sample decks, representative sample tours, quality labels, physical-quantity coverage, validation matrices, observable-contract audits, cross-validation audits, duplicate/reuse audits, motor-readiness audits, ELF/radia/MMM hybrid motor routing, 2D MMM/BEM-like motor quick checks, local simulation handoff contracts, public Python-interface design contracts, an LLM-oriented API manual, typed Python facade schemas, motor-design variables/objectives/sweeps, advanced motor-model coverage for PMa-SynRM, BLDC, line-start PM, deep-bar IM, flux-switching PM, Vernier PM, transverse-flux PM, slotless/coreless PM, claw-pole/Lundell, and commutator/universal motors, winding-layout plans, topology-parameter plans, demagnetization-margin plans, voltage/field-weakening plans, cogging/ripple plans, air-gap harmonic NVH plans, thermal-network plans, manufacturing-tolerance plans, material-variation plans, feasibility gates, drive-cycle plans, optimization-study plans, concrete operating-point run queues, inverter/PWM harmonic screening, saturated Ld/Lq maps, high-speed rotor stress/retention gates, validation scorecards, RunResult payload/path parsing, efficiency-map numeric grid generation, closed-loop candidate ranking, NGSolve runtime cross-checks, drawing/BOM prototype handoffs, dq-axis maps, MTPA searches, reluctance/SynRM/SRM design plans, efficiency-map operating grids, loss-model contracts, torque-speed envelopes, IM slip sweeps, robotics/drone design-agent handoffs, executable NGSolve thermal/NVH/stress validation script generation, `.mai` deck lint, `.meg` generation routing, constrained 2D motor templates, release-readiness gates, prompt-to-sample routing, validation summaries, promotion copy, and bundled ELF600 documentation snapshots. The authoritative runtime count is returned by `elf_overview()["n_tools"]`:
+**100+ compatibility tools, four canonical typed tools, five Resources/resource templates, and one prompt** provide curated engineering guidance, public sample decks, workflow contracts, motor-design plans, metadata gates, and user-local handoff schemas. Product documentation snapshots and wrapper source are not bundled. The authoritative runtime counts are returned by `elf_overview()`:
 
 | Tool family | Purpose | Files |
 |---|---|---|
-| `elf_usage(topic)` | 31 curated topics — high-level recipes | (knowledge.py) |
-| `elf_help_*(...)` | Bundled ELF600 help snapshot | 1141 files, 1.18M chars |
-| `elf_examples_*(...)` | Bundled example snapshot plus 100-card playbook | 332 files, 533k chars |
+| `elf_usage(topic)` | 32 curated topics — high-level recipes | (knowledge.py) |
+| `elf_catalog_page / elf_search / elf_read / elf_contract_gate` | Canonical typed MCP interface | bounded structured responses |
+| `elf://guides/* / elf://corpus/* / elf://topics/{topic}` | Stable MCP Resources | original public summaries |
+| `elf_help_*(...)` | Compatibility access to original summaries | no product-help snapshot |
+| `elf_examples_*(...)` | Compatibility access to original example patterns | no product examples |
 | `elf_sample_decks_*(...)` | Lab-authored ELF-runnable public `.mai`/`.meg` sample decks | 1600 cases, 3200 input files |
 | `elf_recipe_*(...)` | Workflow decision cards for elements, PRE/SOL blocks, outputs, checks, and pitfalls | public-safe recipes |
-| `elf_wiki_*(...)` | Vendor wiki pages from elf.co.jp PukiWiki | 146 pages, 211k chars |
-| `elf_python_*(...)` | Bundled Python ctypes API and configuration reference | 15 files, 246k chars |
+| `elf_wiki_*(...)` | Compatibility access to public link summaries | no vendor-wiki text |
+| `elf_python_*(...)` | Compatibility access to public facade contracts | no vendor wrappers/configs |
 | `elf_python_interface_design(topic)` | Public facade/API design above a user-local product backend | policy, schema, backend, validation |
 | `elf_python_api_manual(topic)` | LLM-oriented Python facade manual | call order, lint rules, examples |
 | `elf_python_api_schema / motor_spec_lint / deck_lint / run_contract / meg_generation_plan / 2d_motor_template` | Concrete public Python facade contracts | MotorSpec, DeckBundle, RunRequest, MEG backend routing |
@@ -37,10 +39,9 @@ This server does **not** execute ELF600 simulations — it provides curated docu
 | `elf_python_ngsolve_validation_plan / ngsolve_validation_script` | Executable open multiphysics validation | NGSolve thermal, NVH, and stress script generation |
 | `elf_public_promotion(...)` | Public-safe promotion copy for the 1600-case corpus | Japanese/English drafts |
 
-Each `_*` family has 3 tools: `_index`, `_search(query)`, `_get(path)`.
-The examples family also has `elf_examples_playbook(limit=100)`, which
-summarizes 100 `.mai` examples as compact cards with detected SOL blocks,
-element families, feature tags, companion `.mei/.model` files, and reuse hints.
+Legacy `_*` index/search/get tools remain for compatibility. New clients should
+prefer Resources plus `elf_catalog_page`, `elf_search`, `elf_read`, and
+`elf_contract_gate`, whose input limits and semantic output schemas are explicit.
 The recipe family also has `elf_plan_workflow(goal)`, which chooses a short
 public-safe recipe sequence from a natural-language analysis goal.
 The sample deck family has `elf_sample_decks_index/search/route/handoff/validation/readiness/motor_readiness/motor_hybrid_router/motor_mmm_quick_check/validation_matrix/observable_contracts/cross_validation/duplicates/quality/physics/representatives/get/playbook`
@@ -497,7 +498,7 @@ inside the public sample decks, and exact agreement with
 `public_samples/VALIDATED_MANIFEST.json` and
 `public_samples/PUBLICATION_BATCHES.json`. Only sample families marked
 `validation: passed` in that manifest are intended for publication.
-The manifest records the validation level for each family:
+The manifest records the public verification level for each family:
 `ngsolve_proxy_energy` or `ngsolve_numeric_invariant`. All 1600 public sample
 decks are cross-checked with an independent NGSolve proxy-field energy gate
 before they are listed. The numeric-validation anchor decks and numeric
@@ -518,7 +519,9 @@ The numeric transformer-coupling decks add MMB8T/HBUN/HBCU transformer-core
 decks with primary/secondary `FLUM` sanity checks and NGSolve proxy invariants
 for current/turn scaling, turns ratio, B-H slope, air-gap leakage, winding
 span, core area/depth, secondary offset, and buck/boost superposition trends.
-ELF `FLUM` invariants and independent NGSolve proxy invariants must both pass.
+Analytic `FLUM`-contract invariants and independent NGSolve proxy invariants
+must both pass. No product execution or product-result data is used as public
+evidence in this manifest.
 MCP clients can inspect this contract with `elf_sample_decks_validation()`;
 the broad proxy gate is intentionally not claimed as a full absolute field,
 force, torque, or loss agreement suite.
@@ -527,11 +530,10 @@ The publication batch manifest groups the validated baseline into deterministic
 No additional cases are required for this baseline. A future optional
 100-case checkpoint would be 1700 cases.
 
-Bundled data (all generated from fresh ELF600 install via `scripts/crawl_*.py`):
-- `help_dump.json` — Shift_JIS HTM decoded + HTML-stripped
-- `examples_dump.json` — 228 MAGIC + 66 ELFIN + 38 BEAM input files
-- `wiki_dump.json` — 146 curated pages from https://elf.co.jp/
-- `python_dump.json` — `elftypes.py`/`magtypes.py` (83 ctypes API functions each), `*.cfg`, `ELFERR.def`/`MESERR.def`, etc.
+Bundled data consists of repository-owned public input decks, validation
+manifests, original summaries, schemas, and contracts. Product manuals, help
+pages, wiki text, example files, wrappers, configuration files, binaries, and
+solver outputs are excluded. See [THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md).
 
 ### Curated topics (`elf_usage`)
 
@@ -648,9 +650,10 @@ without polluting context with the entire vendor PDF. This MCP server returns ju
 
 ## License
 
-BSD-3-Clause. See [LICENSE](./LICENSE).
+BSD-3-Clause. See [LICENSE](./LICENSE) and
+[THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md).
 
-ELF600 itself is a commercial product of Science Solutions International Laboratory and is not redistributed by this package — only documentation references.
+ELF600 itself is a commercial product of Science Solutions International Laboratory and is not redistributed by this package.
 
 ---
 

@@ -13,15 +13,16 @@ SCHEMA = "elf.project-feature-inventory.v1"
 FEATURE_ROUTES: dict[str, tuple[str, ...]] = {
     "static_permanent_magnet_and_demagnetization": ("magic",),
     "nonlinear_magnetic_materials": ("magic",),
-    "stationary_eddy_current_and_shielding": ("elfin",),
-    "moving_conductor_and_rotation": ("elfin",),
-    "force_torque_motor_and_maglev": ("elfin", "magic"),
+    "stationary_eddy_current_and_shielding": ("magic",),
+    "moving_conductor_and_rotation": ("magic",),
+    "force_torque_motor_and_maglev": ("magic",),
     "harmonic_balance": ("magic",),
     "vector_hysteresis": ("magic",),
     "model_order_reduction_and_cln": ("postprocess",),
     "bem_acceleration_and_mesh_research": ("magic",),
     "benchmark_and_validation_projects": ("validation",),
     "charged_particle_tracking": ("beam",),
+    "electrostatic_and_dielectric_fields": ("elfin",),
 }
 
 ARTIFACT_KINDS = (

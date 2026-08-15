@@ -1,7 +1,7 @@
 # ELF/MAGIC Source-Native Loop Policy
 
 ELF/MAGIC public MCP loop slots should start from public-safe ELF-native
-material: bundled help topics, public sample decks, recipes, Python facade
+material: original help summaries, public sample decks, recipes, Python facade
 contracts, and publication-safe deck families.
 
 Generated snippets are allowed as replay harnesses, lints, public reduced

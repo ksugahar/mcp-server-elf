@@ -1,4 +1,4 @@
-"""Public-safe example playbook cards derived from bundled ELF examples.
+"""Public-safe example playbook cards derived from original public patterns.
 
 The cards are summaries: paths, detected SOL blocks, element families,
 keywords, and workflow hints. They intentionally avoid solver outputs or
@@ -116,10 +116,10 @@ def build_example_cards(
     feature: str | None = None,
     query: str | None = None,
 ) -> list[dict[str, Any]]:
-    """Build compact cards from bundled example .mai files.
+    """Build compact cards from public example-pattern summaries.
 
-    Default returns 100 cards across MAGIC, ELFIN, and BEAM. Filtering by
-    solver="MAGIC" returns all bundled MAGIC analysis examples (currently 97).
+    Returns up to ``limit`` original public-pattern cards across MAGIC, ELFIN,
+    and BEAM.
     """
     dump = load_examples_dump()
     solver_filter = solver.upper() if solver else None

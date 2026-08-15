@@ -1,8 +1,8 @@
 # MCP Server Design Pattern
 
-This MCP server is a public documentation and sample-deck server.  It borrows
-maintainability patterns from the official MathWorks MATLAB MCP Server source
-without depending on that code.
+This MCP server is a public documentation and sample-deck server. Its runtime
+uses a small composition core, separately owned handlers and adaptors, explicit
+protocol contracts, and stable Resources without depending on another server.
 
 ## Pattern
 
@@ -18,14 +18,17 @@ without depending on that code.
 
 ## Python Mapping
 
-| MathWorks source pattern | This server equivalent |
+| Runtime responsibility | This server module |
 |---|---|
-| `cmd/<server>/main.go` | package entry point |
-| `pkg/tools` | public MCP tool families |
-| `internal/usecases` | curated knowledge, routing, schemas, public contracts |
-| `internal/adaptors` | file/index readers and public deck parsers |
-| `guides` | docs and prompt/handoff contracts |
-| fake/system tests | fixture decks, schema checks, public-boundary lint |
+| process entry point | `server.py` |
+| runtime construction and instructions | `runtime.py` |
+| public tool handlers | `handlers.py` |
+| explicit safety definitions | `tool_definitions.py` |
+| semantic protocol models | `models.py` |
+| static guidance | `mcp_resources.py` |
+| curated use cases and contracts | domain modules under `elf_mcp_server` |
+| public corpus adaptors | `*_access.py` and `sample_decks.py` |
+| system verification | protocol tests, schema checks, and public-boundary lint |
 
 ## Public Boundary
 

@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "ELF-mcp-server"
-version = "1.61.1"
+version = "1.62.0"
 description = "MCP server for ELF600 docs, public sample decks, and motor-design Python facade contracts: run queues, efficiency maps, dq/MTPA, PWM harmonics, NGSolve validation, RunResult parsing, optimization loops, drawing/BOM handoffs, and release-quality audits."
 readme = "README.md"
 license = {text = "BSD-3-Clause"}
@@ -20,15 +20,19 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Scientific/Engineering :: Physics",
 ]
 dependencies = [
     "mcp>=1.27,<2",
+    "pydantic>=2.10,<3",
 ]
 
 [project.optional-dependencies]
 test = [
     "pytest",
+    "pytest-cov>=5,<8",
     "tomli>=2; python_version < '3.11'",
 ]
 
@@ -46,15 +50,13 @@ elf-mcp-policy-lint = "elf_mcp_server.policy_lint:main"
 packages = ["src/elf_mcp_server"]
 
 [tool.hatch.build.targets.wheel.force-include]
-"src/elf_mcp_server/help_dump.json" = "elf_mcp_server/help_dump.json"
-"src/elf_mcp_server/examples_dump.json" = "elf_mcp_server/examples_dump.json"
-"src/elf_mcp_server/wiki_dump.json" = "elf_mcp_server/wiki_dump.json"
-"src/elf_mcp_server/python_dump.json" = "elf_mcp_server/python_dump.json"
+"THIRD_PARTY_NOTICES.md" = "elf_mcp_server/THIRD_PARTY_NOTICES.md"
 
 [tool.hatch.build.targets.sdist]
 include = [
     "src/elf_mcp_server",
     "README.md",
     "LICENSE",
+    "THIRD_PARTY_NOTICES.md",
     "pyproject.toml",
 ]

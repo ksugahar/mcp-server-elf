@@ -15,6 +15,8 @@ import json
 import os
 import re
 
+from .guards import positive_float
+
 
 MOTOR_TYPES = (
     "spm",
@@ -3854,6 +3856,15 @@ def build_motor_demag_margin_plan(
     mu_rec: float = 1.05,
 ) -> dict[str, Any]:
     """Build a PM demagnetization margin contract."""
+    br_20c_t = positive_float(br_20c_t, name="br_20c_t")
+    hcj_ka_m = positive_float(hcj_ka_m, name="hcj_ka_m")
+    magnet_len_m = positive_float(magnet_len_m, name="magnet_len_m")
+    gaps_m = tuple(positive_float(gap, name="gaps_m item") for gap in gaps_m)
+    if not gaps_m:
+        raise ValueError("gaps_m must contain at least one positive gap")
+    iron_path_m = positive_float(iron_path_m, name="iron_path_m")
+    iron_mu_r = positive_float(iron_mu_r, name="iron_mu_r")
+    mu_rec = positive_float(mu_rec, name="mu_rec")
     family = _infer_motor_type(motor_type, "spm")
     temp = float(temperature_c)
     br_hot = float(br_20c_t) * (1.0 + float(br_temp_coeff_pct_per_k) * (temp - 20.0) / 100.0)

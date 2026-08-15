@@ -6,16 +6,9 @@ element types, mesh scripting, B-H curves, analysis workflows, tools,
 error messages, and advanced topics (anisotropy, lamination, demagnetization,
 sinusoidal response, IPM motors, inductance, magnetization).
 
-Organized into 30+ topics derived from:
-- C:/ELF600/examples/ (all beam/elfin/magic examples)
-- C:/ELF600/help/m_rf1/ (MAGIC reference manual)
-- C:/ELF600/help/e_rf1/ (ELFIN reference manual)
-- C:/ELF600/help/b_rf1/ (BEAM reference manual)
-- C:/ELF600/help/m_treasure/ (quick-reference tables)
-- C:/ELF600/help/d_ken/ (training materials and technical docs)
-- C:/ELF600/help/u_support/ (error messages)
-- C:/ELF600/help/t_mesh/ (IEmesh mesh commands)
-- C:/ELF600/help/t_iemesh/ (IEmesh tool overview)
+The topics are repository-maintained engineering summaries. Product manuals,
+help pages, example files, wiki text, wrappers, binaries, and solver results
+are not bundled or reproduced by this module.
 """
 
 # ============================================================

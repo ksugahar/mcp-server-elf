@@ -10,14 +10,15 @@
       "validation": "passed",
       "validated_on": "2026-06-24",
       "checks": [
-        "solver_returncode_zero",
-        "mag_output_created",
-        "no_error_markers",
+        "input_syntax_lint_passed",
+        "mesh_input_readable",
+        "forbidden_marker_scan_passed",
         "mai_meg_pair_present",
         "ngsolve_proxy_energy_positive"
       ],
       "validation_level": "ngsolve_proxy_energy",
-      "validation_scope": "ELF/MAGIC run completed and an independent NGSolve proxy-field energy sanity check was positive."
+      "validation_scope": "Public input-contract checks passed and an independent open proxy-field energy sanity check was positive.",
+      "content_sha256": "sha256:6af162d219a8b6fe2ca12fbaa315194e203d39bbfa701dd9e455bdbb46f34c35"
     },
     "application/accelerator_magnet_10": {
       "cases": 10,
@@ -25,14 +26,15 @@
       "validation": "passed",
       "validated_on": "2026-06-24",
       "checks": [
-        "solver_returncode_zero",
-        "mag_output_created",
-        "no_error_markers",
+        "input_syntax_lint_passed",
+        "mesh_input_readable",
+        "forbidden_marker_scan_passed",
         "mai_meg_pair_present",
         "ngsolve_proxy_energy_positive"
       ],
       "validation_level": "ngsolve_proxy_energy",
-      "validation_scope": "ELF/MAGIC run completed and an independent NGSolve proxy-field energy sanity check was positive."
+      "validation_scope": "Public input-contract checks passed and an independent open proxy-field energy sanity check was positive.",
+      "content_sha256": "sha256:eb7f346ac6979e2e06ed36923da3172748a5625557242b8fcc609c08da689d84"
     },
     "application/actuator_plunger_10": {
       "cases": 10,
@@ -40,14 +42,15 @@
       "validation": "passed",
       "validated_on": "2026-06-24",
       "checks": [
-        "solver_returncode_zero",
-        "mag_output_created",
-        "no_error_markers",
+        "input_syntax_lint_passed",
+        "mesh_input_readable",
+        "forbidden_marker_scan_passed",
         "mai_meg_pair_present",
         "ngsolve_proxy_energy_positive"
       ],
       "validation_level": "ngsolve_proxy_energy",
-      "validation_scope": "ELF/MAGIC run completed and an independent NGSolve proxy-field energy sanity check was positive."
+      "validation_scope": "Public input-contract checks passed and an independent open proxy-field energy sanity check was positive.",
+      "content_sha256": "sha256:f66c833ec364b64e4ddc09de91d076ec1692840670ac55b3b41c04592679ed2a"
     },
     "application/eddy_current_brake_10": {
       "cases": 10,
@@ -55,14 +58,15 @@
       "validation": "passed",
       "validated_on": "2026-06-24",
       "checks": [
-        "solver_returncode_zero",
-        "mag_output_created",
-        "no_error_markers",
+        "input_syntax_lint_passed",
+        "mesh_input_readable",
+        "forbidden_marker_scan_passed",
         "mai_meg_pair_present",
         "ngsolve_proxy_energy_positive"
       ],
       "validation_level": "ngsolve_proxy_energy",
-      "validation_scope": "ELF/MAGIC run completed and an independent NGSolve proxy-field energy sanity check was positive."
+      "validation_scope": "Public input-contract checks passed and an independent open proxy-field energy sanity check was positive.",
+      "content_sha256": "sha256:a8a1a56a37a688343c3cc779b49bdd0f6a26eb71d37397a5cbec7418d63b7412"
     },
     "application/electromagnetic_clutch_10": {
       "cases": 10,
@@ -70,14 +74,15 @@
       "validation": "passed",
       "validated_on": "2026-06-24",
       "checks": [
-        "solver_returncode_zero",
-        "mag_output_created",
-        "no_error_markers",
+        "input_syntax_lint_passed",
+        "mesh_input_readable",
+        "forbidden_marker_scan_passed",
         "mai_meg_pair_present",
         "ngsolve_proxy_energy_positive"
       ],
       "validation_level": "ngsolve_proxy_energy",
-      "validation_scope": "ELF/MAGIC run completed and an independent NGSolve proxy-field energy sanity check was positive."
+      "validation_scope": "Public input-contract checks passed and an independent open proxy-field energy sanity check was positive.",
+      "content_sha256": "sha256:e8a20ef851b6eb7933b28d1d42d06a3967317c8f1ad302aa0ced4d57d550ef32"
     },
     "application/emdlab_1ph_transformer_static_10": {
       "cases": 10,
@@ -85,14 +90,15 @@
       "validation": "passed",
       "validated_on": "2026-06-24",
       "checks": [
-        "solver_returncode_zero",
-        "mag_output_created",
-        "no_error_markers",
+        "input_syntax_lint_passed",
+        "mesh_input_readable",
+        "forbidden_marker_scan_passed",
         "mai_meg_pair_present",
         "ngsolve_proxy_energy_positive"
       ],
       "validation_level": "ngsolve_proxy_energy",
-      "validation_scope": "ELF/MAGIC run completed and an independent NGSolve proxy-field energy sanity check was positive."
+      "validation_scope": "Public input-contract checks passed and an independent open proxy-field energy sanity check was positive.",
+      "content_sha256": "sha256:3d5303b17fe036022e303c310b22c7a0661a9ef784cacc1985d45a2bf267b268"
     },
     "application/emdlab_benchmark_ccore_10": {
       "cases": 10,
@@ -100,14 +106,15 @@
       "validation": "passed",
       "validated_on": "2026-06-24",
       "checks": [
-        "solver_returncode_zero",
-        "mag_output_created",
-        "no_error_markers",
+        "input_syntax_lint_passed",
+        "mesh_input_readable",
+        "forbidden_marker_scan_passed",
         "mai_meg_pair_present",
         "ngsolve_proxy_energy_positive"
       ],
       "validation_level": "ngsolve_proxy_energy",
-      "validation_scope": "ELF/MAGIC run completed and an independent NGSolve proxy-field energy sanity check was positive."
+      "validation_scope": "Public input-contract checks passed and an independent open proxy-field energy sanity check was positive.",
+      "content_sha256": "sha256:b5f2e9d4201ae2a0826a77287196486b916533e3a7419426bb72e6c9d9be28e9"
     },
     "application/emdlab_benchmark_geometry_10": {
       "cases": 10,
@@ -115,14 +122,15 @@
       "validation": "passed",
       "validated_on": "2026-06-24",
       "checks": [
-        "solver_returncode_zero",
-        "mag_output_created",
-        "no_error_markers",
+        "input_syntax_lint_passed",
+        "mesh_input_readable",
+        "forbidden_marker_scan_passed",
         "mai_meg_pair_present",
         "ngsolve_proxy_energy_positive"
       ],
       "validation_level": "ngsolve_proxy_energy",
-      "validation_scope": "ELF/MAGIC run completed and an independent NGSolve proxy-field energy sanity check was positive."
+      "validation_scope": "Public input-contract checks passed and an independent open proxy-field energy sanity check was positive.",
+      "content_sha256": "sha256:7b810e170fd11b59c301f586af02f988d29fae5c125eb04430612ee6afd69dbe"
     },
     "application/emdlab_benchmark_magnet_10": {
       "cases": 10,
@@ -130,14 +138,15 @@
       "validation": "passed",
       "validated_on": "2026-06-24",
       "checks": [
-        "solver_returncode_zero",
-        "mag_output_created",
-        "no_error_markers",
+        "input_syntax_lint_passed",
+        "mesh_input_readable",
+        "forbidden_marker_scan_passed",
         "mai_meg_pair_present",
         "ngsolve_proxy_energy_positive"
       ],
       "validation_level": "ngsolve_proxy_energy",
-      "validation_scope": "ELF/MAGIC run completed and an independent NGSolve proxy-field energy sanity check was positive."
+      "validation_scope": "Public input-contract checks passed and an independent open proxy-field energy sanity check was positive.",
+      "content_sha256": "sha256:46955b397db43c2786050469739709ea35658784b5f3ac33b51d2b68913faae9"
     },
     "application/hall_sensor_fixture_10": {
       "cases": 10,
@@ -145,14 +154,15 @@
       "validation": "passed",
       "validated_on": "2026-06-24",
       "checks": [
-        "solver_returncode_zero",
-        "mag_output_created",
-        "no_error_markers",
+        "input_syntax_lint_passed",
+        "mesh_input_readable",
+        "forbidden_marker_scan_passed",
         "mai_meg_pair_present",
         "ngsolve_proxy_energy_positive"
       ],
       "validation_level": "ngsolve_proxy_energy",
-      "validation_scope": "ELF/MAGIC run completed and an independent NGSolve proxy-field energy sanity check was positive."
+      "validation_scope": "Public input-contract checks passed and an independent open proxy-field energy sanity check was positive.",
+      "content_sha256": "sha256:75c4e941258b7e0518695d1466ab8465c95b8d017f8be87a19e79c25edbfab14"
     },
     "application/ih_induction_heating_10": {
       "cases": 10,
@@ -160,14 +170,15 @@
       "validation": "passed",
       "validated_on": "2026-06-24",
       "checks": [
-        "solver_returncode_zero",
-        "mag_output_created",
-        "no_error_markers",
+        "input_syntax_lint_passed",
+        "mesh_input_readable",
+        "forbidden_marker_scan_passed",
         "mai_meg_pair_present",
         "ngsolve_proxy_energy_positive"
       ],
       "validation_level": "ngsolve_proxy_energy",
-      "validation_scope": "ELF/MAGIC run completed and an independent NGSolve proxy-field energy sanity check was positive."
+      "validation_scope": "Public input-contract checks passed and an independent open proxy-field energy sanity check was positive.",
+      "content_sha256": "sha256:5152f9f407a1c3611aadf99ed5175714c86c00d9e0a5fa7fb06e70b01446e56f"
     },
     "application/ih_susceptor_ring_10": {
       "cases": 10,
@@ -175,14 +186,15 @@
       "validation": "passed",
       "validated_on": "2026-06-24",
       "checks": [
-        "solver_returncode_zero",
-        "mag_output_created",
-        "no_error_markers",
+        "input_syntax_lint_passed",
+        "mesh_input_readable",
+        "forbidden_marker_scan_passed",
         "mai_meg_pair_present",
         "ngsolve_proxy_energy_positive"
       ],
       "validation_level": "ngsolve_proxy_energy",
-      "validation_scope": "ELF/MAGIC run completed and an independent NGSolve proxy-field energy sanity check was positive."
+      "validation_scope": "Public input-contract checks passed and an independent open proxy-field energy sanity check was positive.",
+      "content_sha256": "sha256:5c983c793a2d26838f5273708ba4388799251872a0bed6061fe9f073021df2a0"
     },
     "application/maglev_bearing_10": {
       "cases": 10,
@@ -190,14 +202,15 @@
       "validation": "passed",
       "validated_on": "2026-06-24",
       "checks": [
-        "solver_returncode_zero",
-        "mag_output_created",
-        "no_error_markers",
+        "input_syntax_lint_passed",
+        "mesh_input_readable",
+        "forbidden_marker_scan_passed",
         "mai_meg_pair_present",
         "ngsolve_proxy_energy_positive"
       ],
       "validation_level": "ngsolve_proxy_energy",
-      "validation_scope": "ELF/MAGIC run completed and an independent NGSolve proxy-field energy sanity check was positive."
+      "validation_scope": "Public input-contract checks passed and an independent open proxy-field energy sanity check was positive.",
+      "content_sha256": "sha256:f6ac1cdadb859fac68d3a12c3904920e039162439a78899b146257031b059497"
     },
     "application/magnetic_gear_10": {
       "cases": 10,
@@ -205,14 +218,15 @@
       "validation": "passed",
       "validated_on": "2026-06-24",
       "checks": [
-        "solver_returncode_zero",
-        "mag_output_created",
-        "no_error_markers",
+        "input_syntax_lint_passed",
+        "mesh_input_readable",
+        "forbidden_marker_scan_passed",
         "mai_meg_pair_present",
         "ngsolve_proxy_energy_positive"
       ],
       "validation_level": "ngsolve_proxy_energy",
-      "validation_scope": "ELF/MAGIC run completed and an independent NGSolve proxy-field energy sanity check was positive."
+      "validation_scope": "Public input-contract checks passed and an independent open proxy-field energy sanity check was positive.",
+      "content_sha256": "sha256:e11b0f04dddeb5d900a2264ae7cd7a6ef9673ba1314f4fa0c9cd295260247eab"
     },
     "application/magnetic_separator_10": {
       "cases": 10,
@@ -220,14 +234,15 @@
       "validation": "passed",
       "validated_on": "2026-06-24",
       "checks": [
-        "solver_returncode_zero",
-        "mag_output_created",
-        "no_error_markers",
+        "input_syntax_lint_passed",
+        "mesh_input_readable",
+        "forbidden_marker_scan_passed",
         "mai_meg_pair_present",
         "ngsolve_proxy_energy_positive"
       ],
       "validation_level": "ngsolve_proxy_energy",
-      "validation_scope": "ELF/MAGIC run completed and an independent NGSolve proxy-field energy sanity check was positive."
+      "validation_scope": "Public input-contract checks passed and an independent open proxy-field energy sanity check was positive.",
+      "content_sha256": "sha256:bba80b58af73a9c1b5c8e76780707505ac3be9a97554f60852923961476b1149"
     },
     "application/motor/axial_flux_pm_10": {
       "cases": 10,
@@ -235,14 +250,15 @@
       "validation": "passed",
       "validated_on": "2026-06-24",
       "checks": [
-        "solver_returncode_zero",
-        "mag_output_created",
-        "no_error_markers",
+        "input_syntax_lint_passed",
+        "mesh_input_readable",
+        "forbidden_marker_scan_passed",
         "mai_meg_pair_present",
         "ngsolve_proxy_energy_positive"
       ],
       "validation_level": "ngsolve_proxy_energy",
-      "validation_scope": "ELF/MAGIC run completed and an independent NGSolve proxy-field energy sanity check was positive."
+      "validation_scope": "Public input-contract checks passed and an independent open proxy-field energy sanity check was positive.",
+      "content_sha256": "sha256:7559bf52171dadf40b06922c8534dcc187b01741239daf71698e8ee90c3326d4"
     },
     "application/motor/emdlab_afpm_linearized_10": {
       "cases": 10,
@@ -250,14 +266,15 @@
       "validation": "passed",
       "validated_on": "2026-06-24",
       "checks": [
-        "solver_returncode_zero",
-        "mag_output_created",
-        "no_error_markers",
+        "input_syntax_lint_passed",
+        "mesh_input_readable",
+        "forbidden_marker_scan_passed",
         "mai_meg_pair_present",
         "ngsolve_proxy_energy_positive"
       ],
       "validation_level": "ngsolve_proxy_energy",
-      "validation_scope": "ELF/MAGIC run completed and an independent NGSolve proxy-field energy sanity check was positive."
+      "validation_scope": "Public input-contract checks passed and an independent open proxy-field energy sanity check was positive.",
+      "content_sha256": "sha256:2ec50d9dc43020748861ea2606200dc3ddfebf456d0ffd954e38582f6a4380cb"
     },
     "application/motor/emdlab_bldc_outer_rotor_10": {
       "cases": 10,
@@ -265,14 +282,15 @@
       "validation": "passed",
       "validated_on": "2026-06-24",
       "checks": [
-        "solver_returncode_zero",
-        "mag_output_created",
-        "no_error_markers",
+        "input_syntax_lint_passed",
+        "mesh_input_readable",
+        "forbidden_marker_scan_passed",
         "mai_meg_pair_present",
         "ngsolve_proxy_energy_positive"
       ],
       "validation_level": "ngsolve_proxy_energy",
-      "validation_scope": "ELF/MAGIC run completed and an independent NGSolve proxy-field energy sanity check was positive."
+      "validation_scope": "Public input-contract checks passed and an independent open proxy-field energy sanity check was positive.",
+      "content_sha256": "sha256:5c03bd10ea3b06270aba443f9e36284b673f1f1a8b9480c033c050dc9390f319"
     },
     "application/motor/emdlab_bldc_spm_10": {
       "cases": 10,
@@ -280,14 +298,15 @@
       "validation": "passed",
       "validated_on": "2026-06-24",
       "checks": [
-        "solver_returncode_zero",
-        "mag_output_created",
-        "no_error_markers",
+        "input_syntax_lint_passed",
+        "mesh_input_readable",
+        "forbidden_marker_scan_passed",
         "mai_meg_pair_present",
         "ngsolve_proxy_energy_positive"
       ],
       "validation_level": "ngsolve_proxy_energy",
-      "validation_scope": "ELF/MAGIC run completed and an independent NGSolve proxy-field energy sanity check was positive."
+      "validation_scope": "Public input-contract checks passed and an independent open proxy-field energy sanity check was positive.",
+      "content_sha256": "sha256:fc80dd2b23fef87226d279b80a390bf080ad95ba4d011aa6804352af23293279"
     },
     "application/motor/emdlab_induction_bar_10": {
       "cases": 10,
@@ -295,14 +314,15 @@
       "validation": "passed",
       "validated_on": "2026-06-24",
       "checks": [
-        "solver_returncode_zero",
-        "mag_output_created",
-        "no_error_markers",
+        "input_syntax_lint_passed",
+        "mesh_input_readable",
+        "forbidden_marker_scan_passed",
         "mai_meg_pair_present",
         "ngsolve_proxy_energy_positive"
       ],
       "validation_level": "ngsolve_proxy_energy",
-      "validation_scope": "ELF/MAGIC run completed and an independent NGSolve proxy-field energy sanity check was positive."
+      "validation_scope": "Public input-contract checks passed and an independent open proxy-field energy sanity check was positive.",
+      "content_sha256": "sha256:2f2822044462ddd5d47864d457a2616e7af9f18d483fccb6498be74b2228aa9d"
     },
     "application/motor/emdlab_induction_fraction_10": {
       "cases": 10,
@@ -310,14 +330,15 @@
       "validation": "passed",
       "validated_on": "2026-06-24",
       "checks": [
-        "solver_returncode_zero",
-        "mag_output_created",
-        "no_error_markers",
+        "input_syntax_lint_passed",
+        "mesh_input_readable",
+        "forbidden_marker_scan_passed",
         "mai_meg_pair_present",
         "ngsolve_proxy_energy_positive"
       ],
       "validation_level": "ngsolve_proxy_energy",
-      "validation_scope": "ELF/MAGIC run completed and an independent NGSolve proxy-field energy sanity check was positive."
+      "validation_scope": "Public input-contract checks passed and an independent open proxy-field energy sanity check was positive.",
+      "content_sha256": "sha256:af72378c7963c26b2875f2d7dbbd1287b04ca811c932b8fe558e757dc3236057"
     },
     "application/motor/emdlab_ipm_hairpin_10": {
       "cases": 10,
@@ -325,14 +346,15 @@
       "validation": "passed",
       "validated_on": "2026-06-24",
       "checks": [
-        "solver_returncode_zero",
-        "mag_output_created",
-        "no_error_markers",
+        "input_syntax_lint_passed",
+        "mesh_input_readable",
+        "forbidden_marker_scan_passed",
         "mai_meg_pair_present",
         "ngsolve_proxy_energy_positive"
       ],
       "validation_level": "ngsolve_proxy_energy",
-      "validation_scope": "ELF/MAGIC run completed and an independent NGSolve proxy-field energy sanity check was positive."
+      "validation_scope": "Public input-contract checks passed and an independent open proxy-field energy sanity check was positive.",
+      "content_sha256": "sha256:994918026cd9d29af72e4519eef4871bcaa8ef69eaa61d1d9bc930b54545fedd"
     },
     "application/motor/emdlab_ipm_hairpin_fraction_10": {
       "cases": 10,
@@ -340,14 +362,15 @@
       "validation": "passed",
       "validated_on": "2026-06-24",
       "checks": [
-        "solver_returncode_zero",
-        "mag_output_created",
-        "no_error_markers",
+        "input_syntax_lint_passed",
+        "mesh_input_readable",
+        "forbidden_marker_scan_passed",
         "mai_meg_pair_present",
         "ngsolve_proxy_energy_positive"
       ],
       "validation_level": "ngsolve_proxy_energy",
-      "validation_scope": "ELF/MAGIC run completed and an independent NGSolve proxy-field energy sanity check was positive."
+      "validation_scope": "Public input-contract checks passed and an independent open proxy-field energy sanity check was positive.",
+      "content_sha256": "sha256:4a370e082a116d8c6b7c826cfa0f32baa46e2b938944b6b4cdbca36bc29db345"
     },
     "application/motor/emdlab_spmsm_10": {
       "cases": 10,
@@ -355,14 +378,15 @@
       "validation": "passed",
       "validated_on": "2026-06-24",
       "checks": [
-        "solver_returncode_zero",
-        "mag_output_created",
-        "no_error_markers",
+        "input_syntax_lint_passed",
+        "mesh_input_readable",
+        "forbidden_marker_scan_passed",
         "mai_meg_pair_present",
         "ngsolve_proxy_energy_positive"
       ],
       "validation_level": "ngsolve_proxy_energy",
-      "validation_scope": "ELF/MAGIC run completed and an independent NGSolve proxy-field energy sanity check was positive."
+      "validation_scope": "Public input-contract checks passed and an independent open proxy-field energy sanity check was positive.",
+      "content_sha256": "sha256:7f45ef029f071c8160853e79dcf04b62258a1a3469fa297d237d668470786a7b"
     },
     "application/motor/emdlab_spmsm_fraction_10": {
       "cases": 10,
@@ -370,14 +394,15 @@
       "validation": "passed",
       "validated_on": "2026-06-24",
       "checks": [
-        "solver_returncode_zero",
-        "mag_output_created",
-        "no_error_markers",
+        "input_syntax_lint_passed",
+        "mesh_input_readable",
+        "forbidden_marker_scan_passed",
         "mai_meg_pair_present",
         "ngsolve_proxy_energy_positive"
       ],
       "validation_level": "ngsolve_proxy_energy",
-      "validation_scope": "ELF/MAGIC run completed and an independent NGSolve proxy-field energy sanity check was positive."
+      "validation_scope": "Public input-contract checks passed and an independent open proxy-field energy sanity check was positive.",
+      "content_sha256": "sha256:4892d9c3136d8ec950bc2dbb1aae904748e5025094b4ef5f6665a44504ad8780"
     },
     "application/motor/emdlab_spmsm_static_torque_10": {
       "cases": 10,
@@ -385,14 +410,15 @@
       "validation": "passed",
       "validated_on": "2026-06-24",
       "checks": [
-        "solver_returncode_zero",
-        "mag_output_created",
-        "no_error_markers",
+        "input_syntax_lint_passed",
+        "mesh_input_readable",
+        "forbidden_marker_scan_passed",
         "mai_meg_pair_present",
         "ngsolve_proxy_energy_positive"
       ],
       "validation_level": "ngsolve_proxy_energy",
-      "validation_scope": "ELF/MAGIC run completed and an independent NGSolve proxy-field energy sanity check was positive."
+      "validation_scope": "Public input-contract checks passed and an independent open proxy-field energy sanity check was positive.",
+      "content_sha256": "sha256:6fe0fec5a5452fe18c54a1b7090bb04ae3a2785577f6e5c46748aab880f68855"
     },
     "application/motor/emdlab_srm1216_outer_rotor_10": {
       "cases": 10,
@@ -400,14 +426,15 @@
       "validation": "passed",
       "validated_on": "2026-06-24",
       "checks": [
-        "solver_returncode_zero",
-        "mag_output_created",
-        "no_error_markers",
+        "input_syntax_lint_passed",
+        "mesh_input_readable",
+        "forbidden_marker_scan_passed",
         "mai_meg_pair_present",
         "ngsolve_proxy_energy_positive"
       ],
       "validation_level": "ngsolve_proxy_energy",
-      "validation_scope": "ELF/MAGIC run completed and an independent NGSolve proxy-field energy sanity check was positive."
+      "validation_scope": "Public input-contract checks passed and an independent open proxy-field energy sanity check was positive.",
+      "content_sha256": "sha256:7d5224b233c8e13c700395afe0297be5daa22e63187f6c92fc103b0fbb584cd9"
     },
     "application/motor/emdlab_srm128_10": {
       "cases": 10,
@@ -415,14 +442,15 @@
       "validation": "passed",
       "validated_on": "2026-06-24",
       "checks": [
-        "solver_returncode_zero",
-        "mag_output_created",
-        "no_error_markers",
+        "input_syntax_lint_passed",
+        "mesh_input_readable",
+        "forbidden_marker_scan_passed",
         "mai_meg_pair_present",
         "ngsolve_proxy_energy_positive"
       ],
       "validation_level": "ngsolve_proxy_energy",
-      "validation_scope": "ELF/MAGIC run completed and an independent NGSolve proxy-field energy sanity check was positive."
+      "validation_scope": "Public input-contract checks passed and an independent open proxy-field energy sanity check was positive.",
+      "content_sha256": "sha256:2d4119d470cd1f1697c1f8ef209367931b19fdd1dfd30cc8722750c382a111de"
     },
     "application/motor/emdlab_srm64_10": {
       "cases": 10,
@@ -430,14 +458,15 @@
       "validation": "passed",
       "validated_on": "2026-06-24",
       "checks": [
-        "solver_returncode_zero",
-        "mag_output_created",
-        "no_error_markers",
+        "input_syntax_lint_passed",
+        "mesh_input_readable",
+        "forbidden_marker_scan_passed",
         "mai_meg_pair_present",
         "ngsolve_proxy_energy_positive"
       ],
       "validation_level": "ngsolve_proxy_energy",
-      "validation_scope": "ELF/MAGIC run completed and an independent NGSolve proxy-field energy sanity check was positive."
+      "validation_scope": "Public input-contract checks passed and an independent open proxy-field energy sanity check was positive.",
+      "content_sha256": "sha256:0cd628af21b0745cdca84d5d92a9163eaceb254d0ab7707e658401a31ce8ea0a"
     },
     "application/motor/emdlab_srm86_10": {
       "cases": 10,
@@ -445,14 +474,15 @@
       "validation": "passed",
       "validated_on": "2026-06-24",
       "checks": [
-        "solver_returncode_zero",
-        "mag_output_created",
-        "no_error_markers",
+        "input_syntax_lint_passed",
+        "mesh_input_readable",
+        "forbidden_marker_scan_passed",
         "mai_meg_pair_present",
         "ngsolve_proxy_energy_positive"
       ],
       "validation_level": "ngsolve_proxy_energy",
-      "validation_scope": "ELF/MAGIC run completed and an independent NGSolve proxy-field energy sanity check was positive."
+      "validation_scope": "Public input-contract checks passed and an independent open proxy-field energy sanity check was positive.",
+      "content_sha256": "sha256:30be12da582a0adeb46aeb1e24acbd365dfdd2255610d3ef3c439381e265c3b5"
     },
     "application/motor/emdlab_srm86_fraction_10": {
       "cases": 10,
@@ -460,14 +490,15 @@
       "validation": "passed",
       "validated_on": "2026-06-24",
       "checks": [
-        "solver_returncode_zero",
-        "mag_output_created",
-        "no_error_markers",
+        "input_syntax_lint_passed",
+        "mesh_input_readable",
+        "forbidden_marker_scan_passed",
         "mai_meg_pair_present",
         "ngsolve_proxy_energy_positive"
       ],
       "validation_level": "ngsolve_proxy_energy",
-      "validation_scope": "ELF/MAGIC run completed and an independent NGSolve proxy-field energy sanity check was positive."
+      "validation_scope": "Public input-contract checks passed and an independent open proxy-field energy sanity check was positive.",
+      "content_sha256": "sha256:b68092afa2316d96b8feeb914df5b616c745381b776273957d838c5be8c3e94b"
     },
     "application/motor/emdlab_srm86_static_torque_10": {
       "cases": 10,
@@ -475,14 +506,15 @@
       "validation": "passed",
       "validated_on": "2026-06-24",
       "checks": [
-        "solver_returncode_zero",
-        "mag_output_created",
-        "no_error_markers",
+        "input_syntax_lint_passed",
+        "mesh_input_readable",
+        "forbidden_marker_scan_passed",
         "mai_meg_pair_present",
         "ngsolve_proxy_energy_positive"
       ],
       "validation_level": "ngsolve_proxy_energy",
-      "validation_scope": "ELF/MAGIC run completed and an independent NGSolve proxy-field energy sanity check was positive."
+      "validation_scope": "Public input-contract checks passed and an independent open proxy-field energy sanity check was positive.",
+      "content_sha256": "sha256:f84ffb1b701d86e9399780d22bf57c765bd67a1dc1d2bdcac695befb4dca43aa"
     },
     "application/motor/emdlab_srm_pole_variants_10": {
       "cases": 10,
@@ -490,14 +522,15 @@
       "validation": "passed",
       "validated_on": "2026-06-24",
       "checks": [
-        "solver_returncode_zero",
-        "mag_output_created",
-        "no_error_markers",
+        "input_syntax_lint_passed",
+        "mesh_input_readable",
+        "forbidden_marker_scan_passed",
         "mai_meg_pair_present",
         "ngsolve_proxy_energy_positive"
       ],
       "validation_level": "ngsolve_proxy_energy",
-      "validation_scope": "ELF/MAGIC run completed and an independent NGSolve proxy-field energy sanity check was positive."
+      "validation_scope": "Public input-contract checks passed and an independent open proxy-field energy sanity check was positive.",
+      "content_sha256": "sha256:caed69480484917083d69e4f622465ffeed8ab61d95bbc1561eb71a4eea64b64"
     },
     "application/motor/emdlab_synrm_flux_barrier_10": {
       "cases": 10,
@@ -505,14 +538,15 @@
       "validation": "passed",
       "validated_on": "2026-06-24",
       "checks": [
-        "solver_returncode_zero",
-        "mag_output_created",
-        "no_error_markers",
+        "input_syntax_lint_passed",
+        "mesh_input_readable",
+        "forbidden_marker_scan_passed",
         "mai_meg_pair_present",
         "ngsolve_proxy_energy_positive"
       ],
       "validation_level": "ngsolve_proxy_energy",
-      "validation_scope": "ELF/MAGIC run completed and an independent NGSolve proxy-field energy sanity check was positive."
+      "validation_scope": "Public input-contract checks passed and an independent open proxy-field energy sanity check was positive.",
+      "content_sha256": "sha256:19365e63cd5bbd996066f579b6a28effc0945efaf73a88a87c20a3b94af56055"
     },
     "application/motor/emdlab_synrm_fraction_static_torque_10": {
       "cases": 10,
@@ -520,14 +554,15 @@
       "validation": "passed",
       "validated_on": "2026-06-24",
       "checks": [
-        "solver_returncode_zero",
-        "mag_output_created",
-        "no_error_markers",
+        "input_syntax_lint_passed",
+        "mesh_input_readable",
+        "forbidden_marker_scan_passed",
         "mai_meg_pair_present",
         "ngsolve_proxy_energy_positive"
       ],
       "validation_level": "ngsolve_proxy_energy",
-      "validation_scope": "ELF/MAGIC run completed and an independent NGSolve proxy-field energy sanity check was positive."
+      "validation_scope": "Public input-contract checks passed and an independent open proxy-field energy sanity check was positive.",
+      "content_sha256": "sha256:91e7eae5215cbf41b28ac3a0885597d4d32fff41ed078e3731096a387a6c8992"
     },
     "application/motor/emdlab_synrm_static_torque_10": {
       "cases": 10,
@@ -535,14 +570,15 @@
       "validation": "passed",
       "validated_on": "2026-06-24",
       "checks": [
-        "solver_returncode_zero",
-        "mag_output_created",
-        "no_error_markers",
+        "input_syntax_lint_passed",
+        "mesh_input_readable",
+        "forbidden_marker_scan_passed",
         "mai_meg_pair_present",
         "ngsolve_proxy_energy_positive"
       ],
       "validation_level": "ngsolve_proxy_energy",
-      "validation_scope": "ELF/MAGIC run completed and an independent NGSolve proxy-field energy sanity check was positive."
+      "validation_scope": "Public input-contract checks passed and an independent open proxy-field energy sanity check was positive.",
+      "content_sha256": "sha256:1be0cd279200d603f16e611b47c19da9d8d0b3458480ab71e79600428f7476fd"
     },
     "application/motor/hysteresis_motor_10": {
       "cases": 10,
@@ -550,14 +586,15 @@
       "validation": "passed",
       "validated_on": "2026-06-24",
       "checks": [
-        "solver_returncode_zero",
-        "mag_output_created",
-        "no_error_markers",
+        "input_syntax_lint_passed",
+        "mesh_input_readable",
+        "forbidden_marker_scan_passed",
         "mai_meg_pair_present",
         "ngsolve_proxy_energy_positive"
       ],
       "validation_level": "ngsolve_proxy_energy",
-      "validation_scope": "ELF/MAGIC run completed and an independent NGSolve proxy-field energy sanity check was positive."
+      "validation_scope": "Public input-contract checks passed and an independent open proxy-field energy sanity check was positive.",
+      "content_sha256": "sha256:b99bc6d7e6efbffbb8f8f031b5364fb6b2dc0a7343c06bb272996d66965b0c14"
     },
     "application/motor/induction_cage_10": {
       "cases": 10,
@@ -565,14 +602,15 @@
       "validation": "passed",
       "validated_on": "2026-06-24",
       "checks": [
-        "solver_returncode_zero",
-        "mag_output_created",
-        "no_error_markers",
+        "input_syntax_lint_passed",
+        "mesh_input_readable",
+        "forbidden_marker_scan_passed",
         "mai_meg_pair_present",
         "ngsolve_proxy_energy_positive"
       ],
       "validation_level": "ngsolve_proxy_energy",
-      "validation_scope": "ELF/MAGIC run completed and an independent NGSolve proxy-field energy sanity check was positive."
+      "validation_scope": "Public input-contract checks passed and an independent open proxy-field energy sanity check was positive.",
+      "content_sha256": "sha256:3571f1090e1cf8b61d7272b776a60ec4d61b7a7c776c646f95e79a1b96b8c7ad"
     },
     "application/motor/ipm_interior_pm_10": {
       "cases": 10,
@@ -580,14 +618,15 @@
       "validation": "passed",
       "validated_on": "2026-06-24",
       "checks": [
-        "solver_returncode_zero",
-        "mag_output_created",
-        "no_error_markers",
+        "input_syntax_lint_passed",
+        "mesh_input_readable",
+        "forbidden_marker_scan_passed",
         "mai_meg_pair_present",
         "ngsolve_proxy_energy_positive"
       ],
       "validation_level": "ngsolve_proxy_energy",
-      "validation_scope": "ELF/MAGIC run completed and an independent NGSolve proxy-field energy sanity check was positive."
+      "validation_scope": "Public input-contract checks passed and an independent open proxy-field energy sanity check was positive.",
+      "content_sha256": "sha256:7e8da56df8d2c04fe3a9bbad037a95df4ff960e6c94c169990b6001e0910d882"
     },
     "application/motor/linear_pm_motor_10": {
       "cases": 10,
@@ -595,14 +634,15 @@
       "validation": "passed",
       "validated_on": "2026-06-24",
       "checks": [
-        "solver_returncode_zero",
-        "mag_output_created",
-        "no_error_markers",
+        "input_syntax_lint_passed",
+        "mesh_input_readable",
+        "forbidden_marker_scan_passed",
         "mai_meg_pair_present",
         "ngsolve_proxy_energy_positive"
       ],
       "validation_level": "ngsolve_proxy_energy",
-      "validation_scope": "ELF/MAGIC run completed and an independent NGSolve proxy-field energy sanity check was positive."
+      "validation_scope": "Public input-contract checks passed and an independent open proxy-field energy sanity check was positive.",
+      "content_sha256": "sha256:ded3524ee01ed4191d627be1fe78a22f300e8cc888f7675af32db24034b8abd3"
     },
     "application/motor/pm_cosine_pickup_72": {
       "cases": 72,
@@ -610,14 +650,15 @@
       "validation": "passed",
       "validated_on": "2026-06-24",
       "checks": [
-        "solver_returncode_zero",
-        "mag_output_created",
-        "no_error_markers",
+        "input_syntax_lint_passed",
+        "mesh_input_readable",
+        "forbidden_marker_scan_passed",
         "mai_meg_pair_present",
         "ngsolve_proxy_energy_positive"
       ],
       "validation_level": "ngsolve_proxy_energy",
-      "validation_scope": "ELF/MAGIC run completed and an independent NGSolve proxy-field energy sanity check was positive."
+      "validation_scope": "Public input-contract checks passed and an independent open proxy-field energy sanity check was positive.",
+      "content_sha256": "sha256:e2a44a0d3766396bfca30ca5619430627cf9617f5460d128919fef64aa50fccc"
     },
     "application/motor/pm_square_2pole_pickup_100": {
       "cases": 100,
@@ -625,14 +666,15 @@
       "validation": "passed",
       "validated_on": "2026-06-24",
       "checks": [
-        "solver_returncode_zero",
-        "mag_output_created",
-        "no_error_markers",
+        "input_syntax_lint_passed",
+        "mesh_input_readable",
+        "forbidden_marker_scan_passed",
         "mai_meg_pair_present",
         "ngsolve_proxy_energy_positive"
       ],
       "validation_level": "ngsolve_proxy_energy",
-      "validation_scope": "ELF/MAGIC run completed and an independent NGSolve proxy-field energy sanity check was positive."
+      "validation_scope": "Public input-contract checks passed and an independent open proxy-field energy sanity check was positive.",
+      "content_sha256": "sha256:2f588aa4faa61b1dde4e5044fe41fa2bb32e312178c6f65188d60dde28d43596"
     },
     "application/motor/pm_square_4pole_pickup_60": {
       "cases": 60,
@@ -640,14 +682,15 @@
       "validation": "passed",
       "validated_on": "2026-06-24",
       "checks": [
-        "solver_returncode_zero",
-        "mag_output_created",
-        "no_error_markers",
+        "input_syntax_lint_passed",
+        "mesh_input_readable",
+        "forbidden_marker_scan_passed",
         "mai_meg_pair_present",
         "ngsolve_proxy_energy_positive"
       ],
       "validation_level": "ngsolve_proxy_energy",
-      "validation_scope": "ELF/MAGIC run completed and an independent NGSolve proxy-field energy sanity check was positive."
+      "validation_scope": "Public input-contract checks passed and an independent open proxy-field energy sanity check was positive.",
+      "content_sha256": "sha256:28cae35f625890257da9e99aca04207345742e0d68a8ffd6e7198337ff399037"
     },
     "application/motor/pm_square_6pole_pickup_72": {
       "cases": 72,
@@ -655,14 +698,15 @@
       "validation": "passed",
       "validated_on": "2026-06-24",
       "checks": [
-        "solver_returncode_zero",
-        "mag_output_created",
-        "no_error_markers",
+        "input_syntax_lint_passed",
+        "mesh_input_readable",
+        "forbidden_marker_scan_passed",
         "mai_meg_pair_present",
         "ngsolve_proxy_energy_positive"
       ],
       "validation_level": "ngsolve_proxy_energy",
-      "validation_scope": "ELF/MAGIC run completed and an independent NGSolve proxy-field energy sanity check was positive."
+      "validation_scope": "Public input-contract checks passed and an independent open proxy-field energy sanity check was positive.",
+      "content_sha256": "sha256:8696fea7901809e03cfc997a5ff613518c88076c04f768c67a806fb58737dc52"
     },
     "application/motor/pm_square_8pole_pickup_28": {
       "cases": 28,
@@ -670,14 +714,15 @@
       "validation": "passed",
       "validated_on": "2026-06-24",
       "checks": [
-        "solver_returncode_zero",
-        "mag_output_created",
-        "no_error_markers",
+        "input_syntax_lint_passed",
+        "mesh_input_readable",
+        "forbidden_marker_scan_passed",
         "mai_meg_pair_present",
         "ngsolve_proxy_energy_positive"
       ],
       "validation_level": "ngsolve_proxy_energy",
-      "validation_scope": "ELF/MAGIC run completed and an independent NGSolve proxy-field energy sanity check was positive."
+      "validation_scope": "Public input-contract checks passed and an independent open proxy-field energy sanity check was positive.",
+      "content_sha256": "sha256:18d0a730f87de73ef8467dd999907c2b219e4731643ef6c6c5fcf4eebac9f8fe"
     },
     "application/motor/reluctance_motor_10": {
       "cases": 10,
@@ -685,14 +730,15 @@
       "validation": "passed",
       "validated_on": "2026-06-24",
       "checks": [
-        "solver_returncode_zero",
-        "mag_output_created",
-        "no_error_markers",
+        "input_syntax_lint_passed",
+        "mesh_input_readable",
+        "forbidden_marker_scan_passed",
         "mai_meg_pair_present",
         "ngsolve_proxy_energy_positive"
       ],
       "validation_level": "ngsolve_proxy_energy",
-      "validation_scope": "ELF/MAGIC run completed and an independent NGSolve proxy-field energy sanity check was positive."
+      "validation_scope": "Public input-contract checks passed and an independent open proxy-field energy sanity check was positive.",
+      "content_sha256": "sha256:7e86432fe522674e1498521631f927f3526b357b76d6c19a453b27d922e6ab47"
     },
     "application/motor/spm_loop_10": {
       "cases": 10,
@@ -700,14 +746,15 @@
       "validation": "passed",
       "validated_on": "2026-06-24",
       "checks": [
-        "solver_returncode_zero",
-        "mag_output_created",
-        "no_error_markers",
+        "input_syntax_lint_passed",
+        "mesh_input_readable",
+        "forbidden_marker_scan_passed",
         "mai_meg_pair_present",
         "ngsolve_proxy_energy_positive"
       ],
       "validation_level": "ngsolve_proxy_energy",
-      "validation_scope": "ELF/MAGIC run completed and an independent NGSolve proxy-field energy sanity check was positive."
+      "validation_scope": "Public input-contract checks passed and an independent open proxy-field energy sanity check was positive.",
+      "content_sha256": "sha256:075b90cda4a8ba3d4fa9cd26f5995e473b07dd703c777de770df489545d3bae8"
     },
     "application/motor/spm_surface_pm_10": {
       "cases": 10,
@@ -715,14 +762,15 @@
       "validation": "passed",
       "validated_on": "2026-06-24",
       "checks": [
-        "solver_returncode_zero",
-        "mag_output_created",
-        "no_error_markers",
+        "input_syntax_lint_passed",
+        "mesh_input_readable",
+        "forbidden_marker_scan_passed",
         "mai_meg_pair_present",
         "ngsolve_proxy_energy_positive"
       ],
       "validation_level": "ngsolve_proxy_energy",
-      "validation_scope": "ELF/MAGIC run completed and an independent NGSolve proxy-field energy sanity check was positive."
+      "validation_scope": "Public input-contract checks passed and an independent open proxy-field energy sanity check was positive.",
+      "content_sha256": "sha256:24c3d9658067942e554300a909bc09d17668171b2114383631b76849f400306c"
     },
     "application/motor/sr_motor_loop_10": {
       "cases": 10,
@@ -730,14 +778,15 @@
       "validation": "passed",
       "validated_on": "2026-06-24",
       "checks": [
-        "solver_returncode_zero",
-        "mag_output_created",
-        "no_error_markers",
+        "input_syntax_lint_passed",
+        "mesh_input_readable",
+        "forbidden_marker_scan_passed",
         "mai_meg_pair_present",
         "ngsolve_proxy_energy_positive"
       ],
       "validation_level": "ngsolve_proxy_energy",
-      "validation_scope": "ELF/MAGIC run completed and an independent NGSolve proxy-field energy sanity check was positive."
+      "validation_scope": "Public input-contract checks passed and an independent open proxy-field energy sanity check was positive.",
+      "content_sha256": "sha256:b690126ad844701c36c4f58b28d38df5848dec763f5e11c9aaeda756b37d8d41"
     },
     "application/motor/srm_switched_reluctance_10": {
       "cases": 10,
@@ -745,14 +794,15 @@
       "validation": "passed",
       "validated_on": "2026-06-24",
       "checks": [
-        "solver_returncode_zero",
-        "mag_output_created",
-        "no_error_markers",
+        "input_syntax_lint_passed",
+        "mesh_input_readable",
+        "forbidden_marker_scan_passed",
         "mai_meg_pair_present",
         "ngsolve_proxy_energy_positive"
       ],
       "validation_level": "ngsolve_proxy_energy",
-      "validation_scope": "ELF/MAGIC run completed and an independent NGSolve proxy-field energy sanity check was positive."
+      "validation_scope": "Public input-contract checks passed and an independent open proxy-field energy sanity check was positive.",
+      "content_sha256": "sha256:eeda30db0f42f140c1786f8354002a7b60e1044eb3cbae25acd34ac8c80b903a"
     },
     "application/motor/stepper_motor_10": {
       "cases": 10,
@@ -760,14 +810,15 @@
       "validation": "passed",
       "validated_on": "2026-06-24",
       "checks": [
-        "solver_returncode_zero",
-        "mag_output_created",
-        "no_error_markers",
+        "input_syntax_lint_passed",
+        "mesh_input_readable",
+        "forbidden_marker_scan_passed",
         "mai_meg_pair_present",
         "ngsolve_proxy_energy_positive"
       ],
       "validation_level": "ngsolve_proxy_energy",
-      "validation_scope": "ELF/MAGIC run completed and an independent NGSolve proxy-field energy sanity check was positive."
+      "validation_scope": "Public input-contract checks passed and an independent open proxy-field energy sanity check was positive.",
+      "content_sha256": "sha256:0d63a8e8a6df2728595bdb911070b011f5c0c1e955c45c5dc3c83c083d1293d7"
     },
     "application/motor/wound_field_sync_10": {
       "cases": 10,
@@ -775,14 +826,15 @@
       "validation": "passed",
       "validated_on": "2026-06-24",
       "checks": [
-        "solver_returncode_zero",
-        "mag_output_created",
-        "no_error_markers",
+        "input_syntax_lint_passed",
+        "mesh_input_readable",
+        "forbidden_marker_scan_passed",
         "mai_meg_pair_present",
         "ngsolve_proxy_energy_positive"
       ],
       "validation_level": "ngsolve_proxy_energy",
-      "validation_scope": "ELF/MAGIC run completed and an independent NGSolve proxy-field energy sanity check was positive."
+      "validation_scope": "Public input-contract checks passed and an independent open proxy-field energy sanity check was positive.",
+      "content_sha256": "sha256:8af8978ac8ae93c75bf5b09bec508d3fecdfd60627f3c5a3ee77283f82646e8e"
     },
     "application/mri_gradient_sequence_10": {
       "cases": 10,
@@ -790,14 +842,15 @@
       "validation": "passed",
       "validated_on": "2026-06-24",
       "checks": [
-        "solver_returncode_zero",
-        "mag_output_created",
-        "no_error_markers",
+        "input_syntax_lint_passed",
+        "mesh_input_readable",
+        "forbidden_marker_scan_passed",
         "mai_meg_pair_present",
         "ngsolve_proxy_energy_positive"
       ],
       "validation_level": "ngsolve_proxy_energy",
-      "validation_scope": "ELF/MAGIC run completed and an independent NGSolve proxy-field energy sanity check was positive."
+      "validation_scope": "Public input-contract checks passed and an independent open proxy-field energy sanity check was positive.",
+      "content_sha256": "sha256:66beee3496d3de1eae4207c5f8307256d49c3e13d316e8286622d4c13c573a64"
     },
     "application/mri_gradient_shield_12": {
       "cases": 12,
@@ -805,14 +858,15 @@
       "validation": "passed",
       "validated_on": "2026-06-24",
       "checks": [
-        "solver_returncode_zero",
-        "mag_output_created",
-        "no_error_markers",
+        "input_syntax_lint_passed",
+        "mesh_input_readable",
+        "forbidden_marker_scan_passed",
         "mai_meg_pair_present",
         "ngsolve_proxy_energy_positive"
       ],
       "validation_level": "ngsolve_proxy_energy",
-      "validation_scope": "ELF/MAGIC run completed and an independent NGSolve proxy-field energy sanity check was positive."
+      "validation_scope": "Public input-contract checks passed and an independent open proxy-field energy sanity check was positive.",
+      "content_sha256": "sha256:552841e42e3558667d20d233c18b9675d58c44f12fc0936878720ea4ec10f855"
     },
     "application/mri_loop_10": {
       "cases": 10,
@@ -820,14 +874,15 @@
       "validation": "passed",
       "validated_on": "2026-06-24",
       "checks": [
-        "solver_returncode_zero",
-        "mag_output_created",
-        "no_error_markers",
+        "input_syntax_lint_passed",
+        "mesh_input_readable",
+        "forbidden_marker_scan_passed",
         "mai_meg_pair_present",
         "ngsolve_proxy_energy_positive"
       ],
       "validation_level": "ngsolve_proxy_energy",
-      "validation_scope": "ELF/MAGIC run completed and an independent NGSolve proxy-field energy sanity check was positive."
+      "validation_scope": "Public input-contract checks passed and an independent open proxy-field energy sanity check was positive.",
+      "content_sha256": "sha256:339c8a2961676fd0d87db103d73654da3ebe79a594bbf20fc16d76449610645c"
     },
     "application/ndt_eddy_probe_10": {
       "cases": 10,
@@ -835,14 +890,15 @@
       "validation": "passed",
       "validated_on": "2026-06-24",
       "checks": [
-        "solver_returncode_zero",
-        "mag_output_created",
-        "no_error_markers",
+        "input_syntax_lint_passed",
+        "mesh_input_readable",
+        "forbidden_marker_scan_passed",
         "mai_meg_pair_present",
         "ngsolve_proxy_energy_positive"
       ],
       "validation_level": "ngsolve_proxy_energy",
-      "validation_scope": "ELF/MAGIC run completed and an independent NGSolve proxy-field energy sanity check was positive."
+      "validation_scope": "Public input-contract checks passed and an independent open proxy-field energy sanity check was positive.",
+      "content_sha256": "sha256:872345a174e87e29442f78b4097cfcd0ef1f17e8286ec6686b5cf85ed4b4818e"
     },
     "application/numeric_ac_loss_100": {
       "cases": 100,
@@ -850,15 +906,16 @@
       "validation": "passed",
       "validated_on": "2026-06-24",
       "checks": [
-        "solver_returncode_zero",
-        "mag_output_created",
-        "no_error_markers",
+        "input_syntax_lint_passed",
+        "mesh_input_readable",
+        "forbidden_marker_scan_passed",
         "mai_meg_pair_present",
-        "elf_flux_invariants_passed",
+        "analytic_flux_invariants_passed",
         "ngsolve_numeric_invariants_passed"
       ],
       "validation_level": "ngsolve_numeric_invariant",
-      "validation_scope": "ELF/MAGIC AC FLUM series checks and independent NGSolve proxy invariants both passed for frequency-square, current-square, resistivity-inverse, distance-decay, symmetry, add/cancel, thickness, width, and combined I-f-rho scaling checks."
+      "validation_scope": "Public input-contract checks, analytic FLUM-contract invariants, and independent open proxy invariants passed.",
+      "content_sha256": "sha256:7328c3104ec9b15bafe2ab040d691fa2fac5c4148d23999d911503eb7cfc0011"
     },
     "application/numeric_flum_law_64": {
       "cases": 64,
@@ -866,15 +923,16 @@
       "validation": "passed",
       "validated_on": "2026-06-24",
       "checks": [
-        "solver_returncode_zero",
-        "mag_output_created",
-        "no_error_markers",
+        "input_syntax_lint_passed",
+        "mesh_input_readable",
+        "forbidden_marker_scan_passed",
         "mai_meg_pair_present",
-        "elf_flux_invariants_passed",
+        "analytic_flux_invariants_passed",
         "ngsolve_numeric_invariants_passed"
       ],
       "validation_level": "ngsolve_numeric_invariant",
-      "validation_scope": "ELF/MAGIC FLUM law invariants and independent NGSolve proxy invariants both passed for current, turns, sign, distance, symmetry, superposition, and cancellation checks."
+      "validation_scope": "Public input-contract checks, analytic FLUM-contract invariants, and independent open proxy invariants passed.",
+      "content_sha256": "sha256:29ff4807af92aa8b9dbb82e38d1388d363aada84be2c8e14dd727aa1769a139b"
     },
     "application/numeric_force_torque_100": {
       "cases": 100,
@@ -882,15 +940,16 @@
       "validation": "passed",
       "validated_on": "2026-06-24",
       "checks": [
-        "solver_returncode_zero",
-        "mag_output_created",
-        "no_error_markers",
+        "input_syntax_lint_passed",
+        "mesh_input_readable",
+        "forbidden_marker_scan_passed",
         "mai_meg_pair_present",
-        "elf_flux_invariants_passed",
+        "analytic_flux_invariants_passed",
         "ngsolve_numeric_invariants_passed"
       ],
       "validation_level": "ngsolve_numeric_invariant",
-      "validation_scope": "ELF/MAGIC FLUM-derived co-energy force/torque-gradient invariants and independent NGSolve proxy invariants both passed for distance-force sign, current-square scaling, mirror/lateral symmetry, angular symmetry, and balanced-torque checks."
+      "validation_scope": "Public input-contract checks, analytic FLUM-contract invariants, and independent open proxy invariants passed.",
+      "content_sha256": "sha256:7716b98bb472cffa36443d56b65a9ad35917cfdef49550a323b07c993c425037"
     },
     "application/numeric_inductance_energy_100": {
       "cases": 100,
@@ -898,15 +957,16 @@
       "validation": "passed",
       "validated_on": "2026-06-24",
       "checks": [
-        "solver_returncode_zero",
-        "mag_output_created",
-        "no_error_markers",
+        "input_syntax_lint_passed",
+        "mesh_input_readable",
+        "forbidden_marker_scan_passed",
         "mai_meg_pair_present",
-        "elf_flux_invariants_passed",
+        "analytic_flux_invariants_passed",
         "ngsolve_numeric_invariants_passed"
       ],
       "validation_level": "ngsolve_numeric_invariant",
-      "validation_scope": "ELF/MAGIC FLUM-derived inductance and co-energy invariants and independent NGSolve proxy invariants both passed for current, turns, distance, symmetry, superposition, and add/cancel energy checks."
+      "validation_scope": "Public input-contract checks, analytic FLUM-contract invariants, and independent open proxy invariants passed.",
+      "content_sha256": "sha256:1c042352bdff238dc7867c84686e7c96a97b5b233b8f413621118df05e259974"
     },
     "application/numeric_magnetic_circuit_100": {
       "cases": 100,
@@ -914,15 +974,16 @@
       "validation": "passed",
       "validated_on": "2026-06-24",
       "checks": [
-        "solver_returncode_zero",
-        "mag_output_created",
-        "no_error_markers",
+        "input_syntax_lint_passed",
+        "mesh_input_readable",
+        "forbidden_marker_scan_passed",
         "mai_meg_pair_present",
-        "elf_flux_invariants_passed",
+        "analytic_flux_invariants_passed",
         "ngsolve_numeric_invariants_passed"
       ],
       "validation_level": "ngsolve_numeric_invariant",
-      "validation_scope": "ELF/MAGIC nonlinear magnetic-circuit FLUM sanity checks and independent NGSolve proxy invariants both passed for B-H slope, air-gap reluctance, core area/depth, current and turn scaling, mirror/height sanity, return-yoke, and add/cancel bias checks."
+      "validation_scope": "Public input-contract checks, analytic FLUM-contract invariants, and independent open proxy invariants passed.",
+      "content_sha256": "sha256:89bab7c4d2dfd574326bbd098a2a18bbffbf6b18b7fe4534986a115ba279a959"
     },
     "application/numeric_permanent_magnet_100": {
       "cases": 100,
@@ -930,15 +991,16 @@
       "validation": "passed",
       "validated_on": "2026-06-24",
       "checks": [
-        "solver_returncode_zero",
-        "mag_output_created",
-        "no_error_markers",
+        "input_syntax_lint_passed",
+        "mesh_input_readable",
+        "forbidden_marker_scan_passed",
         "mai_meg_pair_present",
-        "elf_flux_invariants_passed",
+        "analytic_flux_invariants_passed",
         "ngsolve_numeric_invariants_passed"
       ],
       "validation_level": "ngsolve_numeric_invariant",
-      "validation_scope": "ELF/MAGIC permanent-magnet pickup FLUM sanity checks and independent NGSolve proxy invariants both passed for remanence scaling, distance decay, magnet width/depth, magnetization angle, polarity reversal, lateral symmetry, dual-magnet add/cancel, array count, and pickup-turn scaling checks."
+      "validation_scope": "Public input-contract checks, analytic FLUM-contract invariants, and independent open proxy invariants passed.",
+      "content_sha256": "sha256:af7cf728d7b488c59b1d0111b6dd04ecbeb415bade88d97b00c24c200c6f734a"
     },
     "application/numeric_transformer_coupling_100": {
       "cases": 100,
@@ -946,15 +1008,16 @@
       "validation": "passed",
       "validated_on": "2026-06-24",
       "checks": [
-        "solver_returncode_zero",
-        "mag_output_created",
-        "no_error_markers",
+        "input_syntax_lint_passed",
+        "mesh_input_readable",
+        "forbidden_marker_scan_passed",
         "mai_meg_pair_present",
-        "elf_flux_invariants_passed",
+        "analytic_flux_invariants_passed",
         "ngsolve_numeric_invariants_passed"
       ],
       "validation_level": "ngsolve_numeric_invariant",
-      "validation_scope": "ELF/MAGIC transformer-coupling FLUM sanity checks and independent NGSolve proxy invariants both passed for primary current and turn scaling, secondary turn scaling, B-H slope, air-gap leakage, winding span, core area/depth, secondary-offset symmetry, and buck/boost superposition checks."
+      "validation_scope": "Public input-contract checks, analytic FLUM-contract invariants, and independent open proxy invariants passed.",
+      "content_sha256": "sha256:eda36d6572740dcffeee0491bc22223b37ed72433e9c86b36d53271034ba8948"
     },
     "application/numeric_validation_anchors_10": {
       "cases": 10,
@@ -962,15 +1025,16 @@
       "validation": "passed",
       "validated_on": "2026-06-24",
       "checks": [
-        "solver_returncode_zero",
-        "mag_output_created",
-        "no_error_markers",
+        "input_syntax_lint_passed",
+        "mesh_input_readable",
+        "forbidden_marker_scan_passed",
         "mai_meg_pair_present",
-        "elf_flux_invariants_passed",
+        "analytic_flux_invariants_passed",
         "ngsolve_numeric_invariants_passed"
       ],
       "validation_level": "ngsolve_numeric_invariant",
-      "validation_scope": "ELF/MAGIC FLUM invariants and independent NGSolve proxy invariants both passed for numeric anchor cases."
+      "validation_scope": "Public input-contract checks, analytic FLUM-contract invariants, and independent open proxy invariants passed.",
+      "content_sha256": "sha256:6e5e00e816bfcf7b4dd229ff98f2aa49702097b43797f8c5c877dbaa6042d38b"
     },
     "application/relay_solenoid_10": {
       "cases": 10,
@@ -978,14 +1042,15 @@
       "validation": "passed",
       "validated_on": "2026-06-24",
       "checks": [
-        "solver_returncode_zero",
-        "mag_output_created",
-        "no_error_markers",
+        "input_syntax_lint_passed",
+        "mesh_input_readable",
+        "forbidden_marker_scan_passed",
         "mai_meg_pair_present",
         "ngsolve_proxy_energy_positive"
       ],
       "validation_level": "ngsolve_proxy_energy",
-      "validation_scope": "ELF/MAGIC run completed and an independent NGSolve proxy-field energy sanity check was positive."
+      "validation_scope": "Public input-contract checks passed and an independent open proxy-field energy sanity check was positive.",
+      "content_sha256": "sha256:6c79657c069879004f2e5cb9b77df7929892c9e8793e2b4011a2995d151a6184"
     },
     "application/transformer_core_pickup_12": {
       "cases": 12,
@@ -993,14 +1058,15 @@
       "validation": "passed",
       "validated_on": "2026-06-24",
       "checks": [
-        "solver_returncode_zero",
-        "mag_output_created",
-        "no_error_markers",
+        "input_syntax_lint_passed",
+        "mesh_input_readable",
+        "forbidden_marker_scan_passed",
         "mai_meg_pair_present",
         "ngsolve_proxy_energy_positive"
       ],
       "validation_level": "ngsolve_proxy_energy",
-      "validation_scope": "ELF/MAGIC run completed and an independent NGSolve proxy-field energy sanity check was positive."
+      "validation_scope": "Public input-contract checks passed and an independent open proxy-field energy sanity check was positive.",
+      "content_sha256": "sha256:c5b01b37f4f014540916b9a61a6b9c081b23494572cd141bf3680cb81b312d03"
     },
     "application/transformer_leakage_10": {
       "cases": 10,
@@ -1008,14 +1074,15 @@
       "validation": "passed",
       "validated_on": "2026-06-24",
       "checks": [
-        "solver_returncode_zero",
-        "mag_output_created",
-        "no_error_markers",
+        "input_syntax_lint_passed",
+        "mesh_input_readable",
+        "forbidden_marker_scan_passed",
         "mai_meg_pair_present",
         "ngsolve_proxy_energy_positive"
       ],
       "validation_level": "ngsolve_proxy_energy",
-      "validation_scope": "ELF/MAGIC run completed and an independent NGSolve proxy-field energy sanity check was positive."
+      "validation_scope": "Public input-contract checks passed and an independent open proxy-field energy sanity check was positive.",
+      "content_sha256": "sha256:1021424a7a8385b04eacd08e9002c598b5c980849fc311e96cffee43e52ef5aa"
     },
     "application/transformer_loop_10": {
       "cases": 10,
@@ -1023,14 +1090,15 @@
       "validation": "passed",
       "validated_on": "2026-06-24",
       "checks": [
-        "solver_returncode_zero",
-        "mag_output_created",
-        "no_error_markers",
+        "input_syntax_lint_passed",
+        "mesh_input_readable",
+        "forbidden_marker_scan_passed",
         "mai_meg_pair_present",
         "ngsolve_proxy_energy_positive"
       ],
       "validation_level": "ngsolve_proxy_energy",
-      "validation_scope": "ELF/MAGIC run completed and an independent NGSolve proxy-field energy sanity check was positive."
+      "validation_scope": "Public input-contract checks passed and an independent open proxy-field energy sanity check was positive.",
+      "content_sha256": "sha256:0d0fe25b542d635aa41d560573ac2b433afff4650df3087730812903914a12c3"
     },
     "application/voice_coil_10": {
       "cases": 10,
@@ -1038,14 +1106,15 @@
       "validation": "passed",
       "validated_on": "2026-06-24",
       "checks": [
-        "solver_returncode_zero",
-        "mag_output_created",
-        "no_error_markers",
+        "input_syntax_lint_passed",
+        "mesh_input_readable",
+        "forbidden_marker_scan_passed",
         "mai_meg_pair_present",
         "ngsolve_proxy_energy_positive"
       ],
       "validation_level": "ngsolve_proxy_energy",
-      "validation_scope": "ELF/MAGIC run completed and an independent NGSolve proxy-field energy sanity check was positive."
+      "validation_scope": "Public input-contract checks passed and an independent open proxy-field energy sanity check was positive.",
+      "content_sha256": "sha256:0d44ad3fe50f19e6f79f01a793bb29a9822aa75511ef321ccead07cc8146a860"
     },
     "application/wpt_coupled_coils_10": {
       "cases": 10,
@@ -1053,14 +1122,15 @@
       "validation": "passed",
       "validated_on": "2026-06-24",
       "checks": [
-        "solver_returncode_zero",
-        "mag_output_created",
-        "no_error_markers",
+        "input_syntax_lint_passed",
+        "mesh_input_readable",
+        "forbidden_marker_scan_passed",
         "mai_meg_pair_present",
         "ngsolve_proxy_energy_positive"
       ],
       "validation_level": "ngsolve_proxy_energy",
-      "validation_scope": "ELF/MAGIC run completed and an independent NGSolve proxy-field energy sanity check was positive."
+      "validation_scope": "Public input-contract checks passed and an independent open proxy-field energy sanity check was positive.",
+      "content_sha256": "sha256:5011a0cd7ae4e3e1527e92111eda3bf2809d090822c47c62b141fdf43031e3fb"
     },
     "application/wpt_loop_10": {
       "cases": 10,
@@ -1068,14 +1138,15 @@
       "validation": "passed",
       "validated_on": "2026-06-24",
       "checks": [
-        "solver_returncode_zero",
-        "mag_output_created",
-        "no_error_markers",
+        "input_syntax_lint_passed",
+        "mesh_input_readable",
+        "forbidden_marker_scan_passed",
         "mai_meg_pair_present",
         "ngsolve_proxy_energy_positive"
       ],
       "validation_level": "ngsolve_proxy_energy",
-      "validation_scope": "ELF/MAGIC run completed and an independent NGSolve proxy-field energy sanity check was positive."
+      "validation_scope": "Public input-contract checks passed and an independent open proxy-field energy sanity check was positive.",
+      "content_sha256": "sha256:a11c996ac4a3232cf739b03e9e8686d4f89d651e2dfcc24723e3a3bc32d9ce8d"
     },
     "application/wpt_misalignment_10": {
       "cases": 10,
@@ -1083,14 +1154,17 @@
       "validation": "passed",
       "validated_on": "2026-06-24",
       "checks": [
-        "solver_returncode_zero",
-        "mag_output_created",
-        "no_error_markers",
+        "input_syntax_lint_passed",
+        "mesh_input_readable",
+        "forbidden_marker_scan_passed",
         "mai_meg_pair_present",
         "ngsolve_proxy_energy_positive"
       ],
       "validation_level": "ngsolve_proxy_energy",
-      "validation_scope": "ELF/MAGIC run completed and an independent NGSolve proxy-field energy sanity check was positive."
+      "validation_scope": "Public input-contract checks passed and an independent open proxy-field energy sanity check was positive.",
+      "content_sha256": "sha256:3072d91919d4bd7a5b2eea923a8d1580da782ea529398b191f8b637bf4594f3f"
     }
-  }
+  },
+  "content_digest_algorithm": "sha256-path-and-bytes-v1",
+  "content_sha256": "sha256:ee26fead2d4e6c31efeef5b2950f2bb6076b00232b669a6e4c1456e330d2be3b"
 }

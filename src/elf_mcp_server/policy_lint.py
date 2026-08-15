@@ -8,16 +8,22 @@ samples.
 """
 from __future__ import annotations
 
+import argparse
+import glob
+import hashlib
 import json
 from pathlib import Path
 import sys
+import zipfile
 
 
-TEXT_SUFFIXES = {".md", ".py", ".toml", ".txt", ".mai", ".meg"}
+TEXT_SUFFIXES = {".json", ".md", ".py", ".toml", ".txt", ".mai", ".meg", ".yaml", ".yml"}
 
 CURATED_PATHS = (
     ".github",
+    "LICENSE",
     "README.md",
+    "THIRD_PARTY_NOTICES.md",
     "docs",
     "pyproject.toml",
     "scripts",
@@ -31,6 +37,8 @@ PRIVATE_MARKERS = (
     "W:\\",
     "W:/",
     "C:\\temp",
+    "C:\\ELF600",
+    "C:/ELF600",
     "_crossval",
     "internal:",
     "LAB private",
@@ -38,35 +46,46 @@ PRIVATE_MARKERS = (
     "FEMM",
     "JMAG",
     "elf_converter",
+    "Math" + "Works",
+    "MAT" + "LAB MCP Server",
 )
 
-SAMPLE_OUTPUT_SUFFIXES = (".mao", ".mat", ".mac")
-SMALL_REFERENCE_OUTPUT_SUFFIXES = (".mag",)
-SMALL_REFERENCE_OUTPUT_MAX_BYTES = 64 * 1024
+SAMPLE_OUTPUT_SUFFIXES = (".mao", ".mag", ".mat", ".mac")
 SAMPLE_OUTPUT_MARKERS = SAMPLE_OUTPUT_SUFFIXES + ("summary.csv",)
+FORBIDDEN_BUNDLED_NAMES = {
+    "help_dump.json",
+    "examples_dump.json",
+    "wiki_dump.json",
+    "python_dump.json",
+}
 MANIFEST_NAME = "VALIDATED_MANIFEST.json"
 PUBLICATION_BATCHES_NAME = "PUBLICATION_BATCHES.json"
 PUBLICATION_CHECKPOINT_SIZE = 100
 VALIDATION_LEVELS = {
-    "solver_smoke",
+    "static_input_contract",
     "ngsolve_proxy_energy",
     "ngsolve_numeric_invariant",
 }
 LEVEL_REQUIRED_CHECKS = {
-    "solver_smoke": {"solver_returncode_zero", "mag_output_created", "no_error_markers", "mai_meg_pair_present"},
+    "static_input_contract": {
+        "input_syntax_lint_passed",
+        "mesh_input_readable",
+        "forbidden_marker_scan_passed",
+        "mai_meg_pair_present",
+    },
     "ngsolve_proxy_energy": {
-        "solver_returncode_zero",
-        "mag_output_created",
-        "no_error_markers",
+        "input_syntax_lint_passed",
+        "mesh_input_readable",
+        "forbidden_marker_scan_passed",
         "mai_meg_pair_present",
         "ngsolve_proxy_energy_positive",
     },
     "ngsolve_numeric_invariant": {
-        "solver_returncode_zero",
-        "mag_output_created",
-        "no_error_markers",
+        "input_syntax_lint_passed",
+        "mesh_input_readable",
+        "forbidden_marker_scan_passed",
         "mai_meg_pair_present",
-        "elf_flux_invariants_passed",
+        "analytic_flux_invariants_passed",
         "ngsolve_numeric_invariants_passed",
     },
 }
@@ -111,6 +130,17 @@ def _sample_families(samples: Path) -> dict[str, list[Path]]:
         if cases:
             families[family_dir.relative_to(samples).as_posix()] = cases
     return families
+
+
+def _content_digest(paths: list[Path], base: Path) -> str:
+    """Bind stable relative paths and exact bytes into one SHA-256 digest."""
+    digest = hashlib.sha256()
+    for path in sorted(paths, key=lambda item: item.relative_to(base).as_posix()):
+        digest.update(path.relative_to(base).as_posix().encode("utf-8"))
+        digest.update(b"\0")
+        digest.update(path.read_bytes())
+        digest.update(b"\0")
+    return "sha256:" + digest.hexdigest()
 
 
 def _validate_public_sample_manifest(repo: Path, samples: Path) -> list[str]:
@@ -197,6 +227,16 @@ def _validate_public_sample_manifest(repo: Path, samples: Path) -> list[str]:
                 f"{rel_manifest}: family {family!r} input_files={entry.get('input_files')!r} "
                 f"does not match actual {actual_count * 2}"
             )
+        family_files = [
+            case_dir / f"{case_dir.name}{suffix}"
+            for case_dir in cases
+            for suffix in (".mai", ".meg")
+        ]
+        expected_family_digest = _content_digest(family_files, samples)
+        if entry.get("content_sha256") != expected_family_digest:
+            issues.append(
+                f"{rel_manifest}: family {family!r} content_sha256 does not match files"
+            )
         for case_dir in cases:
             case = case_dir.name
             for suffix in (".mai", ".meg"):
@@ -215,6 +255,16 @@ def _validate_public_sample_manifest(repo: Path, samples: Path) -> list[str]:
             f"{rel_manifest}: total_input_files={manifest.get('total_input_files')!r} "
             f"does not match actual {total_input_files}"
         )
+    all_input_files = [
+        case_dir / f"{case_dir.name}{suffix}"
+        for cases in actual.values()
+        for case_dir in cases
+        for suffix in (".mai", ".meg")
+    ]
+    if manifest.get("content_digest_algorithm") != "sha256-path-and-bytes-v1":
+        issues.append(f"{rel_manifest}: unsupported or missing content_digest_algorithm")
+    if manifest.get("content_sha256") != _content_digest(all_input_files, samples):
+        issues.append(f"{rel_manifest}: top-level content_sha256 does not match files")
     issues.extend(
         _validate_publication_batches(
             repo=repo,
@@ -411,6 +461,12 @@ def run_policy_lint(root: Path | str | None = None) -> list[str]:
     repo = repo.resolve()
     issues: list[str] = []
 
+    for path in repo.rglob("*"):
+        if path.is_file() and path.name.lower() in FORBIDDEN_BUNDLED_NAMES:
+            issues.append(
+                f"{path.relative_to(repo).as_posix()}: product-derived dump is not allowed"
+            )
+
     for path in _iter_text_files(repo, CURATED_PATHS):
         rel = path.relative_to(repo).as_posix()
         text = _read_text(path)
@@ -427,18 +483,6 @@ def run_policy_lint(root: Path | str | None = None) -> list[str]:
             suffix = path.suffix.lower()
             if suffix in SAMPLE_OUTPUT_SUFFIXES or path.name.lower() == "summary.csv":
                 issues.append(f"{rel}: solver output file is not allowed")
-            if suffix in SMALL_REFERENCE_OUTPUT_SUFFIXES:
-                size = path.stat().st_size
-                if size > SMALL_REFERENCE_OUTPUT_MAX_BYTES:
-                    issues.append(
-                        f"{rel}: reference output file is too large "
-                        f"({size} > {SMALL_REFERENCE_OUTPUT_MAX_BYTES} bytes)"
-                    )
-                else:
-                    text = _read_text(path)
-                    for marker in PRIVATE_MARKERS:
-                        if marker in text:
-                            issues.append(f"{rel}: contains private marker {marker!r}")
             if suffix in {".mai", ".meg"}:
                 text = _read_text(path)
                 for marker in SAMPLE_OUTPUT_MARKERS + PRIVATE_MARKERS:
@@ -448,10 +492,64 @@ def run_policy_lint(root: Path | str | None = None) -> list[str]:
     return issues
 
 
+def audit_wheel(wheel: Path | str) -> list[str]:
+    """Audit the files that will actually be installed from a wheel."""
+    path = Path(wheel).resolve()
+    issues: list[str] = []
+    try:
+        archive = zipfile.ZipFile(path)
+    except (OSError, zipfile.BadZipFile) as exc:
+        return [f"{path.name}: invalid wheel ({exc})"]
+    with archive:
+        names = archive.namelist()
+        lower_names = {name.lower() for name in names}
+        if not any(name.endswith("/THIRD_PARTY_NOTICES.md") for name in names):
+            issues.append(f"{path.name}: THIRD_PARTY_NOTICES.md is missing from wheel")
+        for name in names:
+            pure = Path(name)
+            lower = name.lower()
+            if pure.name.lower() in FORBIDDEN_BUNDLED_NAMES:
+                issues.append(f"{path.name}:{name}: product-derived dump is not allowed")
+            if lower.endswith(SAMPLE_OUTPUT_SUFFIXES) or lower.endswith("summary.csv"):
+                issues.append(f"{path.name}:{name}: solver output file is not allowed")
+            if lower == "elf_mcp_server/policy_lint.py":
+                # The lint module necessarily contains the marker dictionary.
+                # Repository sources are audited separately, excluding this file.
+                continue
+            if pure.suffix.lower() not in TEXT_SUFFIXES:
+                continue
+            try:
+                text = archive.read(name).decode("utf-8")
+            except (KeyError, UnicodeDecodeError):
+                issues.append(f"{path.name}:{name}: declared text file is not UTF-8")
+                continue
+            for marker in PRIVATE_MARKERS:
+                if marker in text:
+                    issues.append(f"{path.name}:{name}: contains private marker {marker!r}")
+        required = {
+            "elf_mcp_server/runtime.py",
+            "elf_mcp_server/handlers.py",
+            "elf_mcp_server/tool_definitions.py",
+            "elf_mcp_server/mcp_resources.py",
+            "elf_mcp_server/models.py",
+        }
+        missing = sorted(item for item in required if item.lower() not in lower_names)
+        issues.extend(f"{path.name}: missing required runtime file {item}" for item in missing)
+    return issues
+
+
 def main(argv: list[str] | None = None) -> int:
-    args = list(sys.argv[1:] if argv is None else argv)
-    root = Path(args[0]) if args else Path.cwd()
-    issues = run_policy_lint(root)
+    parser = argparse.ArgumentParser(description="Audit the public repository and built wheel")
+    parser.add_argument("root", nargs="?", default=".")
+    parser.add_argument("--wheel", action="append", default=[], help="Wheel path or glob; repeatable")
+    parsed = parser.parse_args(sys.argv[1:] if argv is None else argv)
+    issues = run_policy_lint(parsed.root)
+    wheel_paths: list[str] = []
+    for pattern in parsed.wheel:
+        matches = glob.glob(pattern)
+        wheel_paths.extend(matches or [pattern])
+    for wheel in wheel_paths:
+        issues.extend(audit_wheel(wheel))
     if issues:
         print("ELF MCP policy lint FAILED")
         for issue in issues:
