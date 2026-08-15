@@ -20,7 +20,7 @@ def validate_release_tag(tag: str, repo: Path) -> str:
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("tag", help="Release tag, for example v1.62.0")
+    parser.add_argument("tag", help="Release tag in vX.Y.Z form")
     parser.add_argument("--repo", type=Path, default=Path(__file__).resolve().parents[1])
     args = parser.parse_args()
     try:

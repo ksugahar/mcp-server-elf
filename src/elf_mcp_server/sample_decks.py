@@ -2499,13 +2499,14 @@ def build_public_quality_gates() -> list[dict[str, str]]:
     for path, node in sorted(input_nodes, key=lambda item: item[0]):
         digest.update(path.encode("utf-8"))
         digest.update(b"\0")
-        digest.update(node.read_bytes())
+        digest.update(node.read_bytes().replace(b"\r\n", b"\n").replace(b"\r", b"\n"))
         digest.update(b"\0")
     current_digest = "sha256:" + digest.hexdigest()
     gates.append(
         _public_gate(
             "manifest_content_digest_matches",
-            manifest.get("content_digest_algorithm") == "sha256-path-and-bytes-v1"
+            manifest.get("content_digest_algorithm")
+            == "sha256-path-and-lf-normalized-bytes-v1"
             and manifest.get("content_sha256") == current_digest,
             f"{len(input_nodes)} input files bound by {current_digest}",
         )
@@ -4865,7 +4866,7 @@ def build_mcp_readiness() -> dict[str, Any]:
             "python -m elf_mcp_server.policy_lint <repo>",
             "python -m elf_mcp_server.server --selftest",
             "python -m build --outdir <temp-dist-dir>",
-            "git commit, git tag v1.62.0, git push origin main, git push origin v1.62.0",
+            "git commit, git tag v1.62.1, git push origin main, git push origin v1.62.1",
         ],
         "public_boundary": (
             "Readiness uses public input decks and metadata only. It does not "

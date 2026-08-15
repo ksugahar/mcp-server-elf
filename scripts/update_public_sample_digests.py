@@ -38,7 +38,7 @@ def digest(paths: list[Path]) -> str:
     for path in sorted(paths, key=lambda item: item.relative_to(SAMPLES).as_posix()):
         value.update(path.relative_to(SAMPLES).as_posix().encode("utf-8"))
         value.update(b"\0")
-        value.update(path.read_bytes())
+        value.update(path.read_bytes().replace(b"\r\n", b"\n").replace(b"\r", b"\n"))
         value.update(b"\0")
     return "sha256:" + value.hexdigest()
 
@@ -59,7 +59,7 @@ def main() -> int:
         )
         entry["content_sha256"] = digest(files)
         all_files.extend(files)
-    data["content_digest_algorithm"] = "sha256-path-and-bytes-v1"
+    data["content_digest_algorithm"] = "sha256-path-and-lf-normalized-bytes-v1"
     data["content_sha256"] = digest(all_files)
     MANIFEST.write_text(
         json.dumps(data, ensure_ascii=True, indent=2) + "\n",

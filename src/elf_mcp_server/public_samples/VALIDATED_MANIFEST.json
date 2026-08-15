@@ -34,7 +34,7 @@
       ],
       "validation_level": "ngsolve_proxy_energy",
       "validation_scope": "Public input-contract checks passed and an independent open proxy-field energy sanity check was positive.",
-      "content_sha256": "sha256:eb7f346ac6979e2e06ed36923da3172748a5625557242b8fcc609c08da689d84"
+      "content_sha256": "sha256:fe88fdef314fc6d7a9affc2b1af0f2c60bab419c405f5c7356e6e8a0107364ef"
     },
     "application/actuator_plunger_10": {
       "cases": 10,
@@ -50,7 +50,7 @@
       ],
       "validation_level": "ngsolve_proxy_energy",
       "validation_scope": "Public input-contract checks passed and an independent open proxy-field energy sanity check was positive.",
-      "content_sha256": "sha256:f66c833ec364b64e4ddc09de91d076ec1692840670ac55b3b41c04592679ed2a"
+      "content_sha256": "sha256:59f41a29d800c05be9c50cb7d32e41c2e2d13d2704937018e3890ad08709610c"
     },
     "application/eddy_current_brake_10": {
       "cases": 10,
@@ -66,7 +66,7 @@
       ],
       "validation_level": "ngsolve_proxy_energy",
       "validation_scope": "Public input-contract checks passed and an independent open proxy-field energy sanity check was positive.",
-      "content_sha256": "sha256:a8a1a56a37a688343c3cc779b49bdd0f6a26eb71d37397a5cbec7418d63b7412"
+      "content_sha256": "sha256:0d88005332cf7d8c420b1a66b3288af3dfd55add116379b8d7c36d295bbac3bc"
     },
     "application/electromagnetic_clutch_10": {
       "cases": 10,
@@ -178,7 +178,7 @@
       ],
       "validation_level": "ngsolve_proxy_energy",
       "validation_scope": "Public input-contract checks passed and an independent open proxy-field energy sanity check was positive.",
-      "content_sha256": "sha256:5152f9f407a1c3611aadf99ed5175714c86c00d9e0a5fa7fb06e70b01446e56f"
+      "content_sha256": "sha256:a9b11fdb5dcf8d42044b81b6273142a936e7bb47ce37f7d048cc3a7a10f64ee4"
     },
     "application/ih_susceptor_ring_10": {
       "cases": 10,
@@ -210,7 +210,7 @@
       ],
       "validation_level": "ngsolve_proxy_energy",
       "validation_scope": "Public input-contract checks passed and an independent open proxy-field energy sanity check was positive.",
-      "content_sha256": "sha256:f6ac1cdadb859fac68d3a12c3904920e039162439a78899b146257031b059497"
+      "content_sha256": "sha256:6472a4be90b992835c7f086d7b5fd010f66c0ae6d0fd617de15daf97057c3a6b"
     },
     "application/magnetic_gear_10": {
       "cases": 10,
@@ -242,7 +242,7 @@
       ],
       "validation_level": "ngsolve_proxy_energy",
       "validation_scope": "Public input-contract checks passed and an independent open proxy-field energy sanity check was positive.",
-      "content_sha256": "sha256:bba80b58af73a9c1b5c8e76780707505ac3be9a97554f60852923961476b1149"
+      "content_sha256": "sha256:66f01d90e50c03691fbdcabec351045ab24fb6e6c31237d39771c0c49f99e66d"
     },
     "application/motor/axial_flux_pm_10": {
       "cases": 10,
@@ -594,7 +594,7 @@
       ],
       "validation_level": "ngsolve_proxy_energy",
       "validation_scope": "Public input-contract checks passed and an independent open proxy-field energy sanity check was positive.",
-      "content_sha256": "sha256:b99bc6d7e6efbffbb8f8f031b5364fb6b2dc0a7343c06bb272996d66965b0c14"
+      "content_sha256": "sha256:b9e26d6a72326765f85f6fc323f437259e6c9195d293f0bafcb849621d7574e9"
     },
     "application/motor/induction_cage_10": {
       "cases": 10,
@@ -610,7 +610,7 @@
       ],
       "validation_level": "ngsolve_proxy_energy",
       "validation_scope": "Public input-contract checks passed and an independent open proxy-field energy sanity check was positive.",
-      "content_sha256": "sha256:3571f1090e1cf8b61d7272b776a60ec4d61b7a7c776c646f95e79a1b96b8c7ad"
+      "content_sha256": "sha256:7982cb16cd556d1d34838e0430f4204fc3055e7ac94fc75e153acc30c0592f71"
     },
     "application/motor/ipm_interior_pm_10": {
       "cases": 10,
@@ -658,7 +658,7 @@
       ],
       "validation_level": "ngsolve_proxy_energy",
       "validation_scope": "Public input-contract checks passed and an independent open proxy-field energy sanity check was positive.",
-      "content_sha256": "sha256:e2a44a0d3766396bfca30ca5619430627cf9617f5460d128919fef64aa50fccc"
+      "content_sha256": "sha256:0f77e53fed845f0c63220d6aa163d3c5266e781d9b979d96d15bd4bbce14e12f"
     },
     "application/motor/pm_square_2pole_pickup_100": {
       "cases": 100,
@@ -674,7 +674,7 @@
       ],
       "validation_level": "ngsolve_proxy_energy",
       "validation_scope": "Public input-contract checks passed and an independent open proxy-field energy sanity check was positive.",
-      "content_sha256": "sha256:2f588aa4faa61b1dde4e5044fe41fa2bb32e312178c6f65188d60dde28d43596"
+      "content_sha256": "sha256:45d8349601579862d33773c971667975c3e25b207073c717f51af0552ec57b2a"
     },
     "application/motor/pm_square_4pole_pickup_60": {
       "cases": 60,
@@ -690,7 +690,7 @@
       ],
       "validation_level": "ngsolve_proxy_energy",
       "validation_scope": "Public input-contract checks passed and an independent open proxy-field energy sanity check was positive.",
-      "content_sha256": "sha256:28cae35f625890257da9e99aca04207345742e0d68a8ffd6e7198337ff399037"
+      "content_sha256": "sha256:985d2cc7ca68d7019cedd1ce0e4851b2a6ec2c40101aa98637e19d5baedf8783"
     },
     "application/motor/pm_square_6pole_pickup_72": {
       "cases": 72,
@@ -706,7 +706,7 @@
       ],
       "validation_level": "ngsolve_proxy_energy",
       "validation_scope": "Public input-contract checks passed and an independent open proxy-field energy sanity check was positive.",
-      "content_sha256": "sha256:8696fea7901809e03cfc997a5ff613518c88076c04f768c67a806fb58737dc52"
+      "content_sha256": "sha256:2c0c3164bd4f53d7f00e3df0ac617b1cec7cc195994bdb806a6d849ecebed23b"
     },
     "application/motor/pm_square_8pole_pickup_28": {
       "cases": 28,
@@ -722,7 +722,7 @@
       ],
       "validation_level": "ngsolve_proxy_energy",
       "validation_scope": "Public input-contract checks passed and an independent open proxy-field energy sanity check was positive.",
-      "content_sha256": "sha256:18d0a730f87de73ef8467dd999907c2b219e4731643ef6c6c5fcf4eebac9f8fe"
+      "content_sha256": "sha256:6a4c731358f779a5da02f64200912a32b77995c0f6f8174cb795e7021ed15fdc"
     },
     "application/motor/reluctance_motor_10": {
       "cases": 10,
@@ -738,7 +738,7 @@
       ],
       "validation_level": "ngsolve_proxy_energy",
       "validation_scope": "Public input-contract checks passed and an independent open proxy-field energy sanity check was positive.",
-      "content_sha256": "sha256:7e86432fe522674e1498521631f927f3526b357b76d6c19a453b27d922e6ab47"
+      "content_sha256": "sha256:654d03ceb957847f15a98a93e91d83901bff9802881fc8c7538733c6fe9e8a48"
     },
     "application/motor/spm_loop_10": {
       "cases": 10,
@@ -754,7 +754,7 @@
       ],
       "validation_level": "ngsolve_proxy_energy",
       "validation_scope": "Public input-contract checks passed and an independent open proxy-field energy sanity check was positive.",
-      "content_sha256": "sha256:075b90cda4a8ba3d4fa9cd26f5995e473b07dd703c777de770df489545d3bae8"
+      "content_sha256": "sha256:e46c5f1098df8a6efde2947dc91d253effd12b64b9137315a00fcc0dfc49ceae"
     },
     "application/motor/spm_surface_pm_10": {
       "cases": 10,
@@ -770,7 +770,7 @@
       ],
       "validation_level": "ngsolve_proxy_energy",
       "validation_scope": "Public input-contract checks passed and an independent open proxy-field energy sanity check was positive.",
-      "content_sha256": "sha256:24c3d9658067942e554300a909bc09d17668171b2114383631b76849f400306c"
+      "content_sha256": "sha256:4a428b8c78d64fbc208cb35cddbffab97463295b09081c5cf9d0e346213930d2"
     },
     "application/motor/sr_motor_loop_10": {
       "cases": 10,
@@ -786,7 +786,7 @@
       ],
       "validation_level": "ngsolve_proxy_energy",
       "validation_scope": "Public input-contract checks passed and an independent open proxy-field energy sanity check was positive.",
-      "content_sha256": "sha256:b690126ad844701c36c4f58b28d38df5848dec763f5e11c9aaeda756b37d8d41"
+      "content_sha256": "sha256:4d7cd789bc2fe0b624ac8838d254df76320d3410cdf31e4db873624acda9fdeb"
     },
     "application/motor/srm_switched_reluctance_10": {
       "cases": 10,
@@ -802,7 +802,7 @@
       ],
       "validation_level": "ngsolve_proxy_energy",
       "validation_scope": "Public input-contract checks passed and an independent open proxy-field energy sanity check was positive.",
-      "content_sha256": "sha256:eeda30db0f42f140c1786f8354002a7b60e1044eb3cbae25acd34ac8c80b903a"
+      "content_sha256": "sha256:75cd40953f10ba5177c8b595fa2581bcbd93854bde4bb04d90d94672a4d00a95"
     },
     "application/motor/stepper_motor_10": {
       "cases": 10,
@@ -866,7 +866,7 @@
       ],
       "validation_level": "ngsolve_proxy_energy",
       "validation_scope": "Public input-contract checks passed and an independent open proxy-field energy sanity check was positive.",
-      "content_sha256": "sha256:552841e42e3558667d20d233c18b9675d58c44f12fc0936878720ea4ec10f855"
+      "content_sha256": "sha256:7d17ed9a7ef8dade52f7bc21313b99f48a1e0174d921dbb4189e2d09a3a826ca"
     },
     "application/mri_loop_10": {
       "cases": 10,
@@ -882,7 +882,7 @@
       ],
       "validation_level": "ngsolve_proxy_energy",
       "validation_scope": "Public input-contract checks passed and an independent open proxy-field energy sanity check was positive.",
-      "content_sha256": "sha256:339c8a2961676fd0d87db103d73654da3ebe79a594bbf20fc16d76449610645c"
+      "content_sha256": "sha256:abf091c52f7bfce2590f294df151ef4282ab16723f5aa0f551234284dae8dae4"
     },
     "application/ndt_eddy_probe_10": {
       "cases": 10,
@@ -898,7 +898,7 @@
       ],
       "validation_level": "ngsolve_proxy_energy",
       "validation_scope": "Public input-contract checks passed and an independent open proxy-field energy sanity check was positive.",
-      "content_sha256": "sha256:872345a174e87e29442f78b4097cfcd0ef1f17e8286ec6686b5cf85ed4b4818e"
+      "content_sha256": "sha256:f635d2a5976cae037757e486577c8bdc1f2563f37f6e6f3fced5fd153eeea1d3"
     },
     "application/numeric_ac_loss_100": {
       "cases": 100,
@@ -915,7 +915,7 @@
       ],
       "validation_level": "ngsolve_numeric_invariant",
       "validation_scope": "Public input-contract checks, analytic FLUM-contract invariants, and independent open proxy invariants passed.",
-      "content_sha256": "sha256:7328c3104ec9b15bafe2ab040d691fa2fac5c4148d23999d911503eb7cfc0011"
+      "content_sha256": "sha256:85b5976150039f4d825342ec2e024f66fcb469c7f656f6024169bba123a8ee2d"
     },
     "application/numeric_flum_law_64": {
       "cases": 64,
@@ -932,7 +932,7 @@
       ],
       "validation_level": "ngsolve_numeric_invariant",
       "validation_scope": "Public input-contract checks, analytic FLUM-contract invariants, and independent open proxy invariants passed.",
-      "content_sha256": "sha256:29ff4807af92aa8b9dbb82e38d1388d363aada84be2c8e14dd727aa1769a139b"
+      "content_sha256": "sha256:d1f480148382c99decd042af87c4ea6e5dd1bd3e6aa2365166dbd372b5729c79"
     },
     "application/numeric_force_torque_100": {
       "cases": 100,
@@ -949,7 +949,7 @@
       ],
       "validation_level": "ngsolve_numeric_invariant",
       "validation_scope": "Public input-contract checks, analytic FLUM-contract invariants, and independent open proxy invariants passed.",
-      "content_sha256": "sha256:7716b98bb472cffa36443d56b65a9ad35917cfdef49550a323b07c993c425037"
+      "content_sha256": "sha256:85d0c3cde7926726b90a80fd7dc17e9cb969c02cf3999520b050debc483118f2"
     },
     "application/numeric_inductance_energy_100": {
       "cases": 100,
@@ -966,7 +966,7 @@
       ],
       "validation_level": "ngsolve_numeric_invariant",
       "validation_scope": "Public input-contract checks, analytic FLUM-contract invariants, and independent open proxy invariants passed.",
-      "content_sha256": "sha256:1c042352bdff238dc7867c84686e7c96a97b5b233b8f413621118df05e259974"
+      "content_sha256": "sha256:b927c336ed8f0fecf2a9752e15fb5839b1127a309f866997c311ccc1bfb686f1"
     },
     "application/numeric_magnetic_circuit_100": {
       "cases": 100,
@@ -983,7 +983,7 @@
       ],
       "validation_level": "ngsolve_numeric_invariant",
       "validation_scope": "Public input-contract checks, analytic FLUM-contract invariants, and independent open proxy invariants passed.",
-      "content_sha256": "sha256:89bab7c4d2dfd574326bbd098a2a18bbffbf6b18b7fe4534986a115ba279a959"
+      "content_sha256": "sha256:fced27924fe3b61eb9c56f9628038ffc4cd6dfccf39bc69207022cda6e9d3a9f"
     },
     "application/numeric_permanent_magnet_100": {
       "cases": 100,
@@ -1000,7 +1000,7 @@
       ],
       "validation_level": "ngsolve_numeric_invariant",
       "validation_scope": "Public input-contract checks, analytic FLUM-contract invariants, and independent open proxy invariants passed.",
-      "content_sha256": "sha256:af7cf728d7b488c59b1d0111b6dd04ecbeb415bade88d97b00c24c200c6f734a"
+      "content_sha256": "sha256:17908dfbc245e3f4a2f3af57f32846ddb996f117a710b19c61965c32688c5ba3"
     },
     "application/numeric_transformer_coupling_100": {
       "cases": 100,
@@ -1017,7 +1017,7 @@
       ],
       "validation_level": "ngsolve_numeric_invariant",
       "validation_scope": "Public input-contract checks, analytic FLUM-contract invariants, and independent open proxy invariants passed.",
-      "content_sha256": "sha256:eda36d6572740dcffeee0491bc22223b37ed72433e9c86b36d53271034ba8948"
+      "content_sha256": "sha256:f71eac3bec9df663e6814da7e16444a91adb2a9c67541f4ac85cf2fc1eea3e1d"
     },
     "application/numeric_validation_anchors_10": {
       "cases": 10,
@@ -1034,7 +1034,7 @@
       ],
       "validation_level": "ngsolve_numeric_invariant",
       "validation_scope": "Public input-contract checks, analytic FLUM-contract invariants, and independent open proxy invariants passed.",
-      "content_sha256": "sha256:6e5e00e816bfcf7b4dd229ff98f2aa49702097b43797f8c5c877dbaa6042d38b"
+      "content_sha256": "sha256:05cc348d52531f9e530ecf8758d1c67e9803f1c87e1c666025b0fa69d3118517"
     },
     "application/relay_solenoid_10": {
       "cases": 10,
@@ -1066,7 +1066,7 @@
       ],
       "validation_level": "ngsolve_proxy_energy",
       "validation_scope": "Public input-contract checks passed and an independent open proxy-field energy sanity check was positive.",
-      "content_sha256": "sha256:c5b01b37f4f014540916b9a61a6b9c081b23494572cd141bf3680cb81b312d03"
+      "content_sha256": "sha256:42d356ea5d8eff8f2e5679509ae397d5f8b3fbfe44ece66246e3f0d27c60140d"
     },
     "application/transformer_leakage_10": {
       "cases": 10,
@@ -1098,7 +1098,7 @@
       ],
       "validation_level": "ngsolve_proxy_energy",
       "validation_scope": "Public input-contract checks passed and an independent open proxy-field energy sanity check was positive.",
-      "content_sha256": "sha256:0d0fe25b542d635aa41d560573ac2b433afff4650df3087730812903914a12c3"
+      "content_sha256": "sha256:eb128028857ce6a67419437c01135f40e808f615bd6558df3ebec0ccd9880ff9"
     },
     "application/voice_coil_10": {
       "cases": 10,
@@ -1130,7 +1130,7 @@
       ],
       "validation_level": "ngsolve_proxy_energy",
       "validation_scope": "Public input-contract checks passed and an independent open proxy-field energy sanity check was positive.",
-      "content_sha256": "sha256:5011a0cd7ae4e3e1527e92111eda3bf2809d090822c47c62b141fdf43031e3fb"
+      "content_sha256": "sha256:7d1f6ad18ba15bae13317f38e62304abb534bef5748f278c05730f8791e42802"
     },
     "application/wpt_loop_10": {
       "cases": 10,
@@ -1146,7 +1146,7 @@
       ],
       "validation_level": "ngsolve_proxy_energy",
       "validation_scope": "Public input-contract checks passed and an independent open proxy-field energy sanity check was positive.",
-      "content_sha256": "sha256:a11c996ac4a3232cf739b03e9e8686d4f89d651e2dfcc24723e3a3bc32d9ce8d"
+      "content_sha256": "sha256:3320bc30d68011fa51356f332887576f9ab9941c052a6670e7e66b4e3dc63acd"
     },
     "application/wpt_misalignment_10": {
       "cases": 10,
@@ -1165,6 +1165,6 @@
       "content_sha256": "sha256:3072d91919d4bd7a5b2eea923a8d1580da782ea529398b191f8b637bf4594f3f"
     }
   },
-  "content_digest_algorithm": "sha256-path-and-bytes-v1",
-  "content_sha256": "sha256:ee26fead2d4e6c31efeef5b2950f2bb6076b00232b669a6e4c1456e330d2be3b"
+  "content_digest_algorithm": "sha256-path-and-lf-normalized-bytes-v1",
+  "content_sha256": "sha256:cd7eee604590659530788d4d6eb845a01c9a37102f54dc6ec59c88503c9ceadd"
 }

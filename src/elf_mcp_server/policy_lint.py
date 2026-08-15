@@ -133,12 +133,12 @@ def _sample_families(samples: Path) -> dict[str, list[Path]]:
 
 
 def _content_digest(paths: list[Path], base: Path) -> str:
-    """Bind stable relative paths and exact bytes into one SHA-256 digest."""
+    """Bind paths and LF-normalized text bytes into one SHA-256 digest."""
     digest = hashlib.sha256()
     for path in sorted(paths, key=lambda item: item.relative_to(base).as_posix()):
         digest.update(path.relative_to(base).as_posix().encode("utf-8"))
         digest.update(b"\0")
-        digest.update(path.read_bytes())
+        digest.update(path.read_bytes().replace(b"\r\n", b"\n").replace(b"\r", b"\n"))
         digest.update(b"\0")
     return "sha256:" + digest.hexdigest()
 
@@ -261,7 +261,7 @@ def _validate_public_sample_manifest(repo: Path, samples: Path) -> list[str]:
         for case_dir in cases
         for suffix in (".mai", ".meg")
     ]
-    if manifest.get("content_digest_algorithm") != "sha256-path-and-bytes-v1":
+    if manifest.get("content_digest_algorithm") != "sha256-path-and-lf-normalized-bytes-v1":
         issues.append(f"{rel_manifest}: unsupported or missing content_digest_algorithm")
     if manifest.get("content_sha256") != _content_digest(all_input_files, samples):
         issues.append(f"{rel_manifest}: top-level content_sha256 does not match files")

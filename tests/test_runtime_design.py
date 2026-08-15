@@ -20,7 +20,7 @@ from elf_mcp_server.ngsolve_multiphysics import (
     build_ngsolve_validation_script,
     build_ngsolve_validation_spec,
 )
-from elf_mcp_server.policy_lint import audit_wheel
+from elf_mcp_server.policy_lint import _content_digest, audit_wheel
 from elf_mcp_server.project_feature_inventory_contract import FEATURE_ROUTES
 from elf_mcp_server.python_facade import build_motor_demag_margin_plan
 from elf_mcp_server.sample_decks import build_mcp_readiness, search_sample_decks
@@ -155,3 +155,15 @@ def test_wheel_audit_does_not_flag_its_own_marker_dictionary(tmp_path) -> None:
         for name in required:
             archive.writestr(f"elf_mcp_server/{name}", "# public module")
     assert audit_wheel(wheel) == []
+
+
+def test_deck_content_digest_is_cross_platform_line_ending_stable(tmp_path) -> None:
+    lf_root = tmp_path / "lf"
+    crlf_root = tmp_path / "crlf"
+    lf_root.mkdir()
+    crlf_root.mkdir()
+    lf_file = lf_root / "case.mai"
+    crlf_file = crlf_root / "case.mai"
+    lf_file.write_bytes(b"USE MAGIC\nSOL MOME\nEND\n")
+    crlf_file.write_bytes(b"USE MAGIC\r\nSOL MOME\r\nEND\r\n")
+    assert _content_digest([lf_file], lf_root) == _content_digest([crlf_file], crlf_root)
