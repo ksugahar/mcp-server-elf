@@ -22,4 +22,4 @@ original help/example/link/Python-facade summaries, and compact planning aids fo
 authoring ELF input files, plus release-readiness gates for MCP maintainers.
 """
 
-__version__ = "1.62.1"
+__version__ = "1.62.2"
