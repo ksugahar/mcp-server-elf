@@ -2,7 +2,7 @@
 
 - schema: `elf-python-interface-design/v1`
 - topic: `overview`
-- boundary: Public package scope: API design, schemas, prompt routing, deck-builder contracts, validation gates, and local-runner handoff contracts. The package must not bundle product binaries, execute ELF/MAGIC, expose raw solver output, or publish private validation provenance.
+- boundary: Public package scope: API design, schemas, prompt routing, deck-builder contracts, validation gates, and guarded local product execution. The package may call an installed DLL through a fixed Python ctypes workflow, but must not bundle product binaries, expose raw solver output, or publish private validation provenance.
 
 ## Implementation Policy
 - `product_python_is_reference_not_required`: The existing product-side Python implementation is useful as a reference, but the public facade does not have to depend on it or mirror its surface if a clearer API is needed for MCP users.
@@ -12,9 +12,9 @@
 ## Layered Architecture
 - `elfmagic-python public facade`: A small, typed Python package that turns user intent into stable data models and public input-deck text. It can be published without product binaries and without requiring the product-side Python implementation, because the backend is discovered at runtime on the user's machine.
   artifacts: `MotorSpec / MaterialSpec / WindingSpec / StudySpec dataclasses`, `DeckBundle containing .mai text, .meg text or reference, and metadata`, `ObservableRequest for flux linkage, torque, force, field, loss, and status`, `DQAxisMapPlan, MTPASearchPlan, ReluctanceMotorDesignPlan, EfficiencyMapPlan, LossModelContract, TorqueSpeedEnvelope, InductionSlipSweepPlan, WindingLayoutPlan, TopologyParameterPlan, DemagMarginPlan, DriveCyclePlan, OptimizationStudyPlan, VoltageFieldWeakeningPlan, CoggingRipplePlan, AirgapHarmonicsNVHPlan, ThermalNetworkPlan, ManufacturingTolerancePlan, MaterialVariationPlan, FeasibilityStudy, OperatingPointRunQueue, InverterPWMHarmonicPlan, SaturationInductanceMapPlan, RotorStressRetentionPlan, RunResultParser, RunResultPathParser, EfficiencyMapResult, OptimizationLoop, NGSolveResultCrosscheck, DrawingBOMHandoff, and MotorValidationScorecard`, `RunRequest / RunResult JSON-compatible contracts`
-- `backend adapter protocol`: A pluggable interface for a user-local product installation. The public package defines the protocol; local/private adapters may call a vendor DLL, command-line runner, or dry-run validator.
+- `backend adapter protocol`: A fixed interface for a user-local product installation. The public package discovers supported product roots and calls only allow-listed DLL names and symbols through an isolated Python ctypes worker. Dry-run validation remains available separately.
   artifacts: `discover() returns version/capability metadata without hard-coded paths`, `validate_inputs(bundle) checks .mai/.meg pairing and requested observables`, `run(request) executes only in a user-local environment`, `parse_result(run_directory) returns RunResult with normalized observables`, `parse_result_files(run_directory) scans JSON/CSV/text result files and returns normalized observables only`
-- `MCP orchestration`: The MCP server routes natural-language goals to sample-deck families, Python schemas, validation expectations, and a local runner contract. It remains product-solver-free while generating open validation scripts where appropriate.
+- `MCP orchestration`: The MCP server routes natural-language goals to sample-deck families, Python schemas, validation expectations, and a local runner contract. Its `elf_product_*` tools use an isolated Python ctypes worker for fixed MOME/FIEL workflows while open validation scripts remain separate.
   artifacts: `elf_python_interface_design(topic)`, `elf_python_ngsolve_validation_plan(goal)`, `elf_python_ngsolve_validation_script(goal)`, `elf_motor_hybrid_router(goal)`, `elf_local_simulation_handoff(goal)`, `elf_sample_decks_validation_matrix(quantity)`
 - `independent validation bridge`: Use public-safe validation labels and independent open validation targets to decide whether a result is plausible before iterating design changes.
   artifacts: `observable contract checks`, `physics quantity labels`, `AGE validation targets`, `NGSolve thermal/NVH/stress validation scripts`, `MMM quick checks`, `public sample quality labels`
@@ -88,13 +88,13 @@
   required_after_runresult: `loss inputs for thermal validation`, `torque-ripple/cogging/force-order inputs for NVH validation`, `speed/material/rotor-radius inputs for stress validation`
 
 ## Backend Protocol
-- purpose: A pluggable interface for a user-local product installation. The public package defines the protocol; local/private adapters may call a vendor DLL, command-line runner, or dry-run validator.
+- purpose: A fixed interface for a user-local product installation. The public package discovers supported product roots and calls only allow-listed DLL names and symbols through an isolated Python ctypes worker. Dry-run validation remains available separately.
 - calls: `discover() returns version/capability metadata without hard-coded paths`, `validate_inputs(bundle) checks .mai/.meg pairing and requested observables`, `run(request) executes only in a user-local environment`, `parse_result(run_directory) returns RunResult with normalized observables`, `parse_result_files(run_directory) scans JSON/CSV/text result files and returns normalized observables only`
 
 ## Deck Generation Contract
 - inputs: `MotorSpec or ApplicationSpec`, `StudySpec`, `ObservableRequest list`, `source public sample deck path`, `parameter overrides`
 - outputs: `DeckBundle.mai_text`, `DeckBundle.meg_text or meg_path`, `DeckBundle.metadata`, `DeckBundle.validation_label`
-- rule: Deck generation may create or mutate input decks. Product execution and raw result files remain outside the public MCP package.
+- rule: Deck generation may create or mutate input decks. Product binaries remain outside the public distribution, and product execution writes raw result files only to the caller-selected local work directory.
 
 ## MEG Generation Strategies
 - `cubit_mesh_export`: Use a headless mesh-export backend to produce `.meg` input data from an explicit geometry script. The public API records the backend choice and checks the `.mai/.meg` pair, but does not start GUI sessions or bundle proprietary outputs.
@@ -112,6 +112,9 @@
 - `ngsolve_multiphysics_validation` (public script plus local numeric inputs): thermal rise is solved in an NGSolve H1 heat model, NVH order separation is checked with an NGSolve modal proxy, rotor stress margin is checked with an NGSolve VectorH1 elasticity model, generated scripts do not call product solvers or product DLLs
 
 ## Recommended MCP Calls
+- `elf_product_detect()`
+- `elf_product_case_check(case_directory="<work-copy>", case_name="<case>", solver="MAGIC", workflow="mome_fiel")`
+- `elf_product_run(case_directory="<work-copy>", case_name="<case>", solver="MAGIC", workflow="mome_fiel", confirm_product_execution=True)`
 - `elf_python_interface_design("motor_api")`
 - `elf_motor_hybrid_router("SPM back EMF and torque ripple")`
 - `elf_local_simulation_handoff("IPM torque angle sweep")`
@@ -125,7 +128,7 @@
 - `small conformance deck set`: A fixed public-safe set of input-only decks plus expected observable names lets Python adapters test compatibility without exposing private benchmark numbers.
 
 ## Roadmap
-- `P0 design contract` [started]: public API/layer design in MCP, motor schema and observable vocabulary, backend adapter protocol, validation gate list
-- `P1 public facade skeleton` [next]: standalone dataclasses and JSON schema export, deck bundle builder interface, dry-run lints over public .mai/.meg decks, no product binary dependency
-- `P2 user-local backend adapter` [private/user-local]: runtime discovery, local run request/response, result parser to normalized observables, private validation logs outside the public package
-- `P3 motor integrated workflow` [planned]: SPM/IPM/PMa-SynRM/BLDC/line-start PM/deep-bar IM/flux-switching/Vernier/transverse-flux/slotless/claw-pole/commutator routing, AGE validation target selection, MMM quick-check trend labels, MCP prompt-to-runner orchestration
+- `P0 design contract` [complete]: public API/layer design in MCP, motor schema and observable vocabulary, backend adapter protocol, validation gate list
+- `P1 public facade skeleton` [complete]: standalone dataclasses and JSON schema export, deck bundle builder interface, dry-run lints over public .mai/.meg decks, no product binary dependency
+- `P2 user-local backend adapter` [complete/user-local]: runtime discovery without loading arbitrary binary paths, isolated Python ctypes execution with explicit confirmation, bounded result metadata plus normalized-observable parsers, private validation logs outside the public package
+- `P3 motor integrated workflow` [available]: SPM/IPM/PMa-SynRM/BLDC/line-start PM/deep-bar IM/flux-switching/Vernier/transverse-flux/slotless/claw-pole/commutator routing, AGE validation target selection, MMM quick-check trend labels, MCP prompt-to-runner orchestration

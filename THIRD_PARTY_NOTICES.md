@@ -11,3 +11,7 @@ schemas, MCP Resources, validation contracts, and public sample decks shipped
 by this repository are maintained as repository-owned material. Users must
 obtain the product and its documentation from the vendor under the applicable
 terms.
+
+The optional runtime adapter discovers a user-installed MAGIC/ELFIN DLL and
+calls a fixed API subset through Python `ctypes`. The DLL remains on the user's
+machine and is neither copied into nor linked as part of this distribution.

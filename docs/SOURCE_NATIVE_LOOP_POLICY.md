@@ -25,8 +25,12 @@ shape, documentation knowledge, and open validation candidates.
 
 The preferred public source-native seeds are representative sample decks,
 motor-readiness routes, public validation matrices, and numeric invariant deck
-families. Product/private solver replay remains outside this public MCP
-package.
+families. A commercial user may execute a work copy through the package's
+guarded local `ctypes` adapter. Product binaries, raw outputs, private replay
+artifacts, and resulting commercial benchmark values remain outside the public
+package and public evidence corpus.
+Product/private solver replay remains outside the public package even though a
+commercial user may initiate a local run through the guarded adapter.
 
 ## Learning Closure Gate
 

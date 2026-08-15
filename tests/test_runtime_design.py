@@ -30,19 +30,24 @@ from elf_mcp_server.tool_definitions import TOOL_CONTRACTS
 def test_runtime_surface_is_explicit_and_safely_annotated() -> None:
     tools = asyncio.run(mcp.list_tools())
     assert {tool.name for tool in tools} == set(TOOL_CONTRACTS)
-    assert len(tools) == 112
+    assert len(tools) == 115
     for tool in tools:
         contract = TOOL_CONTRACTS[tool.name]
         assert tool.title == contract.title
         assert tool.annotations is not None
-        assert tool.annotations.readOnlyHint is True
-        assert tool.annotations.destructiveHint is False
-        assert tool.annotations.idempotentHint is True
+        assert tool.annotations.readOnlyHint is contract.read_only
+        assert tool.annotations.destructiveHint is contract.destructive
+        assert tool.annotations.idempotentHint is contract.idempotent
         assert tool.annotations.openWorldHint is contract.open_world
-        assert tool.meta["elf.contract"] == "elf.mcp-server-contract.v2"
-        assert tool.meta["elf.classification"] == (
-            "read-only-external" if contract.open_world else "read-only-local"
+        assert tool.meta["elf.contract"] == "elf.mcp-server-contract.v3"
+        expected_classification = (
+            "read-only-external"
+            if contract.read_only and contract.open_world
+            else "read-only-local"
+            if contract.read_only
+            else "local-product-execution"
         )
+        assert tool.meta["elf.classification"] == expected_classification
 
 
 def test_canonical_tools_publish_bounds_and_semantic_output_schemas() -> None:
@@ -53,6 +58,10 @@ def test_canonical_tools_publish_bounds_and_semantic_output_schemas() -> None:
     assert "hits" in search_schema["properties"]
     assert tools["elf_search"].inputSchema["properties"]["top_k"]["maximum"] == 100
     assert page_schema["properties"]["limit"]["maximum"] == 200
+    product_schema = tools["elf_product_run"].inputSchema["properties"]
+    assert product_schema["timeout_seconds"]["maximum"] == 86_400
+    assert product_schema["record_width"]["maximum"] == 32
+    assert product_schema["case_name"]["pattern"].startswith("^")
 
     result = elf_search("electrostatic", source="help", top_k=3)
     assert result.schema_version == "elf.search.v1"
@@ -78,7 +87,7 @@ def test_resources_templates_and_prompt_are_first_class() -> None:
         ("new_elf_analysis", "New ELF Analysis")
     ]
     content = asyncio.run(mcp.read_resource("elf://guides/overview"))
-    assert "read-only server" in content[0].content
+    assert "Python/ctypes bridge" in content[0].content
     prompt = asyncio.run(
         mcp.get_prompt(
             "new_elf_analysis", {"geometry": "parallel-plate capacitor", "solver": "ELFIN"}
@@ -139,6 +148,14 @@ def test_wheel_audit_rejects_product_dump_even_when_named_json(tmp_path) -> None
     assert any("product-derived dump" in issue for issue in issues)
 
 
+def test_wheel_audit_rejects_bundled_product_dll(tmp_path) -> None:
+    wheel = tmp_path / "unsafe-binary.whl"
+    with zipfile.ZipFile(wheel, "w") as archive:
+        archive.writestr("elf_mcp_server/magh1600.dll", b"MZ")
+    issues = audit_wheel(wheel)
+    assert any("product/runtime binary" in issue for issue in issues)
+
+
 def test_wheel_audit_does_not_flag_its_own_marker_dictionary(tmp_path) -> None:
     wheel = tmp_path / "safe.whl"
     required = (
@@ -147,6 +164,8 @@ def test_wheel_audit_does_not_flag_its_own_marker_dictionary(tmp_path) -> None:
         "tool_definitions.py",
         "mcp_resources.py",
         "models.py",
+        "product_runner.py",
+        "_product_worker.py",
     )
     with zipfile.ZipFile(wheel, "w") as archive:
         archive.writestr("elf_mcp_server/THIRD_PARTY_NOTICES.md", "public notice")

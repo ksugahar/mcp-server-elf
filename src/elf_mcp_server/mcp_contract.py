@@ -8,7 +8,7 @@ from mcp.types import ToolAnnotations
 from .tool_definitions import TOOL_CONTRACTS
 
 
-SCHEMA = "elf.mcp-server-contract.v2"
+SCHEMA = "elf.mcp-server-contract.v3"
 
 
 def apply_tool_contract(
@@ -46,9 +46,12 @@ def apply_tool_contract(
         )
         meta = dict(getattr(tool, "meta", None) or {})
         meta["elf.contract"] = SCHEMA
-        meta["elf.classification"] = (
-            "read-only-external" if contract.open_world else "read-only-local"
-        )
+        if contract.read_only:
+            meta["elf.classification"] = (
+                "read-only-external" if contract.open_world else "read-only-local"
+            )
+        else:
+            meta["elf.classification"] = "local-product-execution"
         tool.meta = meta
 
     low_level = getattr(mcp, "_mcp_server", None)
@@ -56,8 +59,8 @@ def apply_tool_contract(
         low_level.version = version
         if not getattr(low_level, "instructions", None):
             low_level.instructions = (
-                f"Use {server_name} as a read-only public documentation and input-contract server. "
-                "Keep product execution and raw results outside the MCP process."
+                f"Use {server_name} for public guidance and guarded user-local product execution. "
+                "Call detect and case_check before product_run; keep raw results local."
             )
     return {"tools": len(selected), "explicit_contracts": len(contracts)}
 

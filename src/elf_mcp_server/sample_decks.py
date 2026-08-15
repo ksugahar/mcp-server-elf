@@ -4583,8 +4583,9 @@ def build_local_simulation_handoff(
         "quantity_filter": quantity or "",
         "public_boundary": (
             "This public MCP server selects decks, quantities, validation labels, "
-            "and runner/parser contracts. It does not execute ELF/MAGIC, launch "
-            "GUI/CLI solvers, or bundle solver outputs."
+            "and runner/parser contracts. It can execute an installed product "
+            "DLL through the guarded elf_product_* ctypes tools, but it does not "
+            "bundle product binaries or return raw solver outputs."
         ),
         "selected_routes": selected_routes,
         "runner_input_contract": {
@@ -4612,19 +4613,16 @@ def build_local_simulation_handoff(
                 "dry_run_validate_inputs_only",
             ],
             "execution_policy": {
-                "preferred": "direct_solver_exe_no_gui",
+                "preferred": "isolated_python_ctypes_worker",
                 "avoid": "Launcher.exe GUI route",
                 "reason": (
                     "The shell association route can leave a completion dialog. "
-                    "Automation should call the solver executable directly and "
-                    "wait for process exit."
+                    "The MCP runner loads only an allow-listed product DLL in an "
+                    "isolated Python worker with a bounded timeout."
                 ),
-                "current_elf600_executables": {
-                    "mesh_script": "mesh750.exe (.mei -> .meg, optional)",
-                    "magic": "magh1600.exe (.mai -> .mao/.mag/.mat/.mac)",
-                    "elfin": "elfh1300.exe (.mai -> .mao and electrostatic outputs)",
-                    "beam": "beamh1000.exe (.mai -> beam outputs)",
-                    "field_export": "MagFilter2.exe (.mag -> requested CSV extracts)",
+                "product_ctypes_backends": {
+                    "magic": "magh1600.dll through the fixed MOME/FIEL workflow",
+                    "elfin": "elfh1300.dll through the fixed MOME/FIEL workflow",
                 },
                 "artifact_roles": {
                     ".mai": "analysis/control input deck",
@@ -4667,11 +4665,14 @@ def build_local_simulation_handoff(
             "Route the prompt with this handoff tool and choose the strongest matching public deck family.",
             "Open representative `.mai` and `.meg` decks with `elf_sample_decks_get(...)`.",
             "Choose the physical observable before editing parameters: FLUM for flux linkage, co-energy gradients for force/torque, MOMC/FREQ/OHM2 for AC or eddy-current behavior.",
-            "Send the runner input contract to a user-local/private runner that has access to the installed ELF/MAGIC product.",
+            "Call elf_product_detect(), then elf_product_case_check(...) on a work copy.",
+            "Call elf_product_run(..., confirm_product_execution=True) to execute the installed DLL through Python ctypes.",
             "Parse the runner output into the parser output contract.",
             "Compare trends against the public validation label and quantity focus; only then propose the next geometry/current/frequency/material mutation.",
         ],
         "recommended_public_calls": [
+            "elf_product_detect()",
+            "elf_product_case_check(case_directory='<local case directory>', case_name='<case>')",
             f'elf_sample_decks_route("{goal}")',
             'elf_sample_decks_validation_matrix(quantity="motor")',
             'elf_sample_decks_cross_validation(family="motor")',
@@ -4840,13 +4841,16 @@ def build_mcp_readiness() -> dict[str, Any]:
             ),
         ),
         _public_gate(
-            "local_handoff_boundary_declared",
-            "does not execute ELF/MAGIC" in build_local_simulation_handoff(
-                "SPM motor flux linkage sweep",
-                family="spm",
-                quantity="motor",
-            )["public_boundary"],
-            "handoff contract states that public MCP does not execute ELF/MAGIC",
+            "local_execution_boundary_declared",
+            all(
+                marker in build_local_simulation_handoff(
+                    "SPM motor flux linkage sweep",
+                    family="spm",
+                    quantity="motor",
+                )["public_boundary"]
+                for marker in ("ctypes", "does not bundle", "raw solver outputs")
+            ),
+            "handoff contract allows guarded local ctypes execution without bundling binaries or raw outputs",
         ),
         *route_gates,
     ]
@@ -4866,7 +4870,7 @@ def build_mcp_readiness() -> dict[str, Any]:
             "python -m elf_mcp_server.policy_lint <repo>",
             "python -m elf_mcp_server.server --selftest",
             "python -m build --outdir <temp-dist-dir>",
-            "git commit, git tag v1.62.2, git push origin main, git push origin v1.62.2",
+            "git commit, tag the package version, and push only when explicitly requested",
         ],
         "public_boundary": (
             "Readiness uses public input decks and metadata only. It does not "

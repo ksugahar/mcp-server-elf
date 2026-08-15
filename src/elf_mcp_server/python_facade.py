@@ -4937,8 +4937,8 @@ def build_motor_market_brief(
         ],
         "user_experience_policy": [
             "End users provide specifications and review drawings/results; they do not need to operate analysis software directly.",
-            "A user-local backend may execute the licensed product through an agent-controlled contract.",
-            "The public MCP layer returns schemas, deck contracts, and validation routing only.",
+            "The public MCP runner may execute a supported user-local product DLL through an isolated Python ctypes worker after explicit confirmation.",
+            "Raw product outputs stay in the selected local work directory; the MCP response is bounded metadata by default.",
         ],
     }
 

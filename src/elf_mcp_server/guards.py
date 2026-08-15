@@ -10,6 +10,31 @@ TopK = Annotated[int, Field(ge=1, le=100, description="Number of search hits to 
 PageOffset = Annotated[int, Field(ge=0, le=100_000, description="Zero-based page offset.")]
 PageSize = Annotated[int, Field(ge=1, le=200, description="Number of records in one page.")]
 MaxChars = Annotated[int, Field(ge=256, le=60_000, description="Maximum returned text characters.")]
+ProductCaseName = Annotated[
+    str,
+    Field(
+        min_length=1,
+        max_length=64,
+        pattern=r"^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$",
+        description="Local product case stem without a path or extension.",
+    ),
+]
+ProductRecordWidth = Annotated[
+    int,
+    Field(ge=1, le=32, description="Numeric record width passed to the fixed product DLL API."),
+]
+ProductTimeout = Annotated[
+    int,
+    Field(ge=1, le=86_400, description="Hard timeout for the isolated product worker in seconds."),
+]
+LocalDirectoryPath = Annotated[
+    str,
+    Field(min_length=1, max_length=4096, description="Existing user-local directory path."),
+]
+OptionalProductHome = Annotated[
+    str,
+    Field(max_length=4096, description="Optional user-local product installation root."),
+]
 PositiveFloat = Annotated[
     float,
     Field(gt=0.0, allow_inf_nan=False, description="Finite value greater than zero."),

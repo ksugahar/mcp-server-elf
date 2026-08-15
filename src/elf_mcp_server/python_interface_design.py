@@ -1,8 +1,9 @@
 """Public-safe ELF/MAGIC Python-interface design notes.
 
-This module intentionally describes contracts and routing for a user-local
-Python interface. It does not load, link, inspect, or redistribute any
-product DLL, solver output, private validation log, or machine-local path.
+This module describes contracts and routing for a user-local Python interface.
+The MCP runtime may load an installed product DLL only inside its isolated,
+allow-listed ctypes worker. It never redistributes a DLL, vendor wrapper,
+solver output, private validation log, or machine-local path.
 """
 from __future__ import annotations
 
@@ -11,9 +12,10 @@ from typing import Any
 
 PUBLIC_BOUNDARY = (
     "Public package scope: API design, schemas, prompt routing, deck-builder "
-    "contracts, validation gates, and local-runner handoff contracts. The "
-    "package must not bundle product binaries, execute ELF/MAGIC, expose raw "
-    "solver output, or publish private validation provenance."
+    "contracts, validation gates, and guarded local ctypes execution. The "
+    "package may call an installed product DLL through a fixed API, but must "
+    "not bundle product binaries, expose raw solver output, or publish private "
+    "validation provenance."
 )
 
 IMPLEMENTATION_POLICY: list[dict[str, str]] = [
@@ -92,9 +94,10 @@ LAYERED_ARCHITECTURE: list[dict[str, Any]] = [
     {
         "layer": "backend adapter protocol",
         "purpose": (
-            "A pluggable interface for a user-local product installation. The "
-            "public package defines the protocol; local/private adapters may "
-            "call a vendor DLL, command-line runner, or dry-run validator."
+            "A fixed interface for a user-local product installation. The "
+            "public package discovers supported product roots and calls only "
+            "allow-listed DLL names and symbols through an isolated Python "
+            "ctypes worker. Dry-run validation remains available separately."
         ),
         "artifacts": [
             "discover() returns version/capability metadata without hard-coded paths",
@@ -109,10 +112,12 @@ LAYERED_ARCHITECTURE: list[dict[str, Any]] = [
         "purpose": (
             "The MCP server routes natural-language goals to sample-deck "
             "families, Python schemas, validation expectations, and a local "
-            "runner contract. It remains product-solver-free while generating "
-            "open validation scripts where appropriate."
+            "runner contract. Its guarded product tools execute fixed MOME/FIEL "
+            "workflows through an isolated Python ctypes worker; open validation "
+            "scripts remain separate."
         ),
         "artifacts": [
+            "elf_product_detect() / elf_product_case_check(...) / elf_product_run(...) ctypes workflow",
             "elf_python_interface_design(topic)",
             "elf_python_ngsolve_validation_plan(goal)",
             "elf_python_ngsolve_validation_script(goal)",
@@ -602,7 +607,7 @@ VENDOR_PROPOSAL: list[dict[str, str]] = [
 ROADMAP: list[dict[str, Any]] = [
     {
         "phase": "P0 design contract",
-        "status": "started",
+        "status": "complete",
         "deliverables": [
             "public API/layer design in MCP",
             "motor schema and observable vocabulary",
@@ -612,7 +617,7 @@ ROADMAP: list[dict[str, Any]] = [
     },
     {
         "phase": "P1 public facade skeleton",
-        "status": "next",
+        "status": "complete",
         "deliverables": [
             "standalone dataclasses and JSON schema export",
             "deck bundle builder interface",
@@ -622,17 +627,17 @@ ROADMAP: list[dict[str, Any]] = [
     },
     {
         "phase": "P2 user-local backend adapter",
-        "status": "private/user-local",
+        "status": "complete/user-local",
         "deliverables": [
-            "runtime discovery",
-            "local run request/response",
-            "result parser to normalized observables",
+            "runtime discovery without loading arbitrary binary paths",
+            "isolated Python ctypes execution with explicit confirmation",
+            "bounded result metadata plus normalized-observable parsers",
             "private validation logs outside the public package",
         ],
     },
     {
         "phase": "P3 motor integrated workflow",
-        "status": "planned",
+        "status": "available",
         "deliverables": [
             "SPM/IPM/PMa-SynRM/BLDC/line-start PM/deep-bar IM/flux-switching/Vernier/transverse-flux/slotless/claw-pole/commutator routing",
             "AGE validation target selection",

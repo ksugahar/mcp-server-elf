@@ -1,6 +1,6 @@
 """Explicit safety contracts for every public tool.
 
-The server is documentation-only. Every registered tool is deliberately
+Every registered tool, including the local product execution bridge, is
 classified here instead of inferring safety from its name or prose.
 """
 from __future__ import annotations
@@ -21,6 +21,8 @@ class ToolContract:
 READ_ONLY_TOOL_NAMES = (
     "elf_overview",
     "elf_agentic_profile",
+    "elf_product_detect",
+    "elf_product_case_check",
     "elf_catalog_page",
     "elf_search",
     "elf_read",
@@ -145,11 +147,24 @@ TOOL_CONTRACTS = {
         read_only=True,
         destructive=False,
         idempotent=True,
-        open_world=name == "elf_python_run_result_parse_path",
+        open_world=name in {
+            "elf_python_run_result_parse_path",
+            "elf_product_detect",
+            "elf_product_case_check",
+        },
     )
     for name in READ_ONLY_TOOL_NAMES
 }
 
+TOOL_CONTRACTS["elf_product_run"] = ToolContract(
+    name="elf_product_run",
+    title="ELF Product Run",
+    read_only=False,
+    destructive=True,
+    idempotent=False,
+    open_world=True,
+)
 
-if len(TOOL_CONTRACTS) != len(READ_ONLY_TOOL_NAMES):
+
+if len(TOOL_CONTRACTS) != len(READ_ONLY_TOOL_NAMES) + 1:
     raise RuntimeError("duplicate public tool name in explicit contract registry")

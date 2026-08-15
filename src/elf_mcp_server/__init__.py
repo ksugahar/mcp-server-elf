@@ -19,7 +19,8 @@ motor-readiness audits, ELF/radia/MMM hybrid motor routing,
 local simulation handoff contracts,
 RunResult file parsing, numeric efficiency-map grids,
 original help/example/link/Python-facade summaries, and compact planning aids for
-authoring ELF input files, plus release-readiness gates for MCP maintainers.
+authoring ELF input files, a guarded user-local Python/ctypes product runner,
+and release-readiness gates for MCP maintainers.
 """
 
-__version__ = "1.62.2"
+__version__ = "1.63.0"

@@ -21,7 +21,7 @@ POLICY_LINES = [
     "Product-side Python is reference material, not a required dependency.",
     "The vendor DLL boundary is immutable product territory.",
     "The public facade may add typed schemas, deck builders, validators, routers, and result contracts.",
-    "The public MCP server does not execute ELF/MAGIC or publish raw product-run outputs.",
+    "The public MCP server may execute an installed product DLL through its fixed Python ctypes workflow; it never bundles DLLs or publishes raw product-run outputs.",
 ]
 
 
@@ -519,6 +519,21 @@ LLM_CALL_ORDER = [
         "reason": "Prepare a backend-neutral RunRequest contract.",
     },
     {
+        "step": "28a",
+        "call": "elf_product_detect()",
+        "reason": "Discover the supported installed product DLL without loading it or accepting an arbitrary binary path.",
+    },
+    {
+        "step": "28b",
+        "call": 'elf_product_case_check(case_directory="<work-copy>", case_name="<case>", solver="MAGIC", workflow="mome_fiel")',
+        "reason": "Validate the local .mai/.meg pair, fixed DLL mapping, workflow, and writable work directory before native execution.",
+    },
+    {
+        "step": "28c",
+        "call": 'elf_product_run(case_directory="<work-copy>", case_name="<case>", solver="MAGIC", workflow="mome_fiel", confirm_product_execution=True)',
+        "reason": "Execute the allow-listed product API through the isolated Python ctypes worker after explicit confirmation.",
+    },
+    {
         "step": 29,
         "call": 'elf_python_motor_observable_contract(motor_type="<motor_type>", study="<study>")',
         "reason": "Tell the parser and LLM which output markers, keys, and validation checks apply.",
@@ -622,6 +637,9 @@ EXAMPLES = [
             'elf_python_motor_material_variation_plan(motor_type="spm", focus="magnet")',
             'elf_python_motor_optimization_study_plan(motor_type="spm", objective="cycle_efficiency", budget=48)',
             'elf_python_run_contract("SPM motor back EMF sweep", motor_type="spm", source_public_deck_path="application/motor/pm_cosine_pickup_72/pm001/pm001.mai")',
+            'elf_product_detect()',
+            'elf_product_case_check(case_directory="<work-copy>", case_name="<case>", solver="MAGIC", workflow="mome_fiel")',
+            'elf_product_run(case_directory="<work-copy>", case_name="<case>", solver="MAGIC", workflow="mome_fiel", confirm_product_execution=True)',
             'elf_python_run_result_parse(payload="torque_nm=0.82\\nloss_w=12.5\\nefficiency=0.91", case_id="cand_a")',
             'elf_python_run_result_parse_path(run_path="<local run directory>", requested_observables="torque,loss_proxy")',
             'elf_python_motor_efficiency_map_from_results(motor_type="spm", result_payloads_json="[...parsed local results...]")',
@@ -748,10 +766,11 @@ def build_python_api_manual(topic: str = "quickstart") -> dict[str, Any]:
         ]
     if key in {"quickstart", "local_backend", "all"}:
         data["local_backend_rules"] = [
-            "The public server prepares RunRequest only.",
-            "Execution belongs to a user-local backend with a valid product installation.",
+            "The public server can discover, validate, and execute a supported installed product DLL through its fixed isolated Python ctypes worker.",
+            "Call elf_product_detect, then elf_product_case_check on a work copy, then elf_product_run with confirm_product_execution=True.",
+            "Arbitrary DLL paths, native symbols, shell commands, and Python code are not accepted by the product runner.",
             "Raw outputs and numeric product-run references remain local/private unless explicitly scrubbed.",
-            "RunResult must report status, warnings, generated files, parsed observables, and validation labels.",
+            "The default MCP response reports bounded status and fresh-file metadata; native diagnostics require an explicit local troubleshooting option.",
         ]
     if key in {"quickstart", "validation", "all"}:
         data["validation_rules"] = [

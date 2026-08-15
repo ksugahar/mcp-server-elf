@@ -29,12 +29,27 @@ import sys
 from typing import Literal
 
 from . import __version__
-from .guards import MaxChars, NonNegativeFloat, PageOffset, PageSize, PositiveFloat, TopK, bounded_int, page
+from .guards import (
+    MaxChars,
+    LocalDirectoryPath,
+    NonNegativeFloat,
+    OptionalProductHome,
+    PageOffset,
+    PageSize,
+    PositiveFloat,
+    ProductCaseName,
+    ProductRecordWidth,
+    ProductTimeout,
+    TopK,
+    bounded_int,
+    page,
+)
 from .learning_quality import build_balanced_learning_profile
 from .mcp_contract import apply_tool_contract, build_runtime_contract
 from .mcp_resources import register_resources
 from .models import GateResponse, PageResponse, ReadResponse, SearchHit, SearchResponse
 from .runtime import mcp
+from .product_runner import check_product_case, discover_product, run_product_case
 from .phase_flux_contract import phase_flux_run_contract_gate
 from .mesh_solver_contract import mesh_solver_pipeline_gate
 from .magnet_model_contract import magnet_model_producer_contract_gate
@@ -221,6 +236,7 @@ from .python_access import list_python_files, search_python, get_python_file
 # ============================================================
 
 _TOOL_CATALOG = [
+    ("elf_product_detect / case_check / run", "Discover and safely execute a user-local product DLL through an isolated Python ctypes worker without bundling binaries or returning raw outputs"),
     ("elf_catalog_page(source, offset, limit)", "Canonical paginated catalog for public summaries and sample decks"),
     ("elf_search(query, source, top_k)", "Canonical typed search response"),
     ("elf_read(identifier, source, max_chars)", "Canonical typed read response"),
@@ -358,6 +374,14 @@ def elf_overview() -> dict:
             {
                 "goal": "Inspect the server surface",
                 "call": "elf_overview()",
+            },
+            {
+                "goal": "Detect a user-local product DLL without loading it",
+                "call": "elf_product_detect()",
+            },
+            {
+                "goal": "Validate and execute a local product case through Python ctypes",
+                "call": "elf_product_case_check(case_directory='<local case directory>', case_name='<case>') then elf_product_run(..., confirm_product_execution=True)",
             },
             {
                 "goal": "Search with a bounded semantic result",
@@ -629,17 +653,19 @@ def elf_overview() -> dict:
             },
         ],
         "public_boundary": (
-            "Documentation and lab-authored public input decks only. This MCP "
-            "server does not execute ELF, launch GUI/CLI solvers, bundle solver "
-            "outputs, expose comparison metrics, or publish private validation "
-            "provenance."
+            "Documentation, lab-authored public input decks, and a guarded "
+            "Python/ctypes bridge to a user-local product installation. The "
+            "package never bundles DLLs or raw solver outputs, exposes comparison "
+            "metrics, or publishes private validation provenance."
         ),
         "related_public_packages": [
             {"name": n, "install": inst, "github": gh, "description": d}
             for n, inst, gh, d in _RELATED_PUBLIC_PACKAGES
         ],
         "next_step_hint":
-            "Call elf_usage(topic='all') for the 32 curated topic "
+            "Call elf_product_detect() then elf_product_case_check(...) before "
+            "elf_product_run(..., confirm_product_execution=True) for a local "
+            "product solve; call elf_usage(topic='all') for the 32 curated topic "
             "catalogue, elf_plan_workflow('goal') for a workflow plan, "
             "elf_mcp_readiness() for release-quality gates, "
             "elf_motor_readiness() for motor-specific coverage and validation gaps, "
@@ -716,26 +742,30 @@ def elf_agentic_profile() -> dict:
     return {
         "schema": "cae-ai-lab.agentic-mcp-profile.v1",
         "server": "ELF-mcp-server",
-        "runtime_pattern": "FastMCP public documentation/input-deck server; no ELF/MAGIC solver execution",
+        "runtime_pattern": "FastMCP public knowledge server plus guarded isolated Python/ctypes product execution",
         "runtime_contract": build_runtime_contract(
-            ["public-documentation", "input-contracts", "scrubbed-artifact-gates"],
-            "documentation MCP only; solver execution and private RunResult artifacts remain outside this server",
+            ["public-documentation", "input-contracts", "scrubbed-artifact-gates", "local-product-ctypes-execution"],
+            "detect and check are non-invasive; product_run uses an isolated Python worker and raw RunResult artifacts remain local",
         ),
         "reference_runtime_pattern": {
-            "runtime_vs_skills": "Keep callable public docs/contracts separate from private runner skills.",
-            "environment_probe": "Call elf_overview and elf_mcp_readiness before release or tag push claims.",
+            "runtime_vs_skills": "Keep the fixed ctypes runtime adapter separate from public guidance and external workflow skills.",
+            "environment_probe": "Call elf_product_detect without loading the DLL; call elf_overview and elf_mcp_readiness before release claims.",
             "focused_skills": "Use motor/demag/BEM/public-deck skills only when the source lane is ELF/MAGIC.",
             "result_contract": "Expose public input contracts and scrubbed observable schemas; keep local RunResult files and commercial numbers private.",
         },
         "recommended_first_calls": [
             "elf_overview",
+            "elf_product_detect",
+            "elf_product_case_check",
             "elf_mcp_readiness",
             "elf_motor_readiness",
             "elf_sample_decks_validation_matrix",
         ],
         "execution_policy": {
             "public_boundary": "public engineering-knowledge MCP",
-            "executes_solver": False,
+            "executes_solver": True,
+            "execution_backend": "isolated Python worker using ctypes with fixed DLL/function allow-lists",
+            "requires_explicit_confirmation": True,
             "ships_solver_outputs": False,
             "private_converter": "separate private converter lane; not bundled or exposed by this public MCP",
             "private_validation_store": "separate private validation store; not bundled or exposed by this public MCP",
@@ -754,8 +784,85 @@ def elf_agentic_profile() -> dict:
         "balanced_learning": build_balanced_learning_profile(
             "ELF-mcp-server", "radia-mcp", "ELF/MAGIC product MCP"
         ),
-        "mcp_learning_rule": "An ELF/MAGIC product slot is learned only after public-safe ELF MCP knowledge/input contracts and scrubbed radia motor/demag/BEM gates are verified; raw product results remain private.",
+        "mcp_learning_rule": "A product execution capability is ready only after mocked negative controls, an MCP stdio probe, and a local licensed DLL smoke test pass; raw product results remain local.",
     }
+
+
+@mcp.tool()
+def elf_product_detect(
+    product_home: OptionalProductHome = "",
+    include_paths: bool = False,
+) -> dict:
+    """Detect a user-local product installation without launching a solver.
+
+    Args:
+        product_home: Optional installation root. When empty, environment
+            configuration and the standard Windows installation location are
+            checked. An executable path cannot be supplied.
+        include_paths: Return local absolute paths when true. The default
+            keeps machine-local paths out of the MCP response.
+    """
+    return discover_product(product_home, include_paths=include_paths)
+
+
+@mcp.tool()
+def elf_product_case_check(
+    case_directory: LocalDirectoryPath,
+    case_name: ProductCaseName,
+    solver: Literal["MAGIC", "ELFIN"] = "MAGIC",
+    workflow: Literal["mome", "mome_fiel"] = "mome_fiel",
+    product_home: OptionalProductHome = "",
+    include_paths: bool = False,
+) -> dict:
+    """Validate a local product case and planned stages without executing it.
+
+    The case must contain ``<case_name>.mai`` plus ``.meg``. The DLL and
+    native functions are selected from fixed allow-lists.
+    """
+    return check_product_case(
+        case_directory,
+        case_name,
+        solver=solver,
+        workflow=workflow,
+        product_home=product_home,
+        include_paths=include_paths,
+    )
+
+
+@mcp.tool()
+def elf_product_run(
+    case_directory: LocalDirectoryPath,
+    case_name: ProductCaseName,
+    solver: Literal["MAGIC", "ELFIN"] = "MAGIC",
+    workflow: Literal["mome", "mome_fiel"] = "mome_fiel",
+    record_width: ProductRecordWidth = 8,
+    timeout_seconds: ProductTimeout = 900,
+    confirm_product_execution: bool = False,
+    include_native_diagnostics: bool = False,
+    product_home: OptionalProductHome = "",
+    include_paths: bool = False,
+) -> dict:
+    """Execute a user-local product DLL through an isolated Python ctypes worker.
+
+    This call writes or replaces product result files in ``case_directory``.
+    Set ``confirm_product_execution=true`` only after calling
+    ``elf_product_case_check``. The MCP response contains bounded process
+    metadata, never raw solver-result contents. Native console text is omitted
+    unless ``include_native_diagnostics`` is explicitly enabled for local
+    troubleshooting.
+    """
+    return run_product_case(
+        case_directory,
+        case_name,
+        solver=solver,
+        workflow=workflow,
+        record_width=record_width,
+        timeout_seconds=timeout_seconds,
+        confirm_product_execution=confirm_product_execution,
+        include_native_diagnostics=include_native_diagnostics,
+        product_home=product_home,
+        include_paths=include_paths,
+    )
 
 
 def _catalog_rows(source: str) -> list[dict]:
@@ -4047,6 +4154,12 @@ def main():
         _use_utf8_stdout()
         print("ELF MCP server self-test:")
 
+        product = elf_product_detect()
+        assert product["schema_version"] == "elf.product-ctypes-run.v1"
+        assert product["execution_mode"] == "isolated_python_ctypes_worker"
+        assert product["product_binaries_bundled"] is False
+        assert "product_home" not in product
+
         # 1. Curated topics
         print("[1/16] elf_usage topics:")
         readiness = elf_mcp_readiness()
@@ -4808,7 +4921,8 @@ def main():
         assert "ELF/MAGIC local simulation handoff" in sd_handoff
         assert "Runner Input Contract" in sd_handoff
         assert "application/motor/spm_surface_pm_10" in sd_handoff
-        assert "does not execute ELF/MAGIC" in sd_handoff
+        assert "Python ctypes" in sd_handoff
+        assert "does not bundle" in sd_handoff
         sd_representatives = elf_sample_decks_representatives()
         assert "why representative" in sd_representatives
         assert "application/motor/emdlab_ipm_hairpin_10/eip001/eip001.mai" in sd_representatives
@@ -4890,7 +5004,7 @@ def main():
             marker in sample_corpus_text
             for marker in forbidden_corpus_output_markers
         )
-        assert "direct_solver_exe_no_gui" in handoff_text
+        assert "isolated_python_ctypes_worker" in handoff_text
         assert ".mao" in handoff_text
         assert ".mag" in handoff_text
         assert ".mei" in handoff_text

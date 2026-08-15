@@ -2393,9 +2393,9 @@ FORCE_GAP_OBSERVABLE_CONTRACT = """\
 # PM force-gap observable contract for ELF/MAGIC -> open validation
 
 Use this contract when a MAGIC force observable from `SOL FORC`, `SOL FORT`, or
-`SOL FIXB` is being promoted into an open validation row.  The MCP server does
-not execute ELF/MAGIC and must not publish product result files; it can still
-prepare a public-safe row contract that a user-local runner can fill.
+`SOL FIXB` is being promoted into an open validation row.  This contract tool
+does not launch a run or publish product result files; use the guarded local
+`elf_product_*` ctypes sequence on a work copy before preparing a public-safe row.
 
 ## Minimum row schema
 
@@ -2457,8 +2457,8 @@ MAXWELL_STRESS_SURFACE_PACKAGE_CONTRACT = """\
 # Maxwell-stress surface package contract for ELF/MAGIC -> open validation
 
 Use this contract before promoting a `SOL FORT` Maxwell-stress force or torque
-result into an open validation row.  The MCP server does not execute ELF/MAGIC
-and must not publish product result files; it can still require a clean package
+result into an open validation row.  This contract tool does not launch the
+product or publish product result files; it can still require a clean package
 identity so a user-local runner does not mix a stress surface, solve command,
 and observable table from different cases.
 

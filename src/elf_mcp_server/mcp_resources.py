@@ -29,9 +29,10 @@ def register_resources(mcp: Any) -> None:
     def overview_resource() -> str:
         return (
             "# ELF public MCP overview\n\n"
-            "This read-only server provides original engineering summaries, public input decks, "
-            "validation contracts, and user-local handoff schemas. It does not execute product "
-            "software or distribute manuals, wiki text, wrapper source, binaries, or solver results."
+            "This server provides original engineering summaries, public input decks, validation "
+            "contracts, and a guarded Python/ctypes bridge to a user-local product installation. "
+            "It does not distribute manuals, wiki text, wrapper source, binaries, or solver results; "
+            "raw outputs remain in the caller-selected local directory."
         )
 
     @mcp.resource(

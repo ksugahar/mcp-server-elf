@@ -33,6 +33,7 @@ async def _probe_stdio() -> dict:
             searched = await session.call_tool(
                 "elf_search", {"query": "electrostatic", "source": "help", "top_k": 3}
             )
+            detected = await session.call_tool("elf_product_detect", {})
             resources = await session.list_resources()
             templates = await session.list_resource_templates()
             read = await session.read_resource(AnyUrl("elf://guides/overview"))
@@ -64,6 +65,8 @@ async def _probe_stdio() -> dict:
                 "probe_has_content": bool(called.content),
                 "structured_is_error": bool(searched.isError),
                 "structured_schema": (searched.structuredContent or {}).get("schema_version"),
+                "product_detect_is_error": bool(detected.isError),
+                "product_detect_has_content": bool(detected.content),
                 "resource_count": len(resources.resources),
                 "template_count": len(templates.resourceTemplates),
                 "resource_read": read.contents[0].text,
@@ -87,6 +90,8 @@ def test_stdio_initialize_list_and_safe_call_contract() -> None:
     assert result["structured_schema"] == "elf.search.v1"
     assert result["resource_count"] == 4
     assert result["template_count"] == 1
-    assert "read-only server" in result["resource_read"]
+    assert "Python/ctypes bridge" in result["resource_read"]
+    assert result["product_detect_is_error"] is False
+    assert result["product_detect_has_content"] is True
     assert result["prompt_names"] == ["new_elf_analysis"]
     assert "electrostatic" in result["prompt_text"]

@@ -43,8 +43,9 @@ Publication cadence:
   100-case checkpoint would be 1700 cases
 
 The decks are intended as public examples that users can inspect, copy, and run
-with their own ELF/MAGIC installation. The MCP server itself does not execute
-ELF/MAGIC or bundle solver results.
+with their own ELF/MAGIC installation. `elf_product_run` can execute a work copy
+through the installed DLL; the MCP package does not bundle DLLs or solver
+results.
 
 Quality labels used by the MCP tools:
 
@@ -94,8 +95,9 @@ Representative routing:
   clients should collapse or summarize in concise views.
 - `elf_local_simulation_handoff(goal)` converts a natural-language simulation
   goal into a public-safe local-runner contract: deck family, physical
-  quantities, runner inputs, parser outputs, and motor design-loop steps. The
-  public MCP server still does not execute ELF/MAGIC or bundle solver outputs.
+  quantities, runner inputs, parser outputs, and motor design-loop steps. Use
+  `elf_product_detect`, `elf_product_case_check`, and `elf_product_run` for the
+  guarded local Python/ctypes execution sequence; solver outputs are not bundled.
 - `elf_mcp_readiness()` aggregates the public quality gates, cross-validation
   gates, duplicate audit, local-runner handoff boundary, and high-value route
   checks into a release-readiness report before tag push.

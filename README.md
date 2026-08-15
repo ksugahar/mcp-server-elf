@@ -4,9 +4,12 @@
 [![License: BSD-3-Clause](https://img.shields.io/badge/License-BSD_3--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
 [![Python: 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/)
 
-**MCP server providing ELF600 electromagnetic field analysis documentation** — file formats, solver options, element types, workflow recipes, and ELF-runnable public input decks for the [ELF600](https://www.science-solutions.jp/elf/) BEM-based electromagnetic analysis suite (MAGIC magnetostatic, ELFIN electrostatic, BEAM particle tracking).
+**MCP server for ELF600 electromagnetic field analysis** — file formats, solver options, element types, workflow recipes, ELF-runnable public input decks, and guarded execution of an installed product DLL for the [ELF600](https://www.science-solutions.jp/elf/) BEM-based electromagnetic analysis suite (MAGIC magnetostatic, ELFIN electrostatic, BEAM particle tracking).
 
-This server does **not** execute ELF600 simulations — it provides curated documentation and public `.mai`/`.meg` input decks that AI coding assistants (Claude Code, Cursor, etc.) can consult while authoring ELF input files.
+Commercial users can execute MAGIC or ELFIN directly from the MCP server. The
+server uses an isolated Python worker and `ctypes` with fixed DLL/function
+allow-lists. Product DLLs and licenses are never bundled, and raw output files
+remain in the user-selected local case directory.
 
 ---
 
@@ -17,6 +20,7 @@ This server does **not** execute ELF600 simulations — it provides curated docu
 | Tool family | Purpose | Files |
 |---|---|---|
 | `elf_usage(topic)` | 32 curated topics — high-level recipes | (knowledge.py) |
+| `elf_product_detect / elf_product_case_check / elf_product_run` | Detect, validate, and execute an installed MAGIC/ELFIN DLL through guarded Python `ctypes` | user-local product installation; raw outputs stay local |
 | `elf_catalog_page / elf_search / elf_read / elf_contract_gate` | Canonical typed MCP interface | bounded structured responses |
 | `elf://guides/* / elf://corpus/* / elf://topics/{topic}` | Stable MCP Resources | original public summaries |
 | `elf_help_*(...)` | Compatibility access to original summaries | no product-help snapshot |
@@ -73,7 +77,9 @@ or `.meg` reuse that MCP clients should collapse or summarize rather than
 delete. `elf_local_simulation_handoff(goal)` turns a prompt into a public-safe
 handoff contract for a user-local ELF/MAGIC runner: selected deck families,
 physical quantities, runner input fields, parser output fields, and the motor
-iteration loop. It does not execute ELF/MAGIC or publish solver outputs.
+iteration loop. Use `elf_product_detect()`, `elf_product_case_check(...)`, and
+`elf_product_run(..., confirm_product_execution=True)` to execute the installed
+DLL. The package does not publish or bundle solver outputs.
 `elf_mcp_readiness()` aggregates public quality gates, cross-validation gates,
 duplicate checks, local-runner handoff boundary checks, and key route checks
 into a release-readiness report for maintainers. `elf_motor_readiness()`
@@ -582,6 +588,34 @@ Verify:
 ```bash
 elf-mcp-server --selftest
 ```
+
+### Local product execution
+
+The runner checks `ELF_PRODUCT_HOME`, then compatible legacy environment
+variable names, then the standard Windows installation location. An explicit
+`product_home` may also be supplied to the MCP tools. It must be an installation
+root; arbitrary DLL paths, native symbols, commands, and Python code are not
+accepted.
+
+Recommended call order:
+
+```text
+elf_product_detect()
+elf_product_case_check(case_directory="<work-copy>", case_name="<case>", solver="MAGIC")
+elf_product_run(
+    case_directory="<work-copy>",
+    case_name="<case>",
+    solver="MAGIC",
+    workflow="mome_fiel",
+    confirm_product_execution=True,
+)
+```
+
+`elf_product_run` writes product result files in the supplied work directory.
+Use a work copy when source inputs must remain pristine. The default response
+contains status, timing, native call names, and fresh-file metadata only.
+Native console text is returned only when `include_native_diagnostics=True` is
+explicitly requested for local troubleshooting.
 
 ---
 

@@ -126,6 +126,9 @@ def test_tool_surface_and_no_work_family():
     assert "elf_python_meg_generation_plan" in names
     assert "elf_python_2d_motor_template" in names
     assert "elf_agentic_profile" in names
+    assert "elf_product_detect" in names
+    assert "elf_product_case_check" in names
+    assert "elf_product_run" in names
     assert "elf_project_feature_inventory_contract_gate" in names
     assert "elf_nonlinear_magnetic_conductor_validation_gate" in names
     overview = elf_overview()
@@ -141,7 +144,8 @@ def test_tool_surface_and_no_work_family():
     profile = elf_agentic_profile()
     profile_text = str(profile)
     assert profile["schema"] == "cae-ai-lab.agentic-mcp-profile.v1"
-    assert profile["execution_policy"]["executes_solver"] is False
+    assert profile["execution_policy"]["executes_solver"] is True
+    assert profile["execution_policy"]["execution_backend"].startswith("isolated Python")
     assert profile["execution_policy"]["ships_solver_outputs"] is False
     assert "runtime_vs_skills" in profile["reference_runtime_pattern"]
     assert "elf_mcp_readiness" in profile["recommended_first_calls"]
@@ -1414,6 +1418,12 @@ def test_python_facade_schema_lint_and_generation_plan(tmp_path, monkeypatch):
     assert "Cubit mesh export" in manual
     assert "Netgen 2D" in manual
     assert "Product-side Python is reference material" in manual
+    assert "elf_product_detect()" in manual
+    assert "elf_product_case_check" in manual
+    assert "elf_product_run" in manual
+    assert "confirm_product_execution=True" in manual
+    assert "isolated Python ctypes worker" in manual
+    assert "prepares RunRequest only" not in manual
     assert "S:" + "\\" not in manual
 
 
@@ -1789,7 +1799,7 @@ def test_public_sample_decks_are_runnable_inputs_only():
     assert "mai_text or mai_path" in handoff["runner_input_contract"]["required"]
     assert (
         handoff["runner_input_contract"]["execution_policy"]["preferred"]
-        == "direct_solver_exe_no_gui"
+        == "isolated_python_ctypes_worker"
     )
     assert (
         handoff["runner_input_contract"]["execution_policy"]["avoid"]
@@ -1799,9 +1809,10 @@ def test_public_sample_decks_are_runnable_inputs_only():
     assert handoff["parser_output_contract"]["primary_files"]["mesh_script_input"] == ".mei"
     assert "flux_linkage_FLUM" in handoff["parser_output_contract"]["parsed_observables"]
     handoff_text = format_local_simulation_handoff(handoff)
-    assert "does not execute ELF/MAGIC" in handoff_text
+    assert "Python ctypes" in handoff_text
+    assert "does not bundle" in handoff_text
     assert "Runner Input Contract" in handoff_text
-    assert "direct_solver_exe_no_gui" in handoff_text
+    assert "isolated_python_ctypes_worker" in handoff_text
     assert "primary files" in handoff_text
     assert ".mao" in handoff_text
     assert ".mag" in handoff_text
@@ -1821,7 +1832,7 @@ def test_public_sample_decks_are_runnable_inputs_only():
     )
     assert linear_handoff["selected_routes"][0]["family"] == "application/motor/linear_pm_motor_10"
     linear_handoff_text = format_local_simulation_handoff(linear_handoff)
-    assert "direct_solver_exe_no_gui" in linear_handoff_text
+    assert "isolated_python_ctypes_worker" in linear_handoff_text
     assert ".mao" in linear_handoff_text
     assert ".mag" in linear_handoff_text
     assert ".mei" in linear_handoff_text

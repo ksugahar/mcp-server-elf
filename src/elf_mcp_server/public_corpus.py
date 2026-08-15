@@ -85,7 +85,7 @@ PYTHON = {
     ),
     "facade/RunRequest": _entry(
         "RunRequest contract",
-        "A RunRequest is a handoff description for a user-local backend. It contains artifact identifiers and requested observables but never launches a solver from this server.",
+        "A RunRequest describes a guarded user-local product execution. It contains the case identity, fixed ctypes workflow, timeout, explicit confirmation, and requested observables.",
         ext="schema",
     ),
     "facade/RunResult": _entry(

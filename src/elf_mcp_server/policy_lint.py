@@ -1,10 +1,8 @@
 """Public-package policy lint for ELF-mcp-server.
 
-The public ELF MCP package is a documentation/input-deck server. This lint
-guards the publish boundary that matters most for the public repository:
-no private validation provenance, no machine-local paths, no unrelated
-commercial-tool promotion, and no unsafe bundled solver outputs in public
-samples.
+The public package may orchestrate DLLs installed on a commercial user's
+machine. This lint keeps those DLLs, vendor wrappers, machine-local paths,
+private provenance, and solver outputs outside the repository and wheel.
 """
 from __future__ import annotations
 
@@ -58,6 +56,7 @@ FORBIDDEN_BUNDLED_NAMES = {
     "wiki_dump.json",
     "python_dump.json",
 }
+FORBIDDEN_PRODUCT_BINARY_SUFFIXES = {".dll", ".exe", ".lib", ".pyd"}
 MANIFEST_NAME = "VALIDATED_MANIFEST.json"
 PUBLICATION_BATCHES_NAME = "PUBLICATION_BATCHES.json"
 PUBLICATION_CHECKPOINT_SIZE = 100
@@ -467,6 +466,17 @@ def run_policy_lint(root: Path | str | None = None) -> list[str]:
                 f"{path.relative_to(repo).as_posix()}: product-derived dump is not allowed"
             )
 
+    for rel_root in CURATED_PATHS:
+        root_path = repo / rel_root
+        if not root_path.exists():
+            continue
+        candidates = [root_path] if root_path.is_file() else root_path.rglob("*")
+        for path in candidates:
+            if path.is_file() and path.suffix.lower() in FORBIDDEN_PRODUCT_BINARY_SUFFIXES:
+                issues.append(
+                    f"{path.relative_to(repo).as_posix()}: product/runtime binary is not allowed"
+                )
+
     for path in _iter_text_files(repo, CURATED_PATHS):
         rel = path.relative_to(repo).as_posix()
         text = _read_text(path)
@@ -512,6 +522,8 @@ def audit_wheel(wheel: Path | str) -> list[str]:
                 issues.append(f"{path.name}:{name}: product-derived dump is not allowed")
             if lower.endswith(SAMPLE_OUTPUT_SUFFIXES) or lower.endswith("summary.csv"):
                 issues.append(f"{path.name}:{name}: solver output file is not allowed")
+            if pure.suffix.lower() in FORBIDDEN_PRODUCT_BINARY_SUFFIXES:
+                issues.append(f"{path.name}:{name}: product/runtime binary is not allowed")
             if lower == "elf_mcp_server/policy_lint.py":
                 # The lint module necessarily contains the marker dictionary.
                 # Repository sources are audited separately, excluding this file.
@@ -532,6 +544,8 @@ def audit_wheel(wheel: Path | str) -> list[str]:
             "elf_mcp_server/tool_definitions.py",
             "elf_mcp_server/mcp_resources.py",
             "elf_mcp_server/models.py",
+            "elf_mcp_server/product_runner.py",
+            "elf_mcp_server/_product_worker.py",
         }
         missing = sorted(item for item in required if item.lower() not in lower_names)
         issues.extend(f"{path.name}: missing required runtime file {item}" for item in missing)
